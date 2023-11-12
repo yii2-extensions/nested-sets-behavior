@@ -487,7 +487,6 @@ class NestedSetsBehavior extends Behavior
         }
     }
 
-
     public function afterUpdate()
     {
         switch ($this->operation) {
@@ -513,7 +512,6 @@ class NestedSetsBehavior extends Behavior
         $this->operation = null;
         $this->node = null;
     }
-
 
     protected function moveNodeAsRoot()
     {
@@ -635,7 +633,6 @@ class NestedSetsBehavior extends Behavior
 
         $this->owner->refresh();
     }
-
 
     public function afterDelete()
     {
