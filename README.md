@@ -51,3 +51,7 @@ For install this package, you need [composer](https://getcomposer.org/).
 ## License
 
 The MIT License. Please see [License File](LICENSE.md) for more information.
+
+## Fork 
+
+This package is a fork of [https://github.com/creocoder/yii2-nested-sets](https://github.com/creocoder/yii2-nested-sets) with some corrections.
