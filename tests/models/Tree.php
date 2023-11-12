@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 /**
  * @link https://github.com/creocoder/yii2-nested-sets
+ *
  * @copyright Copyright (c) 2015 Alexander Kochetov
  * @license http://opensource.org/licenses/BSD-3-Clause
  */
@@ -15,10 +16,10 @@ use yii\behavior\nested\sets\NestedSetsBehavior;
 /**
  * Tree
  *
- * @property integer $id
- * @property integer $lft
- * @property integer $rgt
- * @property integer $depth
+ * @property int $id
+ * @property int $lft
+ * @property int $rgt
+ * @property int $depth
  * @property string $name
  */
 final class Tree extends \yii\db\ActiveRecord
@@ -66,6 +67,6 @@ final class Tree extends \yii\db\ActiveRecord
      */
     public static function find()
     {
-        return new TreeQuery(get_called_class());
+        return new TreeQuery(self::class);
     }
 }

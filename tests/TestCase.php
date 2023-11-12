@@ -45,9 +45,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $formattedXml = $dom->saveXML();
 
         // Replace the tags with 4 spaces
-        $formattedXml = str_replace(['<tree', '<multiple_tree'], ["  <tree", "  <multiple_tree"], $formattedXml);
-
-        return $formattedXml;
+        return str_replace(['<tree', '<multiple_tree'], ['  <tree', '  <multiple_tree'], $formattedXml);
     }
 
     protected function createDatabase(): void
