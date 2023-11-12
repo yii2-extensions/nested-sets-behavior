@@ -1,9 +1,12 @@
 {
-    "name": "yii2/template",
+    "name": "yii2-extensions/nested-sets-behavior",
     "type": "library",
-    "description": "_____",
+    "description": "yii2-extension",
     "keywords": [
-        "_____"
+        "yii2",
+        "nested",
+        "sets",
+        "behavior"
     ],
     "license": "mit",
     "minimum-stability": "dev",
@@ -19,12 +22,12 @@
     },
     "autoload": {
         "psr-4": {
-            "yii\\template\\": "src"
+            "yii\\behavior\\nested\\sets\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "yii\\template\\tests\\": "tests"
+            "yii\\behavior\\nested\\sets\\tests\\": "tests"
         }
     },
     "extra": {
