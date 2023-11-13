@@ -12,12 +12,13 @@ declare(strict_types=1);
 namespace yii\behavior\nested\sets;
 
 use yii\base\Behavior;
+use yii\db\ActiveQuery;
 use yii\db\Expression;
 
 /**
  * NestedSetsQueryBehavior
  *
- * @property \yii\db\ActiveQuery $owner
+ * @property ActiveQuery $owner
  *
  * @author Alexander Kochetov <creocoder@gmail.com>
  */
@@ -26,9 +27,9 @@ class NestedSetsQueryBehavior extends Behavior
     /**
      * Gets the root nodes.
      *
-     * @return \yii\db\ActiveQuery the owner
+     * @return ActiveQuery the owner
      */
-    public function roots()
+    public function roots(): ActiveQuery
     {
         $model = new $this->owner->modelClass();
 
@@ -42,9 +43,9 @@ class NestedSetsQueryBehavior extends Behavior
     /**
      * Gets the leaf nodes.
      *
-     * @return \yii\db\ActiveQuery the owner
+     * @return ActiveQuery the owner
      */
-    public function leaves()
+    public function leaves(): ActiveQuery
     {
         $model = new $this->owner->modelClass();
         $db = $model->getDb();
@@ -56,7 +57,9 @@ class NestedSetsQueryBehavior extends Behavior
         }
 
         $this->owner
-            ->andWhere([$model->rightAttribute => new Expression($db->quoteColumnName($model->leftAttribute) . '+ 1')])
+            ->andWhere([$model->rightAttribute => new Expression(
+                $db->quoteColumnName($model->leftAttribute) . '+ 1')]
+            )
             ->addOrderBy($columns);
 
         return $this->owner;
