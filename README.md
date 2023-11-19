@@ -13,6 +13,9 @@
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml" target="_blank">
         <img src="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml/badge.svg" alt="PHPUnit">
     </a>
+    <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/compatibility.yml" target="_blank">
+        <img src="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/compatibility.yml/badge.svg" alt="PHPUnit">
+    </a>
     <a href="https://codecov.io/gh/yii2-extensions/nested-sets-behavior" target="_blank">
         <img src="https://codecov.io/gh/yii2-extensions/nested-sets-behavior/branch/main/graph/badge.svg?token=MF0XUGVLYC" alt="Codecov">
     </a>        
