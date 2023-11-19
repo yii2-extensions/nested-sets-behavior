@@ -19,7 +19,7 @@ on:
       - 'infection.json.dist'
       - 'psalm.xml'
 
-name: build
+name: compatibility
 
 jobs:
   phpunit:
@@ -27,7 +27,7 @@ jobs:
     with:
       composer-command: |
         composer require yiisoft/yii2:^2.0.49 --prefer-dist --no-progress --no-interaction --no-scripts --ansi
-      extensions: pdo, pdo_sqlite
+      extensions: intl, pdo, pdo_sqlite
       os: >-
         ['ubuntu-latest', 'windows-latest']
       php: >-
