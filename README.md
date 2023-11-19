@@ -27,10 +27,6 @@ The minimun version of `PHP` required by this package is `PHP 8.1`.
 
 For install this package, you need [composer](https://getcomposer.org/).
 
-## Usage
-
-[Check the documentation docs](/docs/README.md) to learn about usage.
-
 ## Quality code
 
 [![static-analysis](https://github.com/yii2-extensions/gii/actions/workflows/static.yml/badge.svg)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
