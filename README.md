@@ -21,11 +21,23 @@
     </a>        
 </p>
 
-## Requirements
+## Installation
 
-The minimun version of `PHP` required by this package is `PHP 8.1`.
+The preferred way to install this extension is through [composer](https://getcomposer.org/download/).
 
-For install this package, you need [composer](https://getcomposer.org/).
+Either run
+
+```
+composer require --dev --prefer-dist yii2-extensions/nested-sets-behavior
+```
+
+or add
+
+```
+"yii2-extensions/nested-sets-behavior": "dev-main"
+```
+
+to the require-dev section of your `composer.json` file. 
 
 ## Quality code
 
