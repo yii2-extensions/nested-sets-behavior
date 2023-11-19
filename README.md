@@ -10,23 +10,11 @@
     <a href="https://www.php.net/releases/8.1/en.php" target="_blank">
         <img src="https://img.shields.io/badge/PHP-%3E%3D8.1-787CB5" alt="php-version">
     </a>
-    <a href="https://github.com/yiisoft/yii2/tree/2.2" target="_blank">
-        <img src="https://img.shields.io/badge/Yii2%20version-2.2-blue" alt="yii2-version">
-    </a>
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml" target="_blank">
         <img src="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml/badge.svg" alt="PHPUnit">
     </a>
     <a href="https://codecov.io/gh/yii2-extensions/nested-sets-behavior" target="_blank">
         <img src="https://codecov.io/gh/yii2-extensions/nested-sets-behavior/branch/main/graph/badge.svg?token=MF0XUGVLYC" alt="Codecov">
-    </a>
-    <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml" target="_blank">
-        <img src="https://github.com/yii2-extensions/gii/actions/workflows/static.yml/badge.svg" alt="PHPStan">
-    </a>
-    <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml" target="_blank">
-        <img src="https://img.shields.io/badge/PHPStan%20level-1-blue" alt="PHPStan level">
-    </a>
-    <a href="https://github.styleci.io/repos/717718161?branch=main" target="_blank">
-        <img src="https://github.styleci.io/repos/717718161/shield?branch=main" alt="Code style">
     </a>        
 </p>
 
@@ -39,6 +27,17 @@ For install this package, you need [composer](https://getcomposer.org/).
 ## Usage
 
 [Check the documentation docs](/docs/README.md) to learn about usage.
+
+## Quality code
+
+[![static-analysis](https://github.com/yii2-extensions/gii/actions/workflows/static.yml/badge.svg)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
+[![phpstan-level](https://img.shields.io/badge/PHPStan%20level-1-blue)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
+[![style-ci](https://github.styleci.io/repos/717718161/shield?branch=main)](https://github.styleci.io/repos/717718161?branch=main)
+
+## Support versions Yii2
+
+[![Yii20](https://img.shields.io/badge/Yii2%20version-2.0-blue)](https://github.com/yiisoft/yii2/tree/2.0.49.3)
+[![Yii22](https://img.shields.io/badge/Yii2%20version-2.2-blue)](https://github.com/yiisoft/yii2/tree/2.2)
 
 ## Testing
 
