@@ -2,18 +2,11 @@
 
 declare(strict_types=1);
 
-/**
- * @link https://github.com/creocoder/yii2-nested-sets
- *
- * @copyright Copyright (c) 2015 Alexander Kochetov
- * @license http://opensource.org/licenses/BSD-3-Clause
- */
+namespace Yii2\Extensions\NestedSets\Tests;
 
-namespace yii\behavior\nested\sets\tests;
-
+use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 use yii\base\NotSupportedException;
-use yii\behavior\nested\sets\tests\models\MultipleTree;
-use yii\behavior\nested\sets\tests\models\Tree;
 use yii\db\Exception;
 use yii\helpers\ArrayHelper;
 
@@ -34,7 +27,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-make-root-new.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-make-root-new.xml')->asXML(),
         );
     }
 
@@ -61,7 +54,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-prepend-to-new.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-new.xml')->asXML(),
         );
     }
 
@@ -88,7 +81,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-before-new.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-new.xml')->asXML(),
         );
     }
 
@@ -126,7 +119,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-after-new.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-new.xml')->asXML(),
         );
     }
 
@@ -162,7 +155,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/data/test-make-root-exists.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-make-root-exists.xml')->asXML(),
         );
     }
 
@@ -202,7 +195,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-prepend-to-exists-up.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-exists-up.xml')->asXML(),
         );
     }
 
@@ -220,7 +213,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-prepend-to-exists-down.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-exists-down.xml')->asXML(),
         );
     }
 
@@ -234,7 +227,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/data/test-prepend-to-exists-another-tree.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-exists-another-tree.xml')->asXML(),
         );
     }
 
@@ -285,7 +278,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-append-to-exists-up.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-append-to-exists-up.xml')->asXML(),
         );
     }
 
@@ -303,7 +296,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-append-to-exists-down.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-append-to-exists-down.xml')->asXML(),
         );
     }
 
@@ -317,7 +310,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/data/test-append-to-exists-another-tree.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-append-to-exists-another-tree.xml')->asXML(),
         );
     }
 
@@ -368,7 +361,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-before-exists-up.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-exists-up.xml')->asXML(),
         );
     }
 
@@ -386,7 +379,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-before-exists-down.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-exists-down.xml')->asXML(),
         );
     }
 
@@ -400,7 +393,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-before-exists-another-tree.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-exists-another-tree.xml')->asXML(),
         );
     }
 
@@ -462,7 +455,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-after-exists-up.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-exists-up.xml')->asXML(),
         );
     }
 
@@ -480,7 +473,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-after-exists-down.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-exists-down.xml')->asXML(),
         );
     }
 
@@ -494,7 +487,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/data/test-insert-after-exists-another-tree.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-exists-another-tree.xml')->asXML(),
         );
     }
 
@@ -551,7 +544,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-delete-with-children.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-delete-with-children.xml')->asXML(),
         );
     }
 
@@ -575,7 +568,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/data/test-delete.xml')->asXML(),
+            simplexml_load_file(__DIR__ . '/Support/data/test-delete.xml')->asXML(),
         );
     }
 
@@ -596,7 +589,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "yii\behavior\nested\sets\tests\models\Tree::delete" is not supported for deleting root nodes.'
+            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::delete" is not supported for deleting root nodes.'
         );
 
         $node = Tree::findOne(1);
@@ -609,7 +602,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "yii\behavior\nested\sets\tests\models\Tree::insert" is not supported for inserting new nodes.'
+            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::insert" is not supported for inserting new nodes.'
         );
 
         $node = new Tree(['name' => 'Node']);
@@ -630,22 +623,22 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-parents.php'),
+            require(__DIR__ . '/Support/data/test-parents.php'),
             ArrayHelper::toArray(Tree::findOne(11)->parents()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-parents-multiple-tree.php'),
+            require(__DIR__ . '/Support/data/test-parents-multiple-tree.php'),
             ArrayHelper::toArray(MultipleTree::findOne(33)->parents()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-parents-with-depth.php'),
+            require(__DIR__ . '/Support/data/test-parents-with-depth.php'),
             ArrayHelper::toArray(Tree::findOne(11)->parents(1)->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-parents-multiple-tree-with-depth.php'),
+            require(__DIR__ . '/Support/data/test-parents-multiple-tree-with-depth.php'),
             ArrayHelper::toArray(MultipleTree::findOne(33)->parents(1)->all())
         );
     }
@@ -655,22 +648,22 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-children.php'),
+            require(__DIR__ . '/Support/data/test-children.php'),
             ArrayHelper::toArray(Tree::findOne(9)->children()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-children-multiple-tree.php'),
+            require(__DIR__ . '/Support/data/test-children-multiple-tree.php'),
             ArrayHelper::toArray(MultipleTree::findOne(31)->children()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-children-with-depth.php'),
+            require(__DIR__ . '/Support/data/test-children-with-depth.php'),
             ArrayHelper::toArray(Tree::findOne(9)->children(1)->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-children-multiple-tree-with-depth.php'),
+            require(__DIR__ . '/Support/data/test-children-multiple-tree-with-depth.php'),
             ArrayHelper::toArray(MultipleTree::findOne(31)->children(1)->all())
         );
     }
@@ -680,12 +673,12 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-leaves.php'),
+            require(__DIR__ . '/Support/data/test-leaves.php'),
             ArrayHelper::toArray(Tree::findOne(9)->leaves()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-leaves-multiple-tree.php'),
+            require(__DIR__ . '/Support/data/test-leaves-multiple-tree.php'),
             ArrayHelper::toArray(MultipleTree::findOne(31)->leaves()->all())
         );
     }
@@ -695,12 +688,12 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-prev.php'),
+            require(__DIR__ . '/Support/data/test-prev.php'),
             ArrayHelper::toArray(Tree::findOne(9)->prev()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-prev-multiple-tree.php'),
+            require(__DIR__ . '/Support/data/test-prev-multiple-tree.php'),
             ArrayHelper::toArray(MultipleTree::findOne(31)->prev()->all())
         );
     }
@@ -710,12 +703,12 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-next.php'),
+            require(__DIR__ . '/Support/data/test-next.php'),
             ArrayHelper::toArray(Tree::findOne(9)->next()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-next-multiple-tree.php'),
+            require(__DIR__ . '/Support/data/test-next-multiple-tree.php'),
             ArrayHelper::toArray(MultipleTree::findOne(31)->next()->all())
         );
     }

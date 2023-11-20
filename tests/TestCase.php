@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace yii\behavior\nested\sets\tests;
+namespace Yii2\Extensions\NestedSets\Tests;
 
 use SimpleXMLElement;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 use Yii;
-use yii\behavior\nested\sets\tests\models\MultipleTree;
-use yii\behavior\nested\sets\tests\models\Tree;
 use yii\console\Application;
 use yii\db\Connection;
 use yii\db\SchemaBuilderTrait;
@@ -125,7 +125,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $command = $this->getDb()->createCommand();
 
         // Carga el XML en la tabla `tree`
-        $xml = new SimpleXMLElement(__DIR__ . '/data/test.xml', 0, true);
+        $xml = new SimpleXMLElement(__DIR__ . '/Support/data/test.xml', 0, true);
 
         foreach ($xml->children() as $element => $treeElement) {
             match ($element === 'tree') {

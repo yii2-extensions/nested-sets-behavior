@@ -2,17 +2,10 @@
 
 declare(strict_types=1);
 
-/**
- * @link https://github.com/creocoder/yii2-nested-sets
- *
- * @copyright Copyright (c) 2015 Alexander Kochetov
- * @license http://opensource.org/licenses/BSD-3-Clause
- */
+namespace Yii2\Extensions\NestedSets\Tests;
 
-namespace yii\behavior\nested\sets\tests;
-
-use yii\behavior\nested\sets\tests\models\MultipleTree;
-use yii\behavior\nested\sets\tests\models\Tree;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 use yii\helpers\ArrayHelper;
 
 final class NestedSetsQueryBehaviorTest extends TestCase
@@ -22,12 +15,12 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-roots-query.php'),
+            require(__DIR__ . '/Support/data/test-roots-query.php'),
             ArrayHelper::toArray(Tree::find()->roots()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-roots-multiple-tree-query.php'),
+            require(__DIR__ . '/Support/data/test-roots-multiple-tree-query.php'),
             ArrayHelper::toArray(MultipleTree::find()->roots()->all())
         );
     }
@@ -37,12 +30,12 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         $this->generateFixtureTree();
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-leaves-query.php'),
+            require(__DIR__ . '/Support/data/test-leaves-query.php'),
             ArrayHelper::toArray(Tree::find()->leaves()->all())
         );
 
         $this->assertEquals(
-            require(__DIR__ . '/data/test-leaves-multiple-tree-query.php'),
+            require(__DIR__ . '/Support/data/test-leaves-multiple-tree-query.php'),
             ArrayHelper::toArray(MultipleTree::find()->leaves()->all())
         );
     }

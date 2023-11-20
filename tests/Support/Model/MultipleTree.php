@@ -2,34 +2,28 @@
 
 declare(strict_types=1);
 
-/**
- * @link https://github.com/creocoder/yii2-nested-sets
- *
- * @copyright Copyright (c) 2015 Alexander Kochetov
- * @license http://opensource.org/licenses/BSD-3-Clause
- */
+namespace Yii2\Extensions\NestedSets\Tests\Support\Model;
 
-namespace yii\behavior\nested\sets\tests\models;
-
-use yii\behavior\nested\sets\NestedSetsBehavior;
+use Yii2\Extensions\NestedSets\NestedSetsBehavior;
 
 /**
- * Tree
+ * MultipleTree
  *
  * @property int $id
+ * @property int $tree
  * @property int $lft
  * @property int $rgt
  * @property int $depth
  * @property string $name
  */
-final class Tree extends \yii\db\ActiveRecord
+final class MultipleTree extends \yii\db\ActiveRecord
 {
     /**
      * @inheritdoc
      */
     public static function tableName()
     {
-        return '{{%tree}}';
+        return '{{%multiple_tree}}';
     }
 
     /**
@@ -38,7 +32,10 @@ final class Tree extends \yii\db\ActiveRecord
     public function behaviors()
     {
         return [
-            NestedSetsBehavior::class,
+            [
+                'class' => NestedSetsBehavior::class,
+                'treeAttribute' => 'tree',
+            ],
         ];
     }
 
@@ -67,6 +64,6 @@ final class Tree extends \yii\db\ActiveRecord
      */
     public static function find()
     {
-        return new TreeQuery(self::class);
+        return new MultipleTreeQuery(self::class);
     }
 }
