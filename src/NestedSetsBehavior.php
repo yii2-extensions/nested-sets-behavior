@@ -2,14 +2,7 @@
 
 declare(strict_types=1);
 
-/**
- * @link https://github.com/creocoder/yii2-nested-sets
- *
- * @copyright Copyright (c) 2015 Alexander Kochetov
- * @license http://opensource.org/licenses/BSD-3-Clause
- */
-
-namespace yii\behavior\nested\sets;
+namespace Yii2\Extensions\NestedSets;
 
 use yii\base\Behavior;
 use yii\base\NotSupportedException;
@@ -18,13 +11,6 @@ use yii\db\ActiveRecord;
 use yii\db\Exception;
 use yii\db\Expression;
 
-/**
- * NestedSetsBehavior
- *
- * @property ActiveRecord $owner
- *
- * @author Alexander Kochetov <creocoder@gmail.com>
- */
 class NestedSetsBehavior extends Behavior
 {
     public const OPERATION_MAKE_ROOT = 'makeRoot';
@@ -379,8 +365,9 @@ class NestedSetsBehavior extends Behavior
                 $this->beforeInsertNode($this->node->getAttribute($this->rightAttribute) + 1, 0);
                 break;
             default:
-                throw new NotSupportedException('Method "' . get_class($this->owner) .
-                    '::insert" is not supported for inserting new nodes.');
+                throw new NotSupportedException(
+                    'Method "' . get_class($this->owner) . '::insert" is not supported for inserting new nodes.'
+                );
         }
     }
 
@@ -631,7 +618,9 @@ class NestedSetsBehavior extends Behavior
         }
 
         if ($this->owner->isRoot() && $this->operation !== self::OPERATION_DELETE_WITH_CHILDREN) {
-            throw new NotSupportedException('Method "' . get_class($this->owner) . '::delete" is not supported for deleting root nodes.');
+            throw new NotSupportedException(
+                'Method "' . get_class($this->owner) . '::delete" is not supported for deleting root nodes.'
+            );
         }
 
         $this->owner->refresh();

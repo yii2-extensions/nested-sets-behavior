@@ -22,12 +22,12 @@
     },
     "autoload": {
         "psr-4": {
-            "yii\\behavior\\nested\\sets\\": "src"
+            "Yii2\\Extensions\\NestedSets\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "yii\\behavior\\nested\\sets\\tests\\": "tests"
+            "Yii2\\Extensions\\NestedSets\\Tests\\": "tests"
         }
     },
     "extra": {
