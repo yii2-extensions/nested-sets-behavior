@@ -677,19 +677,22 @@ class NestedSetsBehavior extends Behavior
      */
     public function isChildOf(ActiveRecord $node): bool
     {
-        $result = $this->getOwner()->getAttribute(
-            $this->leftAttribute
-        ) > $node->getAttribute($this->leftAttribute) &&
-            $this->getOwner()->getAttribute($this->rightAttribute) < $node->getAttribute(
-                $this->rightAttribute
-            );
+        $owner = $this->getOwner();
 
-        if ($result && $this->treeAttribute !== false) {
-            $result = $this->getOwner()
-                ->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute);
+        $currentLeft = $owner->getAttribute($this->leftAttribute);
+        $currentRight = $owner->getAttribute($this->rightAttribute);
+        $nodeLeft = $node->getAttribute($this->leftAttribute);
+        $nodeRight = $node->getAttribute($this->rightAttribute);
+
+        if ($currentLeft <= $nodeLeft || $currentRight >= $nodeRight) {
+            return false;
         }
 
-        return $result;
+        if ($this->treeAttribute !== false) {
+            return $owner->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute);
+        }
+
+        return true;
     }
 
     /**
