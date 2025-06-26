@@ -31,6 +31,7 @@ use yii\db\{ActiveQuery, ActiveRecord, Exception, Expression};
  * - Supports custom attribute names for left, right, depth, and tree columns.
  *
  * @template T of ActiveRecord
+ *
  * @extends Behavior<T>
  *
  * @property int $depth
@@ -79,6 +80,7 @@ class NestedSetsBehavior extends Behavior
      * such as insertion, movement, or deletion within the tree structure.
      *
      * @template T of NestedSetsBehavior
+     *
      * @phpstan-var ActiveRecord<T>|null
      */
     protected ActiveRecord|null $node = null;
@@ -425,6 +427,7 @@ class NestedSetsBehavior extends Behavior
                 if ($this->node?->isRoot() === true) {
                     throw new Exception('Can not move a node when the target node is root.');
                 }
+                // no break
             case self::OPERATION_APPEND_TO:
             case self::OPERATION_PREPEND_TO:
                 if ($this->node?->getIsNewRecord() === true) {
@@ -675,9 +678,11 @@ class NestedSetsBehavior extends Behavior
     public function isChildOf(ActiveRecord $node): bool
     {
         $result = $this->getOwner()->getAttribute(
-            $this->leftAttribute) > $node->getAttribute($this->leftAttribute) &&
-            $this->getOwner()->getAttribute($this->rightAttribute) < $node->getAttribute($this->rightAttribute
-        );
+            $this->leftAttribute
+        ) > $node->getAttribute($this->leftAttribute) &&
+            $this->getOwner()->getAttribute($this->rightAttribute) < $node->getAttribute(
+                $this->rightAttribute
+            );
 
         if ($result && $this->treeAttribute !== false) {
             $result = $this->getOwner()
@@ -1096,7 +1101,7 @@ class NestedSetsBehavior extends Behavior
      * The method applies the tree attribute condition if multi-tree support is enabled, restricting the deletion to
      * nodes within the same tree.
      *
-     * @return int|false Number of rows deleted, or `false` if the deletion is unsuccessful for any reason.
+     * @return false|int Number of rows deleted, or `false` if the deletion is unsuccessful for any reason.
      */
     protected function deleteWithChildrenInternal(): bool|int
     {

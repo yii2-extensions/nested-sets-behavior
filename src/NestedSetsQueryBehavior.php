@@ -27,6 +27,7 @@ use yii\db\{ActiveQuery, Expression};
  * - Supports custom left, right, and tree attribute names as defined in the model.
  *
  * @template T of ActiveQuery
+ *
  * @extends Behavior<T>
  *
  * @copyright Copyright (C) 2023 Terabytesoftw.
