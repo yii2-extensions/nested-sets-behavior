@@ -7,8 +7,6 @@ namespace Yii2\Extensions\NestedSets\Tests\Support\Model;
 use Yii2\Extensions\NestedSets\NestedSetsBehavior;
 
 /**
- * Tree
- *
  * @property int $id
  * @property int $lft
  * @property int $rgt
@@ -17,17 +15,11 @@ use Yii2\Extensions\NestedSets\NestedSetsBehavior;
  */
 final class Tree extends \yii\db\ActiveRecord
 {
-    /**
-     * @inheritdoc
-     */
     public static function tableName()
     {
         return '{{%tree}}';
     }
 
-    /**
-     * @inheritdoc
-     */
     public function behaviors()
     {
         return [
@@ -35,9 +27,6 @@ final class Tree extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
     public function rules()
     {
         return [
@@ -45,9 +34,6 @@ final class Tree extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
     public function transactions()
     {
         return [
@@ -55,9 +41,6 @@ final class Tree extends \yii\db\ActiveRecord
         ];
     }
 
-    /**
-     * @inheritdoc
-     */
     public static function find()
     {
         return new TreeQuery(self::class);

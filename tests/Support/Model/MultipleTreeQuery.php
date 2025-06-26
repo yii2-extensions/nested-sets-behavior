@@ -8,9 +8,6 @@ use Yii2\Extensions\NestedSets\NestedSetsQueryBehavior;
 
 class MultipleTreeQuery extends \yii\db\ActiveQuery
 {
-    /**
-     * @inheritdoc
-     */
     public function behaviors()
     {
         return [
