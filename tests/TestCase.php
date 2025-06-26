@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Yii2\Extensions\NestedSets\Tests;
 
 use SimpleXMLElement;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 use Yii;
 use yii\console\Application;
 use yii\db\Connection;
 use yii\db\SchemaBuilderTrait;
 use yii\di\Container;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
@@ -136,7 +136,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
                         'lft' => $treeElement['lft'],
                         'rgt' => $treeElement['rgt'],
                         'depth' => $treeElement['depth'],
-                    ]
+                    ],
                 )->execute(),
                 default => $command->insert(
                     'multiple_tree',
@@ -146,7 +146,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
                         'lft' => $treeElement['lft'],
                         'rgt' => $treeElement['rgt'],
                         'depth' => $treeElement['depth'],
-                    ]
+                    ],
                 )->execute(),
             };
         }

@@ -8,16 +8,20 @@
         "sets",
         "behavior"
     ],
-    "license": "mit",
+    "license": "BSD-3-Clause",
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
         "php": ">=8.1",
-        "yiisoft/yii2": "*"
+        "yiisoft/yii2": "dev-master|^22"
     },
     "require-dev": {
-        "maglnet/composer-require-checker": "^4.6",
+        "maglnet/composer-require-checker": "^4.1",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan-strict-rules": "^2.0.3",
         "phpunit/phpunit": "^10.2",
+        "rector/rector": "^2.0",
+        "symplify/easy-coding-standard": "^12.3",
         "yii2-extensions/phpstan": "dev-main"
     },
     "autoload": {
@@ -38,14 +42,16 @@
     "config": {
         "sort-packages": true,
         "allow-plugins": {
+            "phpstan/extension-installer": true,
             "yiisoft/yii2-composer": true
         }
     },
     "scripts": {
-        "check-dependencies": "composer-require-checker",
-        "mutation": "roave-infection-static-analysis-plugin",
-        "phpstan": "phpstan",
-        "test": "phpunit"
+        "check-dependencies": "./vendor/bin/composer-require-checker check",
+        "ecs": "./vendor/bin/ecs --fix",
+        "rector": "./vendor/bin/rector process src",
+        "static": "./vendor/bin/phpstan analyse src --memory-limit=512M",
+        "tests": "./vendor/bin/phpunit"
     },
     "repositories": [
         {

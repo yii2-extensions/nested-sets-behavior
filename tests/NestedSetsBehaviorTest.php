@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Yii2\Extensions\NestedSets\Tests;
 
-use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 use yii\base\NotSupportedException;
 use yii\db\Exception;
 use yii\helpers\ArrayHelper;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
+use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
 
 final class NestedSetsBehaviorTest extends TestCase
 {
@@ -589,7 +589,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::delete" is not supported for deleting root nodes.'
+            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::delete" is not supported for deleting root nodes.',
         );
 
         $node = Tree::findOne(1);
@@ -602,7 +602,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::insert" is not supported for inserting new nodes.'
+            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::insert" is not supported for inserting new nodes.',
         );
 
         $node = new Tree(['name' => 'Node']);
@@ -624,22 +624,22 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-parents.php'),
-            ArrayHelper::toArray(Tree::findOne(11)->parents()->all())
+            ArrayHelper::toArray(Tree::findOne(11)->parents()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-parents-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(33)->parents()->all())
+            ArrayHelper::toArray(MultipleTree::findOne(33)->parents()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-parents-with-depth.php'),
-            ArrayHelper::toArray(Tree::findOne(11)->parents(1)->all())
+            ArrayHelper::toArray(Tree::findOne(11)->parents(1)->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-parents-multiple-tree-with-depth.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(33)->parents(1)->all())
+            ArrayHelper::toArray(MultipleTree::findOne(33)->parents(1)->all()),
         );
     }
 
@@ -649,22 +649,22 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-children.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->children()->all())
+            ArrayHelper::toArray(Tree::findOne(9)->children()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-children-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->children()->all())
+            ArrayHelper::toArray(MultipleTree::findOne(31)->children()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-children-with-depth.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->children(1)->all())
+            ArrayHelper::toArray(Tree::findOne(9)->children(1)->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-children-multiple-tree-with-depth.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->children(1)->all())
+            ArrayHelper::toArray(MultipleTree::findOne(31)->children(1)->all()),
         );
     }
 
@@ -674,12 +674,12 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-leaves.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->leaves()->all())
+            ArrayHelper::toArray(Tree::findOne(9)->leaves()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-leaves-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->leaves()->all())
+            ArrayHelper::toArray(MultipleTree::findOne(31)->leaves()->all()),
         );
     }
 
@@ -689,12 +689,12 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-prev.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->prev()->all())
+            ArrayHelper::toArray(Tree::findOne(9)->prev()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-prev-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->prev()->all())
+            ArrayHelper::toArray(MultipleTree::findOne(31)->prev()->all()),
         );
     }
 
@@ -704,12 +704,12 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-next.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->next()->all())
+            ArrayHelper::toArray(Tree::findOne(9)->next()->all()),
         );
 
         $this->assertEquals(
             require(__DIR__ . '/Support/data/test-next-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->next()->all())
+            ArrayHelper::toArray(MultipleTree::findOne(31)->next()->all()),
         );
     }
 
