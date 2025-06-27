@@ -44,7 +44,7 @@ to the require-dev section of your `composer.json` file.
 
 ## Quality code
 
-[![Latest Stable Version](http://poser.pugx.org/yii2-extensions/nested-sets-behavior/v)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
+[![Latest Stable Version](http://poser.pugx.org/yii2-extensions/nested-sets-behavior/v)](https://github.com/yii2-extensions/nested-sets-behavior/releases)
 [![Total Downloads](http://poser.pugx.org/yii2-extensions/nested-sets-behavior/downloads)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
 [![codecov](https://codecov.io/gh/yii2-extensions/nested-sets-behavior/graph/badge.svg?token=Upc4yA23YN)](https://codecov.io/gh/yii2-extensions/nested-sets-behavior)
 [![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue)](https://github.com/yii2-extensions/localeurls/actions/workflows/static.yml)
