@@ -63,8 +63,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
         }
 
         // Replace the tags with 4 spaces
-        return str_replace([
-            '<tree', '<multiple_tree'],
+        return str_replace(
+            [
+                '<tree', '<multiple_tree'],
             [
                 '  <tree',
                 '  <multiple_tree',
