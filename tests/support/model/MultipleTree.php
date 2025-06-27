@@ -17,7 +17,7 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
  */
 final class MultipleTree extends ActiveRecord
 {
-    public static function tableName()
+    public static function tableName(): string
     {
         return '{{%multiple_tree}}';
     }
