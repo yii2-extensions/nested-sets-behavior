@@ -2,742 +2,1492 @@
 
 declare(strict_types=1);
 
-namespace Yii2\Extensions\NestedSets\Tests;
+namespace yii2\extensions\nestedsets\tests;
 
 use yii\base\NotSupportedException;
 use yii\db\Exception;
 use yii\helpers\ArrayHelper;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
+use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
+
+use function simplexml_load_file;
 
 final class NestedSetsBehaviorTest extends TestCase
 {
-    public function testMakeRootNewNew(): void
+    public function testReturnTrueAndMatchXmlAfterMakeRootNewForTreeAndMultipleTree(): void
     {
         $this->createDatabase();
 
         $nodeTree = new Tree(['name' => 'Root']);
-        $this->assertTrue($nodeTree->makeRoot());
+
+        self::assertTrue(
+            $nodeTree->makeRoot(),
+            '\'makeRoot()\' should return \'true\' when creating a new root node in \'Tree\'.',
+        );
 
         $nodeMultipleTree = new MultipleTree(['name' => 'Root 1']);
-        $this->assertTrue($nodeMultipleTree->makeRoot());
+
+        self::assertTrue(
+            $nodeMultipleTree->makeRoot(),
+            '\'makeRoot()\' should return \'true\' when creating the first root node in \'MultipleTree\'.',
+        );
 
         $nodeMultipleTree = new MultipleTree(['name' => 'Root 2']);
-        $this->assertTrue($nodeMultipleTree->makeRoot());
 
-        $this->assertEquals(
+        self::assertTrue(
+            $nodeMultipleTree->makeRoot(),
+            '\'makeRoot()\' should return \'true\' when creating a second root node in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-make-root-new.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-make-root-new.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertSame(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-make-root-new.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'makeRoot()\' must match the expected XML structure.',
         );
     }
 
-    public function testMakeRootNewExceptionIsRaisedWhenTreeAttributeIsFalseAndRootIsExists(): void
+    public function testThrowExceptionWhenMakeRootWithTreeAttributeFalseAndRootExists(): void
     {
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create more than one root when "treeAttribute" is false.');
-
         $this->generateFixtureTree();
 
         $node = new Tree(['name' => 'Root']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not create more than one root when "treeAttribute" is false.');
+
         $node->makeRoot();
     }
 
-    public function testPrependToNew(): void
+    public function testReturnTrueAndMatchXmlAfterPrependToNewNodeForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = new Tree(['name' => 'New node']);
-        $this->assertTrue($node->prependTo(Tree::findOne(9)));
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Node with ID \'9\' must exist before calling \'prependTo()\' on it in \'Tree\'.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when prepending a new node to node \'9\' in \'Tree\'.',
+        );
 
         $node = new MultipleTree(['name' => 'New node']);
-        $this->assertTrue($node->prependTo(MultipleTree::findOne(31)));
 
-        $this->assertEquals(
+        $childOfNode = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Node with ID \'31\' must exist before calling \'prependTo()\' on it in \'MultipleTree\'.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when prepending a new node to node \'31\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-prepend-to-new.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-prepend-to-new.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertSame(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-new.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'prependTo()\' must match the expected XML structure.',
         );
     }
 
-    public function testAppendNewToExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenAppendToNewNodeTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not create a node when the target node is new record.');
 
-        $node = new Tree(['name' => 'New node']);
         $node->appendTo(new Tree());
     }
 
-    public function testInsertBeforeNew(): void
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeNewForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = new Tree(['name' => 'New node']);
-        $this->assertTrue($node->insertBefore(Tree::findOne(9)));
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Node with ID \'9\' should exist before calling \'insertBefore()\' on it in \'Tree\'.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            '\'insertBefore()\' should return \'true\' when inserting a new node before node \'9\' in \'Tree\'.',
+        );
 
         $node = new MultipleTree(['name' => 'New node']);
-        $this->assertTrue($node->insertBefore(MultipleTree::findOne(31)));
 
-        $this->assertEquals(
+        $childOfNode = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Node with ID \'31\' should exist before calling \'insertBefore()\' on it in \'MultipleTree\'.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            '\'insertBefore()\' should return \'true\' when inserting a new node before node \'31\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-before-new.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-before-new.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-new.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'insertBefore()\' must match the expected XML structure.',
         );
     }
 
-    public function testInsertBeforeNewExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenInsertBeforeNewNodeTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not create a node when the target node is new record.');
 
-        $node = new Tree(['name' => 'New node']);
         $node->insertBefore(new Tree());
     }
 
-    public function testInsertBeforeNewExceptionIsRaisedWhenTargetIsRoot(): void
+    public function testThrowExceptionWhenInsertBeforeNewNodeTargetIsRoot(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull(
+            $rootNode,
+            'Root node with ID \'1\' should exist before calling \'insertBefore()\' on it in \'Tree\'.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not create a node when the target node is root.');
 
-        $node = new Tree(['name' => 'New node']);
-        $node->insertBefore(Tree::findOne(1));
+        $node->insertBefore($rootNode);
     }
 
-    public function testInsertAfterNew(): void
+    public function testReturnTrueAndMatchXmlAfterInsertAfterNewForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = new Tree(['name' => 'New node']);
-        $this->assertTrue($node->insertAfter(Tree::findOne(9)));
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Node with ID \'9\' must exist before calling \'insertAfter()\' on it in \'Tree\'.',
+        );
+
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when inserting a new node after node \'9\' in \'Tree\'.',
+        );
 
         $node = new MultipleTree(['name' => 'New node']);
-        $this->assertTrue($node->insertAfter(MultipleTree::findOne(31)));
 
-        $this->assertEquals(
+        $childOfNode = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Node with ID \'31\' must exist before calling \'insertAfter()\' on it in \'MultipleTree\'.',
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when inserting a new node after node \'31\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-after-new.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-after-new.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-new.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'insertAfter()\' must match the expected XML structure.',
         );
     }
 
-    public function testInsertAfterNewExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenInsertAfterNewNodeTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not create a node when the target node is new record.');
 
-        $node = new Tree(['name' => 'New node']);
         $node->insertAfter(new Tree());
     }
 
-    public function testInsertAfterNewExceptionIsRaisedWhenTargetIsRoot()
+    public function testThrowExceptionWhenInsertAfterNewNodeTargetIsRoot(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull(
+            $rootNode,
+            'Root node with ID \'1\' should exist before calling \'insertAfter()\' on it in \'Tree\'.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not create a node when the target node is root.');
 
-        $node = new Tree(['name' => 'New node']);
-        $node->insertAfter(Tree::findOne(1));
+        $node->insertAfter($rootNode);
     }
 
-    public function testMakeRootExists()
+    public function testReturnTrueAndMatchXmlAfterMakeRootOnExistingMultipleTreeNode(): void
     {
         $this->generateFixtureTree();
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->makeRoot());
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' must exist before calling \'makeRoot()\' on it in \'MultipleTree\'.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        self::assertTrue(
+            $node->makeRoot(),
+            '\'makeRoot()\' should return \'true\' when called on node \'31\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-make-root-exists.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-make-root-exists.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-make-root-exists.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'makeRoot()\' must match the expected XML structure for \'MultipleTree\'.',
         );
     }
 
-    public function testMakeRootExistsExceptionIsRaisedWhenTreeAttributeIsFalse(): void
+    public function testThrowExceptionWhenMakeRootOnNonRootNodeWithTreeAttributeFalse(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' should exist before calling \'makeRoot()\' on it in \'Tree\'.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node as the root when "treeAttribute" is false.');
 
-        $node = Tree::findOne(9);
         $node->makeRoot();
     }
 
-    public function testMakeRootExistsExceptionIsRaisedWhenItsRoot(): void
+    public function testThrowExceptionWhenMakeRootOnRootNodeInMultipleTree(): void
     {
         $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(23);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'23\' should exist before calling \'makeRoot()\' on it in \'MultipleTree\'.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move the root node as the root.');
 
-        $node = MultipleTree::findOne(23);
         $node->makeRoot();
     }
 
-    public function testPrependToExistsUp(): void
+    public function testReturnTrueAndMatchXmlAfterPrependToUpForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before calling \'prependTo()\' on another node in \'Tree\'.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->prependTo(Tree::findOne(2)));
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'2\' must exist before calling \'prependTo()\' on it in \'Tree\'.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when moving node \'9\' as child of node \'2\' in \'Tree\'.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->prependTo(MultipleTree::findOne(24)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' must exist before calling \'prependTo()\' on another node in \'MultipleTree\'.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'24\' must exist before calling \'prependTo()\' on it in \'MultipleTree\'.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when moving node \'31\' as child of node \'24\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-prepend-to-exists-up.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-prepend-to-exists-up.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-exists-up.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'prependTo()\' must match the expected XML structure.',
         );
     }
 
-    public function testPrependToExistsDown(): void
+    public function testReturnTrueAndMatchXmlAfterPrependToDownForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling \'prependTo()\' on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->prependTo(Tree::findOne(16)));
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'16\' should exist before calling \'prependTo()\' on it.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when moving node \'9\' as child of node \'16\' in \'Tree\'.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->prependTo(MultipleTree::findOne(38)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' should exist before calling \'prependTo()\' on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'38\' should exist before calling \'prependTo()\' on it.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when moving node \'31\' as child of node \'38\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-prepend-to-exists-down.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-prepend-to-exists-down.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-exists-down.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'prependTo()\' must match the expected XML structure.',
         );
     }
 
-    public function testPrependToExistsAnotherTree(): void
+    public function testReturnTrueAndMatchXmlAfterPrependToMultipleTreeWhenTargetIsInAnotherTree(): void
     {
         $this->generateFixtureTree();
 
         $node = MultipleTree::findOne(9);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->prependTo(MultipleTree::findOne(53)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before attempting to prepend to a node in another tree.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'53\' must exist before attempting to prepend to it.',
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            '\'prependTo()\' should return \'true\' when moving node \'9\' as child of node \'53\' in another \'tree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-prepend-to-exists-another-tree.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-prepend-to-exists-another-tree.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-prepend-to-exists-another-tree.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'prependTo()\' must match the expected XML structure for \'MultipleTree\'.',
         );
     }
 
-    public function testPrependToExistsExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenPrependToTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' must exist before calling \'prependTo()\' on another node.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is new record.');
 
-        $node = Tree::findOne(9);
         $node->prependTo(new Tree());
     }
 
-    public function testPrependToExistsExceptionIsRaisedWhenTargetIsSame(): void
+    public function testThrowExceptionWhenPrependToTargetIsSame(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' should exist before calling \'prependTo()\' on itself.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is same.');
 
-        $node = Tree::findOne(9);
-        $node->prependTo(Tree::findOne(9));
+        $node->prependTo($node);
     }
 
-    public function testPrependToExistsExceptionIsRaisedWhenTargetIsChild(): void
+    public function testThrowExceptionWhenPrependToTargetIsChild(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before calling \'prependTo()\' on another node.',
+        );
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'11\' must exist before calling \'prependTo()\' on it.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is child.');
 
-        $node = Tree::findOne(9);
-        $node->prependTo(Tree::findOne(11));
+        $node->prependTo($childOfNode);
     }
 
-    public function testAppendToExistsUp(): void
+    public function testReturnTrueAndMatchXmlAfterAppendToUpForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before calling \'appendTo()\' on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->appendTo(Tree::findOne(2)));
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'2\' must exist before calling \'appendTo()\' on it.',
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            '\'appendTo()\' should return \'true\' when moving node \'9\' as child of node \'2\' in \'Tree\'.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->appendTo(MultipleTree::findOne(24)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' must exist before calling \'appendTo()\' on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'24\' must exist before calling \'appendTo()\' on it.',
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            '\'appendTo()\' should return \'true\' when moving node \'31\' as child of node \'24\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-append-to-exists-up.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-append-to-exists-up.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-append-to-exists-up.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'appendTo()\' must match the expected XML structure.',
         );
     }
 
-    public function testAppendToExistsDown(): void
+    public function testReturnTrueAndMatchXmlAfterAppendToDownForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling \'appendTo()\' on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->appendTo(Tree::findOne(16)));
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'16\' should exist before calling \'appendTo()\' on it.',
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            '\'appendTo()\' should return \'true\' when moving node \'9\' as child of node \'16\' in \'Tree\'.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->appendTo(MultipleTree::findOne(38)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' should exist before calling \'appendTo()\' on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'38\' should exist before calling \'appendTo()\' on it.',
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            '\'appendTo()\' should return \'true\' when moving node \'31\' as child of node \'38\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-append-to-exists-down.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-append-to-exists-down.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-append-to-exists-down.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'appendTo()\' must match the expected XML structure.',
         );
     }
 
-    public function testAppendToExistsAnotherTree(): void
+    public function testReturnTrueAndMatchXmlAfterAppendToMultipleTreeWhenTargetIsInAnotherTree(): void
     {
         $this->generateFixtureTree();
 
         $node = MultipleTree::findOne(9);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->appendTo(MultipleTree::findOne(53)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before attempting to append to a node in another tree.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'53\' must exist before attempting to append to it.',
+        );
+
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            '\'appendTo()\' should return \'true\' when moving node \'9\' as child of node \'53\' in another tree.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-append-to-exists-another-tree.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-append-to-exists-another-tree.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-append-to-exists-another-tree.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'appendTo()\' must match the expected XML structure for \'MultipleTree\'.',
         );
     }
 
-    public function testAppendToExistsExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenAppendToTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' must exist before calling \'appendTo()\' on another node.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is new record.');
 
-        $node = Tree::findOne(9);
         $node->appendTo(new Tree());
     }
 
-    public function testAppendToExistsExceptionIsRaisedWhenTargetIsSame(): void
+    public function testThrowExceptionWhenAppendToTargetIsSame(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling \'appendTo()\' on another node.',
+        );
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'9\' should exist before calling \'appendTo()\' on it.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is same.');
 
-        $node = Tree::findOne(9);
-        $node->appendTo(Tree::findOne(9));
+        $node->appendTo($childOfNode);
     }
 
-    public function testAppendToExistsExceptionIsRaisedWhenTargetIsChild(): void
+    public function testThrowExceptionWhenAppendToTargetIsChild(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Expected node with ID \'9\' to exist before calling \'appendTo()\' on another node.',
+        );
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Expected target child node with ID \'11\' to exist before calling \'appendTo()\' on it.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is child.');
 
-        $node = Tree::findOne(9);
-        $node->appendTo(Tree::findOne(11));
+        $node->appendTo($childOfNode);
     }
 
-    public function testInsertBeforeExistsUp(): void
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeUpForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before calling insertBefore() on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertBefore(Tree::findOne(2)));
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'2\' must exist before calling insertBefore() on it.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            'insertBefore() should return true when moving node \'9\' before node \'2\' in Tree.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertBefore(MultipleTree::findOne(24)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' must exist before calling insertBefore() on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'24\' must exist before calling insertBefore() on it.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            'insertBefore() should return true when moving node \'31\' before node \'24\' in MultipleTree.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-before-exists-up.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-before-exists-up.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-exists-up.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after insertBefore() must match the expected XML structure.',
         );
     }
 
-    public function testInsertBeforeExistsDown(): void
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeDownForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling insertBefore() on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertBefore(Tree::findOne(16)));
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'16\' should exist before calling insertBefore() on it.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            'insertBefore() should return true when moving node \'9\' before node \'16\' in Tree.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertBefore(MultipleTree::findOne(38)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' should exist before calling insertBefore() on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'38\' should exist before calling insertBefore() on it.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            'insertBefore() should return true when moving node \'31\' before node \'38\' in MultipleTree.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-before-exists-down.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-before-exists-down.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-exists-down.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after insertBefore() must match the expected XML structure.',
         );
     }
 
-    public function testInsertBeforeExistsAnotherTree(): void
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeMultipleTreeWhenTargetIsInAnotherTree(): void
     {
         $this->generateFixtureTree();
 
         $node = MultipleTree::findOne(9);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertBefore(MultipleTree::findOne(53)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before attempting to insert before a node in another tree.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'53\' must exist before attempting to insert before it.',
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            '\'insertBefore()\' should return \'true\' when moving node \'9\' before node \'53\' in another tree.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-before-exists-another-tree.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-before-exists-another-tree.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-before-exists-another-tree.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'insertBefore()\' must match the expected XML structure for \'MultipleTree\'.',
         );
     }
 
-    public function testInsertBeforeExistsExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenInsertBeforeTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling \'insertBefore()\' on a new record.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is new record.');
 
-        $node = Tree::findOne(9);
         $node->insertBefore(new Tree());
     }
 
-    public function testInsertBeforeExistsExceptionIsRaisedWhenTargetIsSame(): void
+    public function testThrowExceptionWhenInsertBeforeTargetIsSame(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' should exist before calling \'insertBefore()\' on itself.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is same.');
 
-        $node = Tree::findOne(9);
-        $node->insertBefore(Tree::findOne(9));
+        $node->insertBefore($node);
     }
 
-    public function testInsertBeforeExistsExceptionIsRaisedWhenTargetIsChild(): void
+    public function testThrowExceptionWhenInsertBeforeTargetIsChild(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before calling \'insertBefore()\' on another node.',
+        );
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target child node with ID \'11\' must exist before calling \'insertBefore()\' on it.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is child.');
 
-        $node = Tree::findOne(9);
-        $node->insertBefore(Tree::findOne(11));
+        $node->insertBefore($childOfNode);
     }
 
-    public function testInsertBeforeExistsExceptionIsRaisedWhenTargetIsRoot(): void
+    public function testThrowExceptionWhenInsertBeforeTargetIsRoot(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling \'insertBefore()\' on another node.',
+        );
+
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull(
+            $rootNode,
+            'Root node with ID \'1\' should exist before calling \'insertBefore()\' on it.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is root.');
 
-        $node = Tree::findOne(9);
-        $node->insertBefore(Tree::findOne(1));
+        $node->insertBefore($rootNode);
     }
 
-    public function testInsertAfterExistsUp(): void
+    public function testReturnTrueAndMatchXmlAfterInsertAfterUpForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before calling \'insertAfter()\' on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertAfter(Tree::findOne(2)));
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'2\' must exist before calling \'insertAfter()\' on it.',
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when moving node \'9\' after node \'2\' in \'Tree\'.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertAfter(MultipleTree::findOne(24)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' must exist before calling \'insertAfter()\' on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'24\' must exist before calling \'insertAfter()\' on it.',
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when moving node \'31\' after node \'24\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-after-exists-up.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-after-exists-up.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-exists-up.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'insertAfter()\' must match the expected XML structure.',
         );
     }
 
-    public function testInsertAfterExistsDown(): void
+    public function testReturnTrueAndMatchXmlAfterInsertAfterDownForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' should exist before calling \'insertAfter()\' on another node.',
+        );
+
         $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertAfter(Tree::findOne(16)));
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'16\' should exist before calling \'insertAfter()\' on it.',
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when moving node \'9\' after node \'16\' in Tree.',
+        );
 
         $node = MultipleTree::findOne(31);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertAfter(MultipleTree::findOne(38)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'31\' should exist before calling \'insertAfter()\' on another node.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'38\' should exist before calling \'insertAfter()\' on it.',
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when moving node \'31\' after node \'38\' in \'MultipleTree\'.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-after-exists-down.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-after-exists-down.xml\' should be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-exists-down.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'insertAfter()\' must match the expected XML structure.',
         );
     }
 
-    public function testInsertAfterExistsAnotherTree(): void
+    public function testReturnTrueAndMatchXmlAfterInsertAfterMultipleTreeWhenTargetIsInAnotherTree(): void
     {
         $this->generateFixtureTree();
 
         $node = MultipleTree::findOne(9);
-        $node->name = 'Updated node 2';
-        $this->assertTrue($node->insertAfter(MultipleTree::findOne(53)));
 
-        $this->assertEquals(
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before attempting to insert after a node in another tree.',
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Target node with ID \'53\' must exist before attempting to insert after it.',
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            '\'insertAfter()\' should return \'true\' when moving node \'9\' after node \'53\' in another tree.',
+        );
+
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-insert-after-exists-another-tree.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-insert-after-exists-another-tree.xml\' must be loaded successfully for result comparison.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-insert-after-exists-another-tree.xml')->asXML(),
+            $fileXML->asXML(),
+            'Resulting dataset after \'insertAfter()\' must match the expected XML structure for \'MultipleTree\'.',
         );
     }
 
-    public function testInsertAfterExistsExceptionIsRaisedWhenTargetIsNewRecord(): void
+    public function testThrowExceptionWhenInsertAfterTargetIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' must exist before attempting to insert after a new record.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is new record.');
 
-        $node = Tree::findOne(9);
         $node->insertAfter(new Tree());
     }
 
-    public function testInsertAfterExistsExceptionIsRaisedWhenTargetIsSame(): void
+    public function testThrowExceptionWhenInsertAfterTargetIsSame(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before attempting to insert after itself.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is same.');
 
-        $node = Tree::findOne(9);
-        $node->insertAfter(Tree::findOne(9));
+        $node->insertAfter($node);
     }
 
-    public function testInsertAfterExistsExceptionIsRaisedWhenTargetIsChild(): void
+    public function testThrowExceptionWhenInsertAfterTargetIsChild(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'9\' must exist before attempting to insert after its child node.',
+        );
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Child node with ID \'11\' must exist before attempting to insert after it.',
+        );
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is child.');
 
-        $node = Tree::findOne(9);
-        $node->insertAfter(Tree::findOne(11));
+        $node->insertAfter($childOfNode);
     }
 
-    public function testInsertAfterExistsExceptionIsRaisedWhenTargetIsRoot(): void
+    public function testThrowExceptionWhenInsertAfterTargetIsRoot(): void
     {
         $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, 'Node with ID \'9\' should exist before attempting to insert after the root node.');
+
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull($rootNode, 'Root node with ID \'1\' should exist before attempting to insert after it.');
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is root.');
 
-        $node = Tree::findOne(9);
-        $node->insertAfter(Tree::findOne(1));
+        $node->insertAfter($rootNode);
     }
 
-    public function testDeleteWithChildren(): void
+    public function testReturnAffectedRowsAndMatchXmlAfterDeleteWithChildrenForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(7, Tree::findOne(9)->deleteWithChildren());
-        $this->assertEquals(7, MultipleTree::findOne(31)->deleteWithChildren());
+        self::assertEquals(
+            7,
+            Tree::findOne(9)?->deleteWithChildren(),
+            'Deleting node with ID \'9\' and its children from \'Tree\' should affect exactly seven rows.',
+        );
+        self::assertEquals(
+            7,
+            MultipleTree::findOne(31)?->deleteWithChildren(),
+            'Deleting node with ID \'31\' and its children from \'MultipleTree\' should affect exactly seven rows.',
+        );
 
-        $this->assertEquals(
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-delete-with-children.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-delete-with-children.xml\' should be loaded successfully.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-delete-with-children.xml')->asXML(),
+            $fileXML->asXML(),
+            'The XML dataset after deleting nodes with children should match the expected result.',
         );
     }
 
-    public function testDeleteWithChildrenExceptionIsRaisedWhenNodeIsNewRecord(): void
+    public function testThrowExceptionWhenDeleteWithChildrenIsCalledOnNewRecordNode(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree();
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not delete a node when it is new record.');
 
-        $node = new Tree();
         $node->deleteWithChildren();
     }
 
-    public function testDelete(): void
+    public function testReturnOneWhenDeleteNodeForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(1, Tree::findOne(9)->delete());
-        $this->assertEquals(1, MultipleTree::findOne(31)->delete());
+        self::assertEquals(
+            1,
+            Tree::findOne(9)?->delete(),
+            'Deleting node with ID \'9\' from \'Tree\' should affect exactly one row.',
+        );
+        self::assertEquals(
+            1,
+            MultipleTree::findOne(31)?->delete(),
+            'Deleting node with ID \'31\' from \'MultipleTree\' should affect exactly one row.',
+        );
 
-        $this->assertEquals(
+        $fileXML = simplexml_load_file("{$this->fixtureDirectory}/test-delete.xml");
+
+        self::assertNotFalse(
+            $fileXML,
+            'XML file \'test-delete.xml\' should be loaded successfully.',
+        );
+        self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
-            simplexml_load_file(__DIR__ . '/Support/data/test-delete.xml')->asXML(),
+            $fileXML->asXML(),
+            'The XML dataset after deleting nodes should match the expected result.',
         );
     }
 
-    public function testDeleteExceptionIsRaisedWhenNodeIsNewRecord(): void
+    public function testThrowExceptionWhenDeleteNodeIsNewRecord(): void
     {
         $this->generateFixtureTree();
+
+        $node = new Tree();
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not delete a node when it is new record.');
 
-        $node = new Tree();
         $node->delete();
     }
 
-    public function testDeleteExceptionIsRaisedWhenNodeIsRoot(): void
+    public function testThrowNotSupportedExceptionWhenDeleteIsCalledOnRootNode(): void
     {
         $this->generateFixtureTree();
-
-        $this->expectException(NotSupportedException::class);
-        $this->expectExceptionMessage(
-            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::delete" is not supported for deleting root nodes.',
-        );
 
         $node = Tree::findOne(1);
-        $node->delete();
-    }
 
-    public function testExceptionIsRaisedWhenInsertIsCalled(): void
-    {
-        $this->generateFixtureTree();
+        self::assertNotNull(
+            $node,
+            'Node with ID \'1\' should exist before attempting deletion.',
+        );
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "Yii2\Extensions\NestedSets\Tests\Support\Model\Tree::insert" is not supported for inserting new nodes.',
+            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::delete" is not supported for deleting root nodes.',
         );
 
+        $node->delete();
+    }
+
+    public function testThrowNotSupportedExceptionWhenInsertIsCalledOnTree(): void
+    {
+        $this->generateFixtureTree();
+
         $node = new Tree(['name' => 'Node']);
+
+        $this->expectException(NotSupportedException::class);
+        $this->expectExceptionMessage(
+            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::insert" is not supported for inserting new nodes.',
+        );
+
         $node->insert();
     }
 
-    public function testUpdate(): void
+    public function testReturnOneWhenUpdateNodeName(): void
     {
         $this->generateFixtureTree();
 
         $node = Tree::findOne(9);
-        $node->name = 'Updated node 2';
-        $this->assertEquals(1, $node->update());
+
+        self::assertNotNull($node, 'Node with ID \'9\' should exist before attempting update.');
+
+        $node->name = 'Updated node';
+
+        self::assertEquals(1, $node->update(), 'Updating the node name should affect exactly one row.');
     }
 
-    public function testParents(): void
+    public function testReturnParentsForTreeAndMultipleTreeWithAndWithoutDepth(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-parents.php'),
-            ArrayHelper::toArray(Tree::findOne(11)->parents()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents.php",
+            ArrayHelper::toArray(Tree::findOne(11)?->parents()->all() ?? []),
+            'Parents for \'Tree\' node with ID \'11\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-parents-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(33)->parents()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(33)?->parents()->all() ?? []),
+            'Parents for \'MultipleTree\' node with ID \'33\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-parents-with-depth.php'),
-            ArrayHelper::toArray(Tree::findOne(11)->parents(1)->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents-with-depth.php",
+            ArrayHelper::toArray(Tree::findOne(11)?->parents(1)->all() ?? []),
+            'Parents with \'depth=1\' for \'Tree\' node with ID \'11\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-parents-multiple-tree-with-depth.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(33)->parents(1)->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents-multiple-tree-with-depth.php",
+            ArrayHelper::toArray(MultipleTree::findOne(33)?->parents(1)->all() ?? []),
+            'Parents with \'depth=1\' for \'MultipleTree\' node with ID \'33\' do not match the expected result.',
         );
     }
 
-    public function testChildren(): void
+    public function testReturnChildrenForTreeAndMultipleTreeWithAndWithoutDepth(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-children.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->children()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->children()->all() ?? []),
+            'Children for \'Tree\' node with ID \'9\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-children-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->children()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->children()->all() ?? []),
+            'Children for \'MultipleTree\' node with ID \'31\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-children-with-depth.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->children(1)->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children-with-depth.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->children(1)->all() ?? []),
+            'Children with \'depth=1\' for \'Tree\' node with ID \'9\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-children-multiple-tree-with-depth.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->children(1)->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children-multiple-tree-with-depth.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->children(1)->all() ?? []),
+            'Children with \'depth=1\' for \'MultipleTree\' node with ID \'31\' do not match the expected result.',
         );
     }
 
-    public function testLeaves(): void
+    public function testReturnLeavesForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-leaves.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->leaves()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-leaves.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->leaves()->all() ?? []),
+            'Leaves for \'Tree\' node with ID \'9\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-leaves-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->leaves()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-leaves-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->leaves()->all() ?? []),
+            'Leaves for \'MultipleTree\' node with ID \'31\' do not match the expected result.',
         );
     }
 
-    public function testPrev(): void
+    public function testReturnPrevNodesForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-prev.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->prev()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-prev.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->prev()->all() ?? []),
+            'Previous nodes for \'Tree\' node with ID \'9\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-prev-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->prev()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-prev-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->prev()->all() ?? []),
+            'Previous nodes for \'MultipleTree\' node with ID \'31\' do not match the expected result.',
         );
     }
 
-    public function testNext(): void
+    public function testReturnNextNodesForTreeAndMultipleTree(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-next.php'),
-            ArrayHelper::toArray(Tree::findOne(9)->next()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-next.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->next()->all() ?? []),
+            'Next nodes for \'Tree\' node with ID \'9\' do not match the expected result.',
         );
-
-        $this->assertEquals(
-            require(__DIR__ . '/Support/data/test-next-multiple-tree.php'),
-            ArrayHelper::toArray(MultipleTree::findOne(31)->next()->all()),
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-next-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->next()->all() ?? []),
+            'Next nodes for \'MultipleTree\' node with ID \'31\' do not match the expected result.',
         );
     }
 
-    public function testIsRoot(): void
+    public function testReturnIsRootForRootAndNonRootNode(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertTrue(Tree::findOne(1)->isRoot());
-        $this->assertFalse(Tree::findOne(2)->isRoot());
+        self::assertTrue(Tree::findOne(1)?->isRoot(), 'Node with ID \'1\' should be identified as root.');
+        self::assertFalse(Tree::findOne(2)?->isRoot(), 'Node with ID \'2\' should not be identified as root.');
     }
 
-    public function testIsChildOf(): void
+    public function testReturnIsChildOfForMultipleTreeNodeUnderVariousAncestors(): void
     {
         $this->generateFixtureTree();
 
         $node = MultipleTree::findOne(26);
 
-        $this->assertTrue($node->isChildOf(MultipleTree::findOne(25)));
-        $this->assertTrue($node->isChildOf(MultipleTree::findOne(23)));
-        $this->assertFalse($node->isChildOf(MultipleTree::findOne(3)));
-        $this->assertFalse($node->isChildOf(MultipleTree::findOne(1)));
+        self::assertNotNull(
+            $node,
+            'Node with ID \'26\' should exist in the database.',
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(25),
+            'Node with ID \'25\' should exist in the database.',
+        );
+        self::assertTrue(
+            $node->isChildOf($childOfNode),
+            'Node with ID \'26\' should be a child of node with ID \'25\'.',
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(23),
+            'Node with ID \'23\' should exist in the database.',
+        );
+        self::assertTrue(
+            $node->isChildOf($childOfNode),
+            'Node with ID \'26\' should be a child of node with ID \'23\'.',
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(3),
+            'Node with ID \'3\' should exist in the database.',
+        );
+        self::assertFalse(
+            $node->isChildOf($childOfNode),
+            'Node with ID \'26\' should not be a child of node with ID \'3\'.',
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(1),
+            'Node with ID \'1\' should exist in the database.',
+        );
+        self::assertFalse(
+            $node->isChildOf($childOfNode),
+            'Node with ID \'26\' should not be a child of node with ID \'1\'.',
+        );
     }
 
-    public function testIsLeaf(): void
+    public function testIsLeafReturnsTrueForLeafAndFalseForRoot(): void
     {
         $this->generateFixtureTree();
 
-        $this->assertTrue(Tree::findOne(4)->isLeaf());
-        $this->assertFalse(Tree::findOne(1)->isLeaf());
+        self::assertTrue(
+            Tree::findOne(4)?->isLeaf(),
+            'Node with ID \'4\' should be a leaf node (no children).',
+        );
+        self::assertFalse(
+            Tree::findOne(1)?->isLeaf(),
+            'Node with ID \'1\' should not be a leaf node (has children or is root).',
+        );
     }
 }

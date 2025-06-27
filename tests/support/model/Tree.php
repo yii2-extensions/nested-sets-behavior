@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Yii2\Extensions\NestedSets\Tests\Support\Model;
+namespace yii2\extensions\nestedsets\tests\support\model;
 
-use Yii2\Extensions\NestedSets\NestedSetsBehavior;
+use yii\db\ActiveRecord;
+use yii2\extensions\nestedsets\NestedSetsBehavior;
 
 /**
  * @property int $id
@@ -13,35 +14,41 @@ use Yii2\Extensions\NestedSets\NestedSetsBehavior;
  * @property int $depth
  * @property string $name
  */
-final class Tree extends \yii\db\ActiveRecord
+final class Tree extends ActiveRecord
 {
-    public static function tableName()
+    public static function tableName(): string
     {
         return '{{%tree}}';
     }
 
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             NestedSetsBehavior::class,
         ];
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
             ['name', 'required'],
         ];
     }
 
-    public function transactions()
+    /**
+     * @phpstan-return array<string, int>
+     */
+    public function transactions(): array
     {
         return [
             self::SCENARIO_DEFAULT => self::OP_ALL,
         ];
     }
 
-    public static function find()
+    /**
+     * @phpstan-return TreeQuery<self>
+     */
+    public static function find(): TreeQuery
     {
         return new TreeQuery(self::class);
     }

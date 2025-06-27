@@ -2,47 +2,54 @@
 
 declare(strict_types=1);
 
-namespace Yii2\Extensions\NestedSets\Tests;
+namespace yii2\extensions\nestedsets\tests;
 
 use SimpleXMLElement;
 use Yii;
 use yii\console\Application;
-use yii\db\Connection;
-use yii\db\SchemaBuilderTrait;
-use yii\di\Container;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\MultipleTree;
-use Yii2\Extensions\NestedSets\Tests\Support\Model\Tree;
+use yii\db\{Connection, SchemaBuilderTrait};
+use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
-
+    protected string $fixtureDirectory = __DIR__ . '/support/data/';
     public function getDb(): Connection
     {
         return Yii::$app->getDb();
     }
 
+    /**
+     * @phpstan-param array<
+     *   array{id: int, name: string, tree: int, type: string, lft: int, rgt: int, depth: int, name: string}
+     * > $dataSet
+     */
     protected function buildFlatXMLDataSet(array $dataSet): string
     {
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><dataset></dataset>');
 
         foreach ($dataSet as $item) {
             $treeElement = $xml->addChild($item['type']);
-            $treeElement->addAttribute('id', $item['id']);
+            $treeElement?->addAttribute('id', (string) $item['id']);
 
             if ($item['type'] === 'multiple_tree') {
-                $treeElement->addAttribute('tree', $item['tree']);
+                $treeElement?->addAttribute('tree', (string) $item['tree']);
             }
 
-            $treeElement->addAttribute('lft', $item['lft']);
-            $treeElement->addAttribute('rgt', $item['rgt']);
-            $treeElement->addAttribute('depth', $item['depth']);
-            $treeElement->addAttribute('name', $item['name']);
+            $treeElement?->addAttribute('lft', (string) $item['lft']);
+            $treeElement?->addAttribute('rgt', (string) $item['rgt']);
+            $treeElement?->addAttribute('depth', (string) $item['depth']);
+            $treeElement?->addAttribute('name', $item['name']);
         }
 
         $dom = dom_import_simplexml($xml)->ownerDocument;
+
+        assert($dom !== null, 'Failed to create DOM from SimpleXMLElement.');
+
         $dom->formatOutput = true;
         $formattedXml = $dom->saveXML();
+
+        assert($formattedXml !== false, 'Failed to save XML from DOM.');
 
         // Replace the tags with 4 spaces
         return str_replace(['<tree', '<multiple_tree'], ['  <tree', '  <multiple_tree'], $formattedXml);
@@ -84,18 +91,26 @@ class TestCase extends \PHPUnit\Framework\TestCase
         )->execute();
     }
 
-    protected function destroyApplication()
-    {
-        Yii::$app = null;
-        Yii::$container = new Container();
-    }
-
+    /**
+     * @phpstan-return list<
+     *   array{
+     *     id: int,
+     *     name: string,
+     *     tree: int,
+     *     type: string,
+     *     lft: int,
+     *     rgt: int,
+     *     depth: int
+     *   }
+     * >
+     */
     protected function getDataSet(): array
     {
         $dataSetTree = Tree::find()->asArray()->all();
 
         foreach ($dataSetTree as $key => $value) {
             $dataSetTree[$key]['type'] = 'tree';
+            $dataSetTree[$key]['tree'] = 0;
         }
 
         $dataSetMultipleTree = MultipleTree::find()->asArray()->all();
@@ -107,6 +122,19 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return array_merge($dataSetTree, $dataSetMultipleTree);
     }
 
+    /**
+     * @phpstan-return list<
+     *   array{
+     *     id: int,
+     *     name: string,
+     *     tree: int,
+     *     type: 'multiple_tree',
+     *     lft: int,
+     *     rgt: int,
+     *     depth: int,
+     *   }
+     * >
+     */
     protected function getDataSetMultipleTree(): array
     {
         $dataSetMultipleTree = MultipleTree::find()->asArray()->all();
@@ -115,7 +143,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
             $dataSetMultipleTree[$key]['type'] = 'multiple_tree';
         }
 
-        return $dataSetMultipleTree;
+        return array_values($dataSetMultipleTree);
     }
 
     protected function generateFixtureTree(): void
@@ -127,7 +155,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
         // Carga el XML en la tabla `tree`
         $xml = new SimpleXMLElement(__DIR__ . '/Support/data/test.xml', 0, true);
 
-        foreach ($xml->children() as $element => $treeElement) {
+        $children = $xml->children() ?? [];
+
+        foreach ($children as $element => $treeElement) {
             match ($element === 'tree') {
                 true => $command->insert(
                     'tree',
@@ -168,7 +198,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
         );
     }
 
-    protected function setup(): void
+    protected function setUp(): void
     {
         parent::setUp();
         $this->mockConsoleApplication();
@@ -177,6 +207,5 @@ class TestCase extends \PHPUnit\Framework\TestCase
     protected function tearDown(): void
     {
         parent::tearDown();
-        $this->destroyApplication();
     }
 }

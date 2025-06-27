@@ -9,11 +9,9 @@
         "behavior"
     ],
     "license": "BSD-3-Clause",
-    "minimum-stability": "dev",
-    "prefer-stable": true,
     "require": {
         "php": ">=8.1",
-        "yiisoft/yii2": "dev-master|^22"
+        "yiisoft/yii2": "^2.0.53|^22"
     },
     "require-dev": {
         "maglnet/composer-require-checker": "^4.1",
@@ -22,21 +20,21 @@
         "phpunit/phpunit": "^10.2",
         "rector/rector": "^2.0",
         "symplify/easy-coding-standard": "^12.3",
-        "yii2-extensions/phpstan": "dev-main"
+        "yii2-extensions/phpstan": "^0.3.0"
     },
     "autoload": {
         "psr-4": {
-            "Yii2\\Extensions\\NestedSets\\": "src"
+            "yii2\\extensions\\nestedsets\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Yii2\\Extensions\\NestedSets\\Tests\\": "tests"
+            "yii2\\extensions\\nestedsets\\tests\\": "tests"
         }
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "1.0.x-dev"
+            "dev-main": "0.1.x-dev"
         }
     },
     "config": {
@@ -50,7 +48,7 @@
         "check-dependencies": "./vendor/bin/composer-require-checker check",
         "ecs": "./vendor/bin/ecs --fix",
         "rector": "./vendor/bin/rector process src",
-        "static": "./vendor/bin/phpstan analyse src --memory-limit=512M",
+        "static": "./vendor/bin/phpstan --memory-limit=512M",
         "tests": "./vendor/bin/phpunit"
     },
     "repositories": [

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Yii2\Extensions\NestedSets;
+namespace yii2\extensions\nestedsets;
 
 use LogicException;
 use yii\base\Behavior;
@@ -26,9 +26,8 @@ use yii\db\{ActiveQuery, Expression};
  * - Query for root nodes in a nested set.
  * - Supports custom left, right, and tree attribute names as defined in the model.
  *
- * @template T of ActiveQuery
- *
- * @extends Behavior<T>
+ * @phpstan-template T of ActiveQuery
+ * @phpstan-extends Behavior<T>
  *
  * @copyright Copyright (C) 2023 Terabytesoftw.
  * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
