@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests;
 
+use RuntimeException;
 use SimpleXMLElement;
 use Yii;
 use yii\console\Application;
 use yii\db\{Connection, SchemaBuilderTrait};
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
+
+use function array_merge;
+use function array_values;
+use function dom_import_simplexml;
+use function str_replace;
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
@@ -22,7 +28,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
     /**
      * @phpstan-param array<
-     *   array{id: int, name: string, tree: int, type: string, lft: int, rgt: int, depth: int, name: string}
+     *   array{id: int, name: string, tree: int, type: string, lft: int, rgt: int, depth: int}
      * > $dataSet
      */
     protected function buildFlatXMLDataSet(array $dataSet): string
@@ -45,15 +51,26 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         $dom = dom_import_simplexml($xml)->ownerDocument;
 
-        assert($dom !== null, 'Failed to create DOM from SimpleXMLElement.');
+        if ($dom === null) {
+            throw new RuntimeException('Failed to create DOM from SimpleXMLElement.');
+        }
 
         $dom->formatOutput = true;
         $formattedXml = $dom->saveXML();
 
-        assert($formattedXml !== false, 'Failed to save XML from DOM.');
+        if ($formattedXml === false) {
+            throw new RuntimeException('Failed to save XML from DOM.');
+        }
 
         // Replace the tags with 4 spaces
-        return str_replace(['<tree', '<multiple_tree'], ['  <tree', '  <multiple_tree'], $formattedXml);
+        return str_replace([
+            '<tree', '<multiple_tree'],
+            [
+                '  <tree',
+                '  <multiple_tree',
+            ],
+            $formattedXml,
+        );
     }
 
     protected function createDatabase(): void
@@ -202,11 +219,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->mockConsoleApplication();
-    }
 
-    protected function tearDown(): void
-    {
-        parent::tearDown();
+        $this->mockConsoleApplication();
     }
 }
