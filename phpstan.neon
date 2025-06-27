@@ -9,6 +9,7 @@ parameters:
 
     paths:
         - src
+        - tests
 
     tmpDir: %currentWorkingDirectory%/runtime
 

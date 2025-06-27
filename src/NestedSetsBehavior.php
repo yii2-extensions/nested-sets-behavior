@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Yii2\Extensions\NestedSets;
+namespace yii2\extensions\nestedsets;
 
 use LogicException;
 use yii\base\{Behavior, NotSupportedException};
@@ -30,9 +30,9 @@ use yii\db\{ActiveQuery, ActiveRecord, Exception, Expression};
  * - Query for parents, children, leaves, previous and next siblings.
  * - Supports custom attribute names for left, right, depth, and tree columns.
  *
- * @template T of ActiveRecord
+ * @phpstan-template T of ActiveRecord
  *
- * @extends Behavior<T>
+ * @phpstan-extends Behavior<T>
  *
  * @property int $depth
  * @property int $lft

@@ -2,26 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Yii2\Extensions\NestedSets\Tests\Support\Model;
+namespace yii2\extensions\nestedsets\tests\support\model;
 
-use Yii2\Extensions\NestedSets\NestedSetsBehavior;
+use yii\db\ActiveRecord;
+use yii2\extensions\nestedsets\NestedSetsBehavior;
 
 /**
  * @property int $id
- * @property int $tree
+ * @property int $depth
  * @property int $lft
  * @property int $rgt
- * @property int $depth
+ * @property int $tree
  * @property string $name
  */
-final class MultipleTree extends \yii\db\ActiveRecord
+final class MultipleTree extends ActiveRecord
 {
-    public static function tableName()
+    public static function tableName(): string
     {
         return '{{%multiple_tree}}';
     }
 
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             [
@@ -31,21 +32,27 @@ final class MultipleTree extends \yii\db\ActiveRecord
         ];
     }
 
-    public function rules()
+    public function rules(): array
     {
         return [
             ['name', 'required'],
         ];
     }
 
-    public function transactions()
+    /**
+     * @phpstan-return array<string, int>
+     */
+    public function transactions(): array
     {
         return [
             self::SCENARIO_DEFAULT => self::OP_ALL,
         ];
     }
 
-    public static function find()
+    /**
+     * @phpstan-return MultipleTreeQuery<self>
+     */
+    public static function find(): MultipleTreeQuery
     {
         return new MultipleTreeQuery(self::class);
     }
