@@ -10,7 +10,6 @@
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/releases" target="_blank">
         <img class="badge" src="http://poser.pugx.org/yii2-extensions/nested-sets-behavior/v" alt="Github Release">
     </a>
-    
     <a href="https://www.php.net/releases/8.1/en.php" target="_blank">
         <img src="https://img.shields.io/badge/PHP-%3E%3D8.1-787CB5" alt="PHP Version">
     </a>
