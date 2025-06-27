@@ -154,7 +154,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $command = $this->getDb()->createCommand();
 
         // Carga el XML en la tabla `tree`
-        $xml = new SimpleXMLElement(__DIR__ . '/Support/data/test.xml', 0, true);
+        $xml = new SimpleXMLElement("{$this->fixtureDirectory}/test.xml", 0, true);
 
         $children = $xml->children() ?? [];
 
