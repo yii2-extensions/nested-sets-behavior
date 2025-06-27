@@ -14,6 +14,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
+
     public function getDb(): Connection
     {
         return Yii::$app->getDb();

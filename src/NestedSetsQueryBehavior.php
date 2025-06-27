@@ -27,6 +27,7 @@ use yii\db\{ActiveQuery, Expression};
  * - Supports custom left, right, and tree attribute names as defined in the model.
  *
  * @phpstan-template T of ActiveQuery
+ *
  * @phpstan-extends Behavior<T>
  *
  * @copyright Copyright (C) 2023 Terabytesoftw.

@@ -9,6 +9,7 @@ use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
 
 /**
  * @template T of Tree
+ *
  * @extends ActiveQuery<T>
  */
 final class TreeQuery extends ActiveQuery
