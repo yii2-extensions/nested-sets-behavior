@@ -35,7 +35,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
             'Should return correct root nodes for \'Tree\' model.',
         );
         self::assertEquals(
-            require "{$this->fixtureDirectory}//test-roots-multiple-tree-query.php",
+            require "{$this->fixtureDirectory}/test-roots-multiple-tree-query.php",
             ArrayHelper::toArray(MultipleTree::find()->roots()->all()),
             'Should return correct root nodes for \'MultipleTree\' model.',
         );
