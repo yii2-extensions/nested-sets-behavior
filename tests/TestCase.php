@@ -16,9 +16,23 @@ use function array_values;
 use function dom_import_simplexml;
 use function str_replace;
 
+/**
+ * @phpstan-type DataSetType = list<
+ *   array{
+ *     id: int,
+ *     name: string,
+ *     tree: int,
+ *     type: 'multiple_tree'|'tree',
+ *     lft: int,
+ *     rgt: int,
+ *     depth: int,
+ *   }
+ * >
+ */
 class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
+
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
 
     public function getDb(): Connection
@@ -27,9 +41,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @phpstan-param array<
-     *   array{id: int, name: string, tree: int, type: string, lft: int, rgt: int, depth: int}
-     * > $dataSet
+     * @phpstan-import-type DataSetType from TestCase
+     *
+     * @phpstan-param DataSetType $dataSet
      */
     protected function buildFlatXMLDataSet(array $dataSet): string
     {
@@ -111,17 +125,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @phpstan-return list<
-     *   array{
-     *     id: int,
-     *     name: string,
-     *     tree: int,
-     *     type: string,
-     *     lft: int,
-     *     rgt: int,
-     *     depth: int
-     *   }
-     * >
+     * @phpstan-import-type DataSetType from TestCase
+     *
+     * @phpstan-return DataSetType
      */
     protected function getDataSet(): array
     {
@@ -142,17 +148,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @phpstan-return list<
-     *   array{
-     *     id: int,
-     *     name: string,
-     *     tree: int,
-     *     type: 'multiple_tree',
-     *     lft: int,
-     *     rgt: int,
-     *     depth: int,
-     *   }
-     * >
+     * @phpstan-import-type DataSetType from TestCase
+     *
+     * @phpstan-return DataSetType
      */
     protected function getDataSetMultipleTree(): array
     {
