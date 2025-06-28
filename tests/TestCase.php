@@ -14,6 +14,8 @@ use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use function array_merge;
 use function array_values;
 use function dom_import_simplexml;
+use function file_get_contents;
+use function simplexml_load_string;
 use function str_replace;
 
 /**
@@ -213,6 +215,25 @@ class TestCase extends \PHPUnit\Framework\TestCase
                 ],
             ],
         );
+    }
+
+    protected function loadFixtureXML(string $fileName): SimpleXMLElement
+    {
+        $filePath = "{$this->fixtureDirectory}/{$fileName}";
+
+        $file = file_get_contents($filePath);
+
+        if ($file === false) {
+            throw new RuntimeException("Failed to load fixture file: {$filePath}");
+        }
+
+        $simpleXML = simplexml_load_string($file);
+
+        if ($simpleXML === false) {
+            throw new RuntimeException("Failed to parse XML from fixture file: {$filePath}");
+        }
+
+        return $simpleXML;
     }
 
     protected function setUp(): void

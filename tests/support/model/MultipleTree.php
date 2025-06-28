@@ -25,7 +25,7 @@ final class MultipleTree extends ActiveRecord
     public function behaviors(): array
     {
         return [
-            [
+            'nestedSetsBehavior' => [
                 'class' => NestedSetsBehavior::class,
                 'treeAttribute' => 'tree',
             ],
