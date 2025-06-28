@@ -14,6 +14,15 @@ use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
  */
 final class TreeQuery extends ActiveQuery
 {
+    /**
+     * @phpstan-param class-string<T> $modelClass
+     * @phpstan-param array<string, mixed> $config
+     */
+    public function __construct(string $modelClass, array $config = [])
+    {
+        parent::__construct($modelClass, $config);
+    }
+
     public function behaviors(): array
     {
         return [
