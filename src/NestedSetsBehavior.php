@@ -174,7 +174,7 @@ class NestedSetsBehavior extends Behavior
                 ],
                 $condition,
             );
-            $this->shiftLeftRightAttribute($rightValue + 1, -2);
+            $this->shiftLeftRightAttribute($rightValue, -2);
         }
 
         $this->operation = null;
