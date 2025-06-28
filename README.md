@@ -28,7 +28,7 @@
 
 ### Installation
 
-```php
+```bash
 composer require --prefer-dist yii2-extensions/nested-sets-behavior
 ```
 
