@@ -13,9 +13,6 @@ use yii\helpers\ArrayHelper;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 
-use function file_get_contents;
-use function simplexml_load_string;
-
 final class NestedSetsBehaviorTest extends TestCase
 {
     public function testReturnTrueAndMatchXmlAfterMakeRootNewForTreeAndMultipleTree(): void
@@ -43,19 +40,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'makeRoot()\' should return \'true\' when creating a second root node in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-make-root-new.xml");
+        $simpleXML = $this->loadFixtureXML('test-make-root-new.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-make-root-new.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-make-root-new.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertSame(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -105,19 +91,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'prependTo()\' should return \'true\' when prepending a new node to node \'31\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-prepend-to-new.xml");
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-new.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-prepend-to-new.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-prepend-to-new.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertSame(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -167,19 +142,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'insertBefore()\' should return \'true\' when inserting a new node before node \'31\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-before-new.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-before-new.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-before-new.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-before-new.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -248,19 +212,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'insertAfter()\' should return \'true\' when inserting a new node after node \'31\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-after-new.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-after-new.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-after-new.xml\' must be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-after-new.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -317,19 +270,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'makeRoot()\' should return \'true\' when called on node \'31\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-make-root-exists.xml");
+        $simpleXML = $this->loadFixtureXML('test-make-root-exists.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-make-root-exists.xml\' must be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-make-root-exists.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
             $simpleXML->asXML(),
@@ -412,19 +354,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'prependTo()\' should return \'true\' when moving node \'31\' as child of node \'24\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-prepend-to-exists-up.xml");
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-up.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-prepend-to-exists-up.xml\' must be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-prepend-to-exists-up.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -476,19 +407,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'prependTo()\' should return \'true\' when moving node \'31\' as child of node \'38\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-prepend-to-exists-down.xml");
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-down.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-prepend-to-exists-down.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-prepend-to-exists-down.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -520,19 +440,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'prependTo()\' should return \'true\' when moving node \'9\' as child of node \'53\' in another \'tree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-prepend-to-exists-another-tree.xml");
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-another-tree.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-prepend-to-exists-another-tree.xml\' must be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-prepend-to-exists-another-tree.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
             $simpleXML->asXML(),
@@ -636,19 +545,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'appendTo()\' should return \'true\' when moving node \'31\' as child of node \'24\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-append-to-exists-up.xml");
+        $simpleXML = $this->loadFixtureXML('test-append-to-exists-up.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-append-to-exists-up.xml\' must be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-append-to-exists-up.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -700,19 +598,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'appendTo()\' should return \'true\' when moving node \'31\' as child of node \'38\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-append-to-exists-down.xml");
+        $simpleXML = $this->loadFixtureXML('test-append-to-exists-down.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-append-to-exists-down.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-append-to-exists-down.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -745,19 +632,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'appendTo()\' should return \'true\' when moving node \'9\' as child of node \'53\' in another tree.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-append-to-exists-another-tree.xml");
+        $simpleXML = $this->loadFixtureXML('test-append-to-exists-another-tree.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-append-to-exists-another-tree.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-append-to-exists-another-tree.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
             $simpleXML->asXML(),
@@ -871,19 +747,8 @@ final class NestedSetsBehaviorTest extends TestCase
             'insertBefore() should return true when moving node \'31\' before node \'24\' in MultipleTree.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-before-exists-up.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-up.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-before-exists-up.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-before-exists-up.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -935,19 +800,8 @@ final class NestedSetsBehaviorTest extends TestCase
             'insertBefore() should return true when moving node \'31\' before node \'38\' in MultipleTree.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-before-exists-down.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-down.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-before-exists-down.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-before-exists-down.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -979,19 +833,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'insertBefore()\' should return \'true\' when moving node \'9\' before node \'53\' in another tree.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-before-exists-another-tree.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-another-tree.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-before-exists-another-tree.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-before-exists-another-tree.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
             $simpleXML->asXML(),
@@ -1122,19 +965,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'insertAfter()\' should return \'true\' when moving node \'31\' after node \'24\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-after-exists-up.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-up.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-after-exists-up.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-after-exists-up.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -1186,19 +1018,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'insertAfter()\' should return \'true\' when moving node \'31\' after node \'38\' in \'MultipleTree\'.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-after-exists-down.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-down.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-after-exists-down.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-after-exists-down.xml\' should be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -1230,19 +1051,8 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'insertAfter()\' should return \'true\' when moving node \'9\' after node \'53\' in another tree.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-insert-after-exists-another-tree.xml");
+        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-another-tree.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-insert-after-exists-another-tree.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-insert-after-exists-another-tree.xml\' must be loaded successfully for result comparison.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
             $simpleXML->asXML(),
@@ -1338,19 +1148,8 @@ final class NestedSetsBehaviorTest extends TestCase
             'Deleting node with ID \'31\' and its children from \'MultipleTree\' should affect exactly seven rows.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-delete-with-children.xml");
+        $simpleXML = $this->loadFixtureXML('test-delete-with-children.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-delete-with-children.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-delete-with-children.xml\' should be loaded successfully.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
@@ -1389,19 +1188,8 @@ final class NestedSetsBehaviorTest extends TestCase
             'Deleting node with ID \'31\' from \'MultipleTree\' should affect exactly one row.',
         );
 
-        $file = file_get_contents("{$this->fixtureDirectory}/test-delete.xml");
+        $simpleXML = $this->loadFixtureXML('test-delete.xml');
 
-        self::assertNotFalse(
-            $file,
-            'File \'test-delete.xml\' should be loaded successfully.',
-        );
-
-        $simpleXML = simplexml_load_string($file);
-
-        self::assertNotFalse(
-            $simpleXML,
-            'XML file \'test-delete.xml\' should be loaded successfully.',
-        );
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
