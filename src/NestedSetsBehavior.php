@@ -247,15 +247,15 @@ class NestedSetsBehavior extends Behavior
      */
     public function afterUpdate(): void
     {
-        $nodeLeftValue = $this->node?->getAttribute($this->leftAttribute) ?? 0;
-        $nodeRightValue = $this->node?->getAttribute($this->rightAttribute) ?? 0;
+        $nodeLeftValue = $this->node?->getAttribute($this->leftAttribute);
+        $nodeRightValue = $this->node?->getAttribute($this->rightAttribute);
 
         match ($this->operation) {
-            self::OPERATION_APPEND_TO => $this->moveNode($nodeRightValue, 1),
-            self::OPERATION_INSERT_AFTER => $this->moveNode($nodeRightValue + 1, 0),
-            self::OPERATION_INSERT_BEFORE => $this->moveNode($nodeLeftValue, 0),
+            self::OPERATION_APPEND_TO => $nodeRightValue !== null ? $this->moveNode($nodeRightValue, 1) : null,
+            self::OPERATION_INSERT_AFTER => $nodeRightValue !== null ? $this->moveNode($nodeRightValue + 1, 0) : null,
+            self::OPERATION_INSERT_BEFORE => $nodeLeftValue !== null ? $this->moveNode($nodeLeftValue, 0) : null,
             self::OPERATION_MAKE_ROOT => $this->moveNodeAsRoot(),
-            self::OPERATION_PREPEND_TO => $this->moveNode($nodeLeftValue + 1, 1),
+            self::OPERATION_PREPEND_TO => $nodeLeftValue !== null ? $this->moveNode($nodeLeftValue + 1, 1) : null,
             default => null,
         };
 
