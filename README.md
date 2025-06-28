@@ -24,23 +24,19 @@
     </a>  
 </p>
 
-## Installation
+## Quick start
 
-The preferred way to install this extension is through [composer](https://getcomposer.org/download/).
+### Installation
 
-Either run
-
-```
+```php
 composer require --dev --prefer-dist yii2-extensions/nested-sets-behavior
 ```
 
-or add
+## Documentation
 
-```
-"yii2-extensions/nested-sets-behavior": "dev-main"
-```
+For detailed configuration options and advanced usage.
 
-to the require-dev section of your `composer.json` file. 
+- 🧪 [Testing Guide](docs/testing.md)
 
 ## Quality code
 
@@ -50,17 +46,13 @@ to the require-dev section of your `composer.json` file.
 [![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue)](https://github.com/yii2-extensions/localeurls/actions/workflows/static.yml)
 [![style-ci](https://github.styleci.io/repos/717718161/shield?branch=main)](https://github.styleci.io/repos/717718161?branch=main)
 
-## Testing
-
-[Check the documentation testing](/docs/testing.md) to learn about testing.
-
 ## Our social networks
 
 [![X](https://img.shields.io/badge/follow-@terabytesoftw-1DA1F2?logo=x&logoColor=1DA1F2&labelColor=555555?style=flat)](https://x.com/Terabytesoftw)
 
 ## License
 
-The MIT License. Please see [License File](LICENSE.md) for more information.
+[![License](http://poser.pugx.org/yii2-extensions/nested-sets-behavior/license)](LICENSE.md)
 
 ## Fork 
 
