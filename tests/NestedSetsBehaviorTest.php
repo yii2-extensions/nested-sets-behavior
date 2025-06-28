@@ -1722,13 +1722,13 @@ final class NestedSetsBehaviorTest extends TestCase
                     self::assertEquals(
                         $oldLft - 2,
                         $node->lft,
-                        "Node $i left should be shifted when > deleted right"
+                        "Node $i left should be shifted when > deleted right",
                     );
                 } else {
                     self::assertEquals(
                         $oldLft,
                         $node->lft,
-                        "Node $i left should NOT be shifted when <= deleted right"
+                        "Node $i left should NOT be shifted when <= deleted right",
                     );
                 }
 
@@ -1736,13 +1736,13 @@ final class NestedSetsBehaviorTest extends TestCase
                     self::assertEquals(
                         $oldRgt - 2,
                         $node->rgt,
-                        "Node $i right should be shifted when > deleted right"
+                        "Node $i right should be shifted when > deleted right",
                     );
                 } else {
                     self::assertEquals(
                         $oldRgt,
                         $node->rgt,
-                        "Node $i right should NOT be shifted when <= deleted right"
+                        "Node $i right should NOT be shifted when <= deleted right",
                     );
                 }
             }

@@ -142,7 +142,7 @@ class NestedSetsBehavior extends Behavior
         $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
 
         if ($this->operation === self::OPERATION_DELETE_WITH_CHILDREN || $this->getOwner()->isLeaf()) {
-            $this->shiftLeftRightAttribute($rightValue + 1, $leftValue - $rightValue - 1);
+            $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
         } else {
             $condition = [
                 'and',
