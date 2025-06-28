@@ -385,6 +385,7 @@ class NestedSetsBehavior extends Behavior
                 break;
             case $this->operation === self::OPERATION_APPEND_TO && $this->node !== null:
                 $this->beforeInsertNode($this->node->getAttribute($this->rightAttribute), 1);
+                // no break
             default:
                 throw new NotSupportedException(
                     'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
