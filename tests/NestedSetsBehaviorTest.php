@@ -1621,131 +1621,53 @@ final class NestedSetsBehaviorTest extends TestCase
         $node->makeRoot();
     }
 
-    public function testShiftLeftRightAttributesAfterDeleteLeafNode(): void
+    public function testAfterDeleteShiftsLeftRightAttributesCorrectly(): void
     {
         $this->generateFixtureTree();
 
         $nodeToDelete = Tree::findOne(4);
 
-        self::assertNotNull(
-            $nodeToDelete,
-            'Node with ID \'4\' should exist before deletion.',
-        );
-        self::assertTrue(
-            $nodeToDelete->isLeaf(),
-            'Node with ID \'4\' should be a leaf node before deletion.',
-        );
-        self::assertEquals(
-            4,
-            $nodeToDelete->getAttribute('lft'),
-            'Node with ID \'4\' should have left value \'4\' before deletion.',
-        );
-        self::assertEquals(
-            5,
-            $nodeToDelete->getAttribute('rgt'),
-            'Node with ID \'4\' should have right value \'5\' before deletion.',
-        );
+        self::assertNotNull($nodeToDelete);
+        self::assertTrue($nodeToDelete->isLeaf());
+        self::assertEquals(4, $nodeToDelete->getAttribute('lft'));
+        self::assertEquals(5, $nodeToDelete->getAttribute('rgt'));
 
         $node5 = Tree::findOne(5);
 
-        self::assertNotNull(
-            $node5,
-            'Node with ID \'5\' should exist before deletion.',
-        );
-        self::assertEquals(
-            6,
-            $node5->getAttribute('lft'),
-            'Node with ID \'5\' should have left value \'6\' before deletion.',
-        );
-        self::assertEquals(
-            7,
-            $node5->getAttribute('rgt'),
-            'Node with ID \'5\' should have right value \'7\' before deletion.',
-        );
+        self::assertNotNull($node5);
+        self::assertEquals(6, $node5->getAttribute('lft'));
+        self::assertEquals(7, $node5->getAttribute('rgt'));
 
         $node6 = Tree::findOne(6);
 
-        self::assertNotNull(
-            $node6,
-            'Node with ID \'6\' should exist before deletion.',
-        );
-        self::assertEquals(
-            9,
-            $node6->getAttribute('lft'),
-            'Node with ID \'6\' should have left value \'9\' before deletion.',
-        );
-        self::assertEquals(
-            14,
-            $node6->getAttribute('rgt'),
-            'Node with ID \'6\' should have right value \'14\' before deletion.',
-        );
+        self::assertNotNull($node6);
+        self::assertEquals(9, $node6->getAttribute('lft'));
+        self::assertEquals(14, $node6->getAttribute('rgt'));
 
-        $node9 = Tree::findOne(9);
+        $node3 = Tree::findOne(3);
 
-        self::assertNotNull(
-            $node9,
-            'Node with ID \'9\' should exist before deletion.',
-        );
-        self::assertEquals(
-            16,
-            $node9->getAttribute('lft'),
-            'Node with ID \'9\' should have left value \'16\' before deletion.',
-        );
-        self::assertEquals(
-            29,
-            $node9->getAttribute('rgt'),
-            'Node with ID \'9\' should have right value \'29\' before deletion.',
-        );
+        self::assertNotNull($node3);
+        self::assertEquals(3, $node3->getAttribute('lft'));
+        self::assertEquals(8, $node3->getAttribute('rgt'));
 
         $result = $nodeToDelete->delete();
 
-        self::assertEquals(
-            1,
-            $result,
-            'Deleting the leaf node with ID \'4\' should affect exactly one row.',
-        );
-        self::assertNull(
-            Tree::findOne(4),
-            'Node with ID \'4\' should not exist after deletion.',
-        );
+        self::assertEquals(1, $result);
+        self::assertNull(Tree::findOne(4));
 
         $node5->refresh();
 
-        self::assertEquals(
-            4,
-            $node5->getAttribute('lft'),
-            'Node with ID \'5\' should have left value \'4\' after shifting.',
-        );
-        self::assertEquals(
-            5,
-            $node5->getAttribute('rgt'),
-            'Node with ID \'5\' should have right value \'5\' after shifting.',
-        );
+        self::assertEquals(4, $node5->getAttribute('lft'));
+        self::assertEquals(5, $node5->getAttribute('rgt'));
 
         $node6->refresh();
 
-        self::assertEquals(
-            7,
-            $node6->getAttribute('lft'),
-            'Node with ID \'6\' should have left value \'7\' after shifting.',
-        );
-        self::assertEquals(
-            12,
-            $node6->getAttribute('rgt'),
-            'Node with ID \'6\' should have right value \'12\' after shifting.',
-        );
+        self::assertEquals(7, $node6->getAttribute('lft'));
+        self::assertEquals(12, $node6->getAttribute('rgt'));
 
-        $node9->refresh();
+        $node3->refresh();
 
-        self::assertEquals(
-            14,
-            $node9->getAttribute('lft'),
-            'Node with ID \'9\' should have left value \'14\' after shifting.',
-        );
-        self::assertEquals(
-            27,
-            $node9->getAttribute('rgt'),
-            'Node with ID \'9\' should have right value \'27\' after shifting.',
-        );
+        self::assertEquals(3, $node3->getAttribute('lft'));
+        self::assertEquals(6, $node3->getAttribute('rgt'));
     }
 }
