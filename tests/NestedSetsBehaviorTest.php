@@ -1702,7 +1702,7 @@ final class NestedSetsBehaviorTest extends TestCase
             if ($i !== 2) {
                 $valuesBeforeDelete[$i] = [
                     'lft' => $node->lft,
-                    'rgt' => $node->rgt
+                    'rgt' => $node->rgt,
                 ];
             }
         }
@@ -1719,19 +1719,31 @@ final class NestedSetsBehaviorTest extends TestCase
                 $oldRgt = $valuesBeforeDelete[$i]['rgt'];
 
                 if ($oldLft > $rightValueBeforeDelete) {
-                    self::assertEquals($oldLft - 2, $node->lft,
-                        "Node $i left should be shifted when > deleted right");
+                    self::assertEquals(
+                        $oldLft - 2,
+                        $node->lft,
+                        "Node $i left should be shifted when > deleted right"
+                    );
                 } else {
-                    self::assertEquals($oldLft, $node->lft,
-                        "Node $i left should NOT be shifted when <= deleted right");
+                    self::assertEquals(
+                        $oldLft,
+                        $node->lft,
+                        "Node $i left should NOT be shifted when <= deleted right"
+                    );
                 }
 
                 if ($oldRgt > $rightValueBeforeDelete) {
-                    self::assertEquals($oldRgt - 2, $node->rgt,
-                        "Node $i right should be shifted when > deleted right");
+                    self::assertEquals(
+                        $oldRgt - 2,
+                        $node->rgt,
+                        "Node $i right should be shifted when > deleted right"
+                    );
                 } else {
-                    self::assertEquals($oldRgt, $node->rgt,
-                        "Node $i right should NOT be shifted when <= deleted right");
+                    self::assertEquals(
+                        $oldRgt,
+                        $node->rgt,
+                        "Node $i right should NOT be shifted when <= deleted right"
+                    );
                 }
             }
         }
