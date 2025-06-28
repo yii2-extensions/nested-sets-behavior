@@ -247,17 +247,22 @@ class NestedSetsBehavior extends Behavior
      */
     public function afterUpdate(): void
     {
-        $nodeLeftValue = $this->node?->getAttribute($this->leftAttribute);
-        $nodeRightValue = $this->node?->getAttribute($this->rightAttribute);
-
-        match ($this->operation) {
-            self::OPERATION_APPEND_TO => $nodeRightValue !== null ? $this->moveNode($nodeRightValue, 1) : null,
-            self::OPERATION_INSERT_AFTER => $nodeRightValue !== null ? $this->moveNode($nodeRightValue + 1, 0) : null,
-            self::OPERATION_INSERT_BEFORE => $nodeLeftValue !== null ? $this->moveNode($nodeLeftValue, 0) : null,
-            self::OPERATION_MAKE_ROOT => $this->moveNodeAsRoot(),
-            self::OPERATION_PREPEND_TO => $nodeLeftValue !== null ? $this->moveNode($nodeLeftValue + 1, 1) : null,
-            default => null,
-        };
+        switch (true) {
+            case $this->operation === self::OPERATION_MAKE_ROOT:
+                $this->moveNodeAsRoot();
+                break;
+            case $this->operation === self::OPERATION_APPEND_TO && $this->node !== null:
+                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute), 1);
+                break;
+            case $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null:
+                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute) + 1, 0);
+                break;
+            case $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null:
+                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute), 0);
+                break;
+            case $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null:
+                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute) + 1, 1);
+        }
 
         $this->operation = null;
         $this->node = null;
@@ -361,23 +366,30 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
-        if ($this->node?->getIsNewRecord() === false) {
+        if ($this->node !== null && $this->node->getIsNewRecord() === false) {
             $this->node->refresh();
         }
 
-        $nodeLeftValue = $this->node?->getAttribute($this->leftAttribute) ?? 0;
-        $nodeRightValue = $this->node?->getAttribute($this->rightAttribute) ?? 0;
-
-        match ($this->operation) {
-            self::OPERATION_APPEND_TO => $this->beforeInsertNode($nodeRightValue, 1),
-            self::OPERATION_INSERT_AFTER => $this->beforeInsertNode($nodeRightValue + 1, 0),
-            self::OPERATION_INSERT_BEFORE => $this->beforeInsertNode($nodeLeftValue, 0),
-            self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
-            self::OPERATION_PREPEND_TO => $this->beforeInsertNode($nodeLeftValue + 1, 1),
-            default => throw new NotSupportedException(
-                'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
-            ),
-        };
+        switch (true) {
+            case $this->operation === self::OPERATION_MAKE_ROOT:
+                $this->beforeInsertRootNode();
+                break;
+            case $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null:
+                $this->beforeInsertNode($this->node->getAttribute($this->leftAttribute) + 1, 1);
+                break;
+            case $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null:
+                $this->beforeInsertNode($this->node->getAttribute($this->rightAttribute) + 1, 0);
+                break;
+            case $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null:
+                $this->beforeInsertNode($this->node->getAttribute($this->leftAttribute), 0);
+                break;
+            case $this->operation === self::OPERATION_APPEND_TO && $this->node !== null:
+                $this->beforeInsertNode($this->node->getAttribute($this->rightAttribute), 1);
+            default:
+                throw new NotSupportedException(
+                    'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
+                );
+        }
     }
 
     /**
@@ -1053,14 +1065,19 @@ class NestedSetsBehavior extends Behavior
             $this->getOwner()->setAttribute($this->rightAttribute, $value + 1);
         }
 
-        $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute) ?? 0;
-        $this->getOwner()->setAttribute($this->depthAttribute, $nodeDepthValue + $depth);
+        $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute);
 
-        if ($this->treeAttribute !== false) {
-            $this->getOwner()->setAttribute($this->treeAttribute, $this->node?->getAttribute($this->treeAttribute));
+        if ($nodeDepthValue !== null) {
+            $this->getOwner()->setAttribute($this->depthAttribute, $nodeDepthValue + $depth);
         }
 
-        $this->shiftLeftRightAttribute($value ?? 0, 2);
+        if ($this->treeAttribute !== false && $this->node !== null) {
+            $this->getOwner()->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
+        }
+
+        if ($value !== null) {
+            $this->shiftLeftRightAttribute($value, 2);
+        }
     }
 
     /**
@@ -1150,23 +1167,24 @@ class NestedSetsBehavior extends Behavior
      * This method is called internally during node movement operations such as append, prepend, insert before/after,
      * and supports both root and non-root node moves.
      *
+     * @param ActiveRecord $node Node to be moved within the nested set tree.
      * @param int $value Left attribute value indicating the new position for the node.
      * @param int $depth Depth offset to apply to the node and its descendants after the move.
      */
-    protected function moveNode(int $value, int $depth): void
+    protected function moveNode(ActiveRecord $node, int $value, int $depth): void
     {
         $db = $this->getOwner()::getDb();
         $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
         $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
         $depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
         $depthAttribute = $db->quoteColumnName($this->depthAttribute);
-        $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute) ?? 0;
+        $nodeDepthValue = $node->getAttribute($this->depthAttribute);
 
         $depth = $nodeDepthValue - $depthValue + $depth;
 
         if (
             $this->treeAttribute === false ||
-            $this->getOwner()->getAttribute($this->treeAttribute) === $this->node?->getAttribute($this->treeAttribute)
+            $this->getOwner()->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute)
         ) {
             $delta = $rightValue - $leftValue + 1;
 
@@ -1227,7 +1245,7 @@ class NestedSetsBehavior extends Behavior
         } else {
             $leftAttribute = $db->quoteColumnName($this->leftAttribute);
             $rightAttribute = $db->quoteColumnName($this->rightAttribute);
-            $nodeRootValue = $this->node?->getAttribute($this->treeAttribute);
+            $nodeRootValue = $node->getAttribute($this->treeAttribute);
 
             foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
                 $this->getOwner()::updateAll(
