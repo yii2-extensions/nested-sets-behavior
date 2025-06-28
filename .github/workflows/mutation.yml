@@ -20,5 +20,8 @@ name: mutation test
 jobs:
   mutation:
     uses: php-forge/actions/.github/workflows/infection.yml@main
+    with:
+      command: phpstan-mutant-killer-infection-runner
+      composer-command: composer require --dev phpstan/mutant-killer-infection-runner
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
