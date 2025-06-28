@@ -10,5 +10,8 @@
         "directories": [
             "src"
         ]
-    }
+    },
+    "phpStan": {
+        "configDir": "."
+    },
 }
