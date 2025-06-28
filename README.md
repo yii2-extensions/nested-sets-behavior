@@ -29,7 +29,7 @@
 ### Installation
 
 ```php
-composer require --dev --prefer-dist yii2-extensions/nested-sets-behavior
+composer require --prefer-dist yii2-extensions/nested-sets-behavior
 ```
 
 ## Documentation
