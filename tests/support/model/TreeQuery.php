@@ -17,7 +17,7 @@ final class TreeQuery extends ActiveQuery
     public function behaviors(): array
     {
         return [
-            NestedSetsQueryBehavior::class,
+            'nestedSetsQueryBehavior' => NestedSetsQueryBehavior::class,
         ];
     }
 }

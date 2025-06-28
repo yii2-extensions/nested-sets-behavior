@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests;
 
+use LogicException;
 use yii\helpers\ArrayHelper;
-use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
+use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
+use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeQuery};
 
 final class NestedSetsQueryBehaviorTest extends TestCase
 {
@@ -39,5 +41,33 @@ final class NestedSetsQueryBehaviorTest extends TestCase
             ArrayHelper::toArray(MultipleTree::find()->roots()->all()),
             'Should return correct root nodes for \'MultipleTree\' model.',
         );
+    }
+
+    public function testThrowLogicExceptionWhenBehaviorIsNotAttachedToOwner(): void
+    {
+        $behavior = new NestedSetsQueryBehavior();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
+
+        $behavior->leaves();
+    }
+
+    public function testThrowLogicExceptionWhenBehaviorIsDetachedFromOwner(): void
+    {
+        $this->createDatabase();
+
+        $node = new TreeQuery(Tree::class);
+
+        $behavior = $node->getBehavior('nestedSetsQueryBehavior');
+
+        self::assertInstanceOf(NestedSetsQueryBehavior::class, $behavior);
+
+        $node->detachBehavior('nestedSetsQueryBehavior');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
+
+        $behavior->leaves();
     }
 }

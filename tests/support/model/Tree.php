@@ -24,7 +24,7 @@ final class Tree extends ActiveRecord
     public function behaviors(): array
     {
         return [
-            NestedSetsBehavior::class,
+            'nestedSetsBehavior' => NestedSetsBehavior::class,
         ];
     }
 
