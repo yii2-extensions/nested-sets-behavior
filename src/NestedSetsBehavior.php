@@ -366,7 +366,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
-        if ($this->node !== null && $this->node->getIsNewRecord() === false) {
+        if ($this->node?->getIsNewRecord() === false) {
             $this->node->refresh();
         }
 

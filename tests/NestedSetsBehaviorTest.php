@@ -678,7 +678,7 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is same.');
 
-        $node->appendTo($childOfNode);
+        $node->appendTo($childOfNode, false);
     }
 
     public function testThrowExceptionWhenAppendToTargetIsChild(): void
@@ -1073,7 +1073,7 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->expectException(Exception::class);
         $this->expectExceptionMessage('Can not move a node when the target node is new record.');
 
-        $node->insertAfter(new Tree());
+        $node->insertAfter(new Tree(), false);
     }
 
     public function testThrowExceptionWhenInsertAfterTargetIsSame(): void
