@@ -14,7 +14,7 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
  * @property int $depth
  * @property string $name
  */
-final class Tree extends ActiveRecord
+class Tree extends ActiveRecord
 {
     public static function tableName(): string
     {
@@ -26,6 +26,15 @@ final class Tree extends ActiveRecord
         return [
             'nestedSetsBehavior' => NestedSetsBehavior::class,
         ];
+    }
+
+    public function isTransactional($operation): bool
+    {
+        if ($operation === ActiveRecord::OP_DELETE) {
+            return false;
+        }
+
+        return parent::isTransactional($operation);
     }
 
     public function rules(): array
@@ -46,10 +55,10 @@ final class Tree extends ActiveRecord
     }
 
     /**
-     * @phpstan-return TreeQuery<self>
+     * @phpstan-return TreeQuery<static>
      */
     public static function find(): TreeQuery
     {
-        return new TreeQuery(self::class);
+        return new TreeQuery(static::class);
     }
 }

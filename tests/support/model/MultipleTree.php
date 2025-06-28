@@ -15,7 +15,7 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
  * @property int $tree
  * @property string $name
  */
-final class MultipleTree extends ActiveRecord
+class MultipleTree extends ActiveRecord
 {
     public static function tableName(): string
     {
@@ -50,10 +50,10 @@ final class MultipleTree extends ActiveRecord
     }
 
     /**
-     * @phpstan-return MultipleTreeQuery<self>
+     * @phpstan-return MultipleTreeQuery<static>
      */
     public static function find(): MultipleTreeQuery
     {
-        return new MultipleTreeQuery(self::class);
+        return new MultipleTreeQuery(static::class);
     }
 }
