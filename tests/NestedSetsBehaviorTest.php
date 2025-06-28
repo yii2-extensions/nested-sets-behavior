@@ -1627,16 +1627,105 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $nodeToDelete = Tree::findOne(4);
 
-        self::assertNotNull($nodeToDelete);
-        self::assertTrue($nodeToDelete->isLeaf());
-        self::assertEquals(4, $nodeToDelete->getAttribute('lft'));
-        self::assertEquals(5, $nodeToDelete->getAttribute('rgt'));
+        self::assertNotNull($nodeToDelete, 'Node 4 should exist for deletion test');
+        self::assertTrue($nodeToDelete->isLeaf(), 'Node 4 should be a leaf node');
+        self::assertEquals(4, $nodeToDelete->getAttribute('lft'), 'Node 4 should have lft=4');
+        self::assertEquals(5, $nodeToDelete->getAttribute('rgt'), 'Node 4 should have rgt=5');
 
         $node5 = Tree::findOne(5);
+        $node6 = Tree::findOne(6);
+        $node3 = Tree::findOne(3);
 
         self::assertNotNull($node5);
+        self::assertNotNull($node6);
+        self::assertNotNull($node3);
+
         self::assertEquals(6, $node5->getAttribute('lft'));
         self::assertEquals(7, $node5->getAttribute('rgt'));
+        self::assertEquals(9, $node6->getAttribute('lft'));
+        self::assertEquals(14, $node6->getAttribute('rgt'));
+        self::assertEquals(3, $node3->getAttribute('lft'));
+        self::assertEquals(8, $node3->getAttribute('rgt'));
+
+        $result = $nodeToDelete->delete();
+        self::assertEquals(1, $result, 'Delete should affect exactly 1 row');
+
+        self::assertNull(Tree::findOne(4), 'Node 4 should no longer exist');
+
+        $node5->refresh();
+        $node6->refresh();
+        $node3->refresh();
+
+        self::assertEquals(4, $node5->getAttribute('lft'), 'Node 5 left should shift from 6 to 4');
+        self::assertEquals(5, $node5->getAttribute('rgt'), 'Node 5 right should shift from 7 to 5');
+
+        self::assertEquals(7, $node6->getAttribute('lft'), 'Node 6 left should shift from 9 to 7');
+        self::assertEquals(12, $node6->getAttribute('rgt'), 'Node 6 right should shift from 14 to 12');
+
+        self::assertEquals(3, $node3->getAttribute('lft'), 'Node 3 left should remain 3');
+        self::assertEquals(6, $node3->getAttribute('rgt'), 'Node 3 right should shift from 8 to 6');
+    }
+
+    public function testAfterDeleteShiftStartsAtCorrectPosition(): void
+    {
+        $this->generateFixtureTree();
+
+        $nodeToDelete = Tree::findOne(11);
+
+        self::assertNotNull($nodeToDelete);
+        self::assertEquals(18, $nodeToDelete->getAttribute('lft'));
+        self::assertEquals(19, $nodeToDelete->getAttribute('rgt'));
+
+        $node12 = Tree::findOne(12);
+        $node10 = Tree::findOne(10);
+        $node13 = Tree::findOne(13);
+
+        self::assertNotNull($node12);
+        self::assertNotNull($node10);
+        self::assertNotNull($node13);
+
+        self::assertEquals(20, $node12->getAttribute('lft'), 'Node 12 should start at 20');
+        self::assertEquals(21, $node12->getAttribute('rgt'), 'Node 12 should end at 21');
+        self::assertEquals(17, $node10->getAttribute('lft'), 'Node 10 should start at 17');
+        self::assertEquals(22, $node10->getAttribute('rgt'), 'Node 10 should end at 22');
+        self::assertEquals(23, $node13->getAttribute('lft'), 'Node 13 should start at 23');
+        self::assertEquals(28, $node13->getAttribute('rgt'), 'Node 13 should end at 28');
+
+        $result = $nodeToDelete->delete();
+        self::assertEquals(1, $result);
+        self::assertNull(Tree::findOne(11), 'Node 11 should be deleted');
+
+        $node12->refresh();
+        $node10->refresh();
+        $node13->refresh();
+
+        self::assertEquals(18, $node12->getAttribute('lft'), 'Node 12 left should shift from 20 to 18');
+        self::assertEquals(19, $node12->getAttribute('rgt'), 'Node 12 right should shift from 21 to 19');
+        self::assertEquals(17, $node10->getAttribute('lft'), 'Node 10 left should remain 17');
+        self::assertEquals(20, $node10->getAttribute('rgt'), 'Node 10 right should shift from 22 to 20');
+        self::assertEquals(21, $node13->getAttribute('lft'), 'Node 13 left should shift from 23 to 21');
+        self::assertEquals(26, $node13->getAttribute('rgt'), 'Node 13 right should shift from 28 to 26');
+        self::assertLessThan(
+            $node10->getAttribute('rgt'),
+            $node12->getAttribute('rgt'),
+            'Child node 12 must be contained within parent node 10'
+        );
+        self::assertGreaterThan(
+            $node10->getAttribute('lft'),
+            $node12->getAttribute('lft'),
+            'Child node 12 must be contained within parent node 10'
+        );
+    }
+
+    public function testDeleteWithChildrenShiftsCorrectly(): void
+    {
+        $this->generateFixtureTree();
+
+        $nodeToDelete = Tree::findOne(3);
+
+        self::assertNotNull($nodeToDelete);
+        self::assertEquals(3, $nodeToDelete->getAttribute('lft'));
+        self::assertEquals(8, $nodeToDelete->getAttribute('rgt'));
 
         $node6 = Tree::findOne(6);
 
@@ -1644,30 +1733,16 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertEquals(9, $node6->getAttribute('lft'));
         self::assertEquals(14, $node6->getAttribute('rgt'));
 
-        $node3 = Tree::findOne(3);
+        $result = $nodeToDelete->deleteWithChildren();
 
-        self::assertNotNull($node3);
-        self::assertEquals(3, $node3->getAttribute('lft'));
-        self::assertEquals(8, $node3->getAttribute('rgt'));
-
-        $result = $nodeToDelete->delete();
-
-        self::assertEquals(1, $result);
+        self::assertEquals(3, $result);
+        self::assertNull(Tree::findOne(3));
         self::assertNull(Tree::findOne(4));
-
-        $node5->refresh();
-
-        self::assertEquals(4, $node5->getAttribute('lft'));
-        self::assertEquals(5, $node5->getAttribute('rgt'));
+        self::assertNull(Tree::findOne(5));
 
         $node6->refresh();
 
-        self::assertEquals(7, $node6->getAttribute('lft'));
-        self::assertEquals(12, $node6->getAttribute('rgt'));
-
-        $node3->refresh();
-
-        self::assertEquals(3, $node3->getAttribute('lft'));
-        self::assertEquals(6, $node3->getAttribute('rgt'));
+        self::assertEquals(3, $node6->getAttribute('lft'));
+        self::assertEquals(8, $node6->getAttribute('rgt'));
     }
 }
