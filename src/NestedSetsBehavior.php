@@ -331,8 +331,6 @@ class NestedSetsBehavior extends Behavior
                 'Method "' . get_class($this->getOwner()) . '::delete" is not supported for deleting root nodes.',
             );
         }
-
-        $this->getOwner()->refresh();
     }
 
     /**
@@ -366,10 +364,6 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
-        if ($this->node?->getIsNewRecord() === false) {
-            $this->node->refresh();
-        }
-
         switch (true) {
             case $this->operation === self::OPERATION_MAKE_ROOT:
                 $this->beforeInsertRootNode();
@@ -420,10 +414,6 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeUpdate(): void
     {
-        if ($this->node?->getIsNewRecord() === false) {
-            $this->node->refresh();
-        }
-
         switch ($this->operation) {
             case self::OPERATION_MAKE_ROOT:
                 if ($this->treeAttribute === false) {
