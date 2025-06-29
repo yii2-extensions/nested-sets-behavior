@@ -363,15 +363,24 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
-        $nodeLeftValue = $this->node?->getAttribute($this->leftAttribute) ?? 0;
-        $nodeRightValue = $this->node?->getAttribute($this->rightAttribute) ?? 0;
-
-        match ($this->operation) {
-            self::OPERATION_APPEND_TO => $this->beforeInsertNode($nodeRightValue, 1),
-            self::OPERATION_INSERT_AFTER => $this->beforeInsertNode($nodeRightValue + 1, 0),
-            self::OPERATION_INSERT_BEFORE => $this->beforeInsertNode($nodeLeftValue, 0),
-            self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
-            self::OPERATION_PREPEND_TO => $this->beforeInsertNode($nodeLeftValue + 1, 1),
+        match (true) {
+            $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->rightAttribute),
+                1,
+            ),
+            $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->rightAttribute) + 1,
+                0,
+            ),
+            $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->leftAttribute),
+                0,
+            ),
+            $this->operation === self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
+            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->leftAttribute) + 1,
+                1,
+            ),
             default => throw new NotSupportedException(
                 'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
             ),
