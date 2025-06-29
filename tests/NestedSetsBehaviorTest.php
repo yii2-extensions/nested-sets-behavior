@@ -1620,4 +1620,152 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $node->makeRoot();
     }
+
+    public function testAppendNodeToExistingChildNode(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            'Child node with ID \'2\' should exist before appending.',
+        );
+
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            'Appending a new node to the existing child node should return \'true\'.',
+        );
+    }
+
+    public function testAppendToSetsCorrectDepthForNewNode(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $parent = new Tree(['name' => 'Parent']);
+
+        $parent->appendTo($root);
+
+        $parent->refresh();
+
+        self::assertEquals(1, $parent->depth);
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($parent);
+
+        $child->refresh();
+
+        self::assertEquals(2, $child->depth);
+
+        $grandchild = new Tree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child);
+        $grandchild->refresh();
+
+        self::assertEquals(3, $grandchild->depth);
+    }
+
+    public function testAppendToAndPrependToHaveSameDepthBehavior(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $parent = new Tree(['name' => 'Parent']);
+
+        $parent->appendTo($root);
+
+        $child1 = new Tree(['name' => 'Child1']);
+
+        $child1->prependTo($parent);
+
+        $child2 = new Tree(['name' => 'Child2']);
+
+        $child2->appendTo($parent);
+
+        $child1->refresh();
+
+        self::assertEquals($child1->depth, $child2->depth);
+
+        $child2->refresh();
+
+        self::assertEquals(2, $child1->depth);
+    }
+
+    public function testAppendToSetsCorrectDepthForMultipleTree(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $level1 = new MultipleTree(['name' => 'Level1']);
+
+        $level1->appendTo($root);
+
+        $level2 = new MultipleTree(['name' => 'Level2']);
+
+        $level2->appendTo($level1);
+
+        $level3 = new MultipleTree(['name' => 'Level3']);
+
+        $level3->appendTo($level2);
+
+        $level1->refresh();
+
+        self::assertEquals(1, $level1->depth);
+
+        $level2->refresh();
+
+        self::assertEquals(2, $level2->depth);
+
+        $level3->refresh();
+
+        self::assertEquals(3, $level3->depth);
+    }
+
+    public function testDepthDiffersBetweenSiblingsAndChildren(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $parent = new Tree(['name' => 'Parent']);
+
+        $parent->appendTo($root);
+
+        $sibling = new Tree(['name' => 'Sibling']);
+
+        $sibling->insertAfter($parent);
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($parent);
+
+        $parent->refresh();
+
+        self::assertEquals($parent->depth, $sibling->depth);
+        self::assertEquals($parent->depth + 1, $child->depth);
+        self::assertEquals(1, $parent->depth);
+
+        $sibling->refresh();
+
+        self::assertEquals(1, $sibling->depth);
+
+        $child->refresh();
+
+        self::assertEquals(2, $child->depth);
+    }
 }

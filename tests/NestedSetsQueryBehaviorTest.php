@@ -70,23 +70,4 @@ final class NestedSetsQueryBehaviorTest extends TestCase
 
         $behavior->leaves();
     }
-
-    public function testAppendNodeToExistingChildNode(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $childOfNode = Tree::findOne(2);
-
-        self::assertNotNull(
-            $childOfNode,
-            'Child node with ID \'2\' should exist before appending.'
-        );
-
-        self::assertTrue(
-            $node->appendTo($childOfNode),
-            'Appending a new node to the existing child node should return \'true\'.'
-        );
-    }
 }
