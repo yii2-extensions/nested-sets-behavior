@@ -412,10 +412,6 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeUpdate(): void
     {
-        if ($this->node?->getIsNewRecord() === false) {
-            $this->node->refresh();
-        }
-
         switch ($this->operation) {
             case self::OPERATION_MAKE_ROOT:
                 if ($this->treeAttribute === false) {
