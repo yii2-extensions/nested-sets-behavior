@@ -296,7 +296,10 @@ class NestedSetsBehavior extends Behavior
         $this->operation = self::OPERATION_APPEND_TO;
         $this->node = $node;
 
-        return $this->getOwner()->save($runValidation, $attributes);
+        $result = $this->getOwner()->save($runValidation, $attributes);
+        $node->refresh();
+
+        return $result;
     }
 
     /**
