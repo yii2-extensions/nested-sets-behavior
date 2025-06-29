@@ -361,27 +361,28 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
-        switch (true) {
-            case $this->operation === self::OPERATION_MAKE_ROOT:
-                $this->beforeInsertRootNode();
-                break;
-            case $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null:
-                $this->beforeInsertNode($this->node->getAttribute($this->leftAttribute) + 1, 1);
-                break;
-            case $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null:
-                $this->beforeInsertNode($this->node->getAttribute($this->rightAttribute) + 1, 0);
-                break;
-            case $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null:
-                $this->beforeInsertNode($this->node->getAttribute($this->leftAttribute), 0);
-                break;
-            case $this->operation === self::OPERATION_APPEND_TO && $this->node !== null:
-                $this->beforeInsertNode($this->node->getAttribute($this->rightAttribute), 1);
-                break;
-            default:
-                throw new NotSupportedException(
-                    'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
-                );
-        }
+        match (true) {
+            $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->rightAttribute),
+                1,
+            ),
+            $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->rightAttribute) + 1,
+                0,
+            ),
+            $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->leftAttribute),
+                0,
+            ),
+            $this->operation === self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
+            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNode(
+                $this->node->getAttribute($this->leftAttribute) + 1,
+                1,
+            ),
+            default => throw new NotSupportedException(
+                'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
+            ),
+        };
     }
 
     /**
