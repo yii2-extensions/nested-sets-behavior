@@ -247,22 +247,19 @@ class NestedSetsBehavior extends Behavior
      */
     public function afterUpdate(): void
     {
-        switch (true) {
-            case $this->operation === self::OPERATION_APPEND_TO && $this->node !== null:
-                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute), 1);
-                break;
-            case $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null:
-                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute) + 1, 0);
-                break;
-            case $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null:
-                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute), 0);
-                break;
-            case $this->operation === self::OPERATION_MAKE_ROOT:
-                $this->moveNodeAsRoot();
-                break;
-            case $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null:
-                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute) + 1, 1);
-        }
+        match (true) {
+            $this->operation === self::OPERATION_APPEND_TO && $this->node !== null =>
+                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute), 1),
+            $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null =>
+                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute) + 1, 0),
+            $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null =>
+                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute), 0),
+            $this->operation === self::OPERATION_MAKE_ROOT =>
+                $this->moveNodeAsRoot(),
+            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null =>
+                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute) + 1, 1),
+            default => null,
+        };
 
         $this->operation = null;
         $this->node = null;
