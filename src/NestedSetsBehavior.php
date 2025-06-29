@@ -328,8 +328,6 @@ class NestedSetsBehavior extends Behavior
                 'Method "' . get_class($this->getOwner()) . '::delete" is not supported for deleting root nodes.',
             );
         }
-
-        $this->getOwner()->refresh();
     }
 
     /**
