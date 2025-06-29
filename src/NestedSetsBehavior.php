@@ -1159,7 +1159,7 @@ class NestedSetsBehavior extends Behavior
      * @param int $value Left attribute value indicating the new position for the node.
      * @param int $depth Depth offset to apply to the node and its descendants after the move.
      */
-    protected function moveNode(ActiveRecord $node, $value, int $depth): void
+    protected function moveNode(ActiveRecord $node, int $value, int $depth): void
     {
         $db = $this->getOwner()::getDb();
         $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
