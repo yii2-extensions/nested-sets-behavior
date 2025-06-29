@@ -1625,7 +1625,7 @@ final class NestedSetsBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
-        $behavior = new class extends NestedSetsBehavior {
+        $behavior = new class () extends NestedSetsBehavior {
             public function callBeforeInsertNode(int|null $value, int $depth): void
             {
                 $this->beforeInsertNode($value, $depth);
@@ -1672,7 +1672,7 @@ final class NestedSetsBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
-        $behavior = new class extends NestedSetsBehavior {
+        $behavior = new class () extends NestedSetsBehavior {
             public function callBeforeInsertNode(int|null $value, int $depth): void
             {
                 $this->beforeInsertNode($value, $depth);
