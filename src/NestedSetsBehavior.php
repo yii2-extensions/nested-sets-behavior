@@ -296,7 +296,10 @@ class NestedSetsBehavior extends Behavior
         $this->operation = self::OPERATION_APPEND_TO;
         $this->node = $node;
 
-        return $this->getOwner()->save($runValidation, $attributes);
+        $result = $this->getOwner()->save($runValidation, $attributes);
+        $node->refresh();
+
+        return $result;
     }
 
     /**
@@ -1049,10 +1052,12 @@ class NestedSetsBehavior extends Behavior
             throw new Exception('Can not create a node when the target node is root.');
         }
 
-        if ($value !== null) {
-            $this->getOwner()->setAttribute($this->leftAttribute, $value);
-            $this->getOwner()->setAttribute($this->rightAttribute, $value + 1);
+        if ($value === null) {
+            throw new Exception('Value cannot be \'null\' in \'beforeInsertNode()\' method.');
         }
+
+        $this->getOwner()->setAttribute($this->leftAttribute, $value);
+        $this->getOwner()->setAttribute($this->rightAttribute, $value + 1);
 
         $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute) ?? 0;
 
@@ -1062,7 +1067,7 @@ class NestedSetsBehavior extends Behavior
             $this->getOwner()->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
         }
 
-        $this->shiftLeftRightAttribute($value ?? 0, 2);
+        $this->shiftLeftRightAttribute($value, 2);
     }
 
     /**

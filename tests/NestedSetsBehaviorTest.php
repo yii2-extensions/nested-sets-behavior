@@ -1720,61 +1720,64 @@ final class NestedSetsBehaviorTest extends TestCase
         }
     }
 
-    public function testNullCoalescingOperatorInBeforeInsertNode(): void
+    public function testReturnShiftedLeftRightAttributesWhenChildAppendedToRoot(): void
     {
         $this->createDatabase();
 
-        $behavior = new class extends NestedSetsBehavior {
-            /**
-             * @phpstan-return array<array{input: mixed, output: mixed}>
-             */
-            public function testNullCoalescing(): array
-            {
-                $testCases = [];
+        $root = new Tree(['name' => 'Root']);
 
-                $values = [null, 0, 1, 5, -1];
+        $root->makeRoot();
 
-                foreach ($values as $value) {
-                    $result = $value ?? 0;
-                    $testCases[] = ['input' => $value, 'output' => $result];
-                }
+        $child = new Tree(['name' => 'Child']);
 
-                return $testCases;
-            }
-        };
+        $child->appendTo($root);
 
-        $node = new Tree(['name' => 'Test']);
-
-        $node->attachBehavior('testBehavior', $behavior);
-        $results = $behavior->testNullCoalescing();
-        $nullCase = array_filter($results, static fn($case): bool => $case['input'] === null);
-
-        self::assertCount(
+        self::assertEquals(
             1,
-            $nullCase,
-            'There should be exactly one test case where the input is \'null\'.',
-        );
-
-        $nullCaseValues = array_values($nullCase);
-
-        self::assertNotEmpty(
-            $nullCaseValues,
-            'The test results must contain a case with \'null\' input.',
+            $root->lft,
+            'Root node left value should be \'1\' after \'makeRoot\' and appending a child.',
         );
         self::assertEquals(
-            0,
-            $nullCaseValues[0]['output'],
-            'Output for null input must be \'0\' when using the \'null\' coalescing operator.',
+            4,
+            $root->rgt,
+            'Root node right value should be \'4\' after \'makeRoot\' and appending a child.',
         );
+        self::assertEquals(
+            2,
+            $child->lft,
+            'Child node left value should be \'2\' after being appended to the root node.',
+        );
+        self::assertEquals(
+            3,
+            $child->rgt,
+            'Child node right value should be \'3\' after being appended to the root node.',
+        );
+        self::assertNotEquals(
+            0,
+            $child->lft,
+            'Child node left value should not be \'0\' after \'appendTo\' operation.',
+        );
+        self::assertNotEquals(
+            1,
+            $child->rgt,
+            'Child node right value should not be \'1\' after \'appendTo\' operation.',
+        );
+    }
 
-        $nonNullCases = array_filter($results, static fn($case): bool => $case['input'] !== null);
+    public function testThrowExceptionWhenAppendToParentWithNullRightValue(): void
+    {
+        $this->createDatabase();
 
-        foreach ($nonNullCases as $case) {
-            self::assertEquals(
-                $case['input'],
-                $case['output'],
-                'Output for \'non-null\' input must match the input value when using the \'null\' coalescing operator.',
-            );
-        }
+        $parentNode = new Tree(['name' => 'Parent Node']);
+
+        $parentNode->makeRoot();
+        $parentNode->setAttribute('rgt', null);
+
+        $childNode = new Tree(['name' => 'Child Node']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Value cannot be \'null\' in \'beforeInsertNode()\' method.');
+
+        $childNode->appendTo($parentNode);
     }
 }
