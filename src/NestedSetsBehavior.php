@@ -297,7 +297,10 @@ class NestedSetsBehavior extends Behavior
         $this->node = $node;
 
         $result = $this->getOwner()->save($runValidation, $attributes);
-        $node->refresh();
+
+        if ($result === true) {
+            $node->refresh();
+        }
 
         return $result;
     }

@@ -1727,10 +1727,12 @@ final class NestedSetsBehaviorTest extends TestCase
         $root = new Tree(['name' => 'Root']);
 
         $root->makeRoot();
+        $root->refresh();
 
         $child = new Tree(['name' => 'Child']);
 
         $child->appendTo($root);
+        $child->refresh();
 
         self::assertEquals(
             1,
