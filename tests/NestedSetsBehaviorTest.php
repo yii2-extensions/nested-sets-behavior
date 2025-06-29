@@ -1720,6 +1720,52 @@ final class NestedSetsBehaviorTest extends TestCase
         }
     }
 
+    public function testReturnShiftedLeftRightAttributesWhenChildAppendedToRoot(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+        $root->refresh();
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($root);
+        $child->refresh();
+
+        self::assertEquals(
+            1,
+            $root->lft,
+            'Root node left value should be \'1\' after \'makeRoot\' and appending a child.',
+        );
+        self::assertEquals(
+            4,
+            $root->rgt,
+            'Root node right value should be \'4\' after \'makeRoot\' and appending a child.',
+        );
+        self::assertEquals(
+            2,
+            $child->lft,
+            'Child node left value should be \'2\' after being appended to the root node.',
+        );
+        self::assertEquals(
+            3,
+            $child->rgt,
+            'Child node right value should be \'3\' after being appended to the root node.',
+        );
+        self::assertNotEquals(
+            0,
+            $child->lft,
+            'Child node left value should not be \'0\' after \'appendTo\' operation.',
+        );
+        self::assertNotEquals(
+            1,
+            $child->rgt,
+            'Child node right value should not be \'1\' after \'appendTo\' operation.',
+        );
+    }
+
     public function testThrowExceptionWhenAppendToParentWithNullRightValue(): void
     {
         $this->createDatabase();
