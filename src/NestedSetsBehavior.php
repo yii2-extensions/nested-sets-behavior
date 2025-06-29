@@ -1054,19 +1054,15 @@ class NestedSetsBehavior extends Behavior
             $this->getOwner()->setAttribute($this->rightAttribute, $value + 1);
         }
 
-        $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute);
+        $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute) ?? 0;
 
-        if ($nodeDepthValue !== null) {
-            $this->getOwner()->setAttribute($this->depthAttribute, $nodeDepthValue + $depth);
-        }
+        $this->getOwner()->setAttribute($this->depthAttribute, $nodeDepthValue + $depth);
 
         if ($this->treeAttribute !== false && $this->node !== null) {
             $this->getOwner()->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
         }
 
-        if ($value !== null) {
-            $this->shiftLeftRightAttribute($value, 2);
-        }
+        $this->shiftLeftRightAttribute($value ?? 0, 2);
     }
 
     /**

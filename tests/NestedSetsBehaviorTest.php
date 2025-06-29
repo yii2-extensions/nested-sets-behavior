@@ -1620,4 +1620,145 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $node->makeRoot();
     }
+
+    public function testSetNodeToNullAndCallBeforeInsertNodeSetsLftRgtAndDepth(): void
+    {
+        $this->createDatabase();
+
+        $behavior = new class extends NestedSetsBehavior {
+            public function callBeforeInsertNode(int|null $value, int $depth): void
+            {
+                $this->beforeInsertNode($value, $depth);
+            }
+
+            public function setNodeToNull(): void
+            {
+                $this->node = null;
+            }
+
+            public function getNodeDepth(): int|null
+            {
+                return $this->node !== null ? $this->node->getAttribute($this->depthAttribute) : null;
+            }
+        };
+
+        $newNode = new Tree(['name' => 'Test Node']);
+
+        $newNode->attachBehavior('testBehavior', $behavior);
+        $behavior->setNodeToNull();
+        $behavior->callBeforeInsertNode(5, 1);
+
+        self::assertEquals(
+            5,
+            $newNode->lft,
+            '\'beforeInsertNode\' should set \'lft\' attribute to \'5\' on the new node.',
+        );
+        self::assertEquals(
+            6,
+            $newNode->rgt,
+            '\'beforeInsertNode\' should set \'rgt\' attribute to \'6\' on the new node.',
+        );
+
+        $actualDepth = $newNode->getAttribute('depth');
+
+        self::assertEquals(
+            1,
+            $actualDepth,
+            '\'beforeInsertNode\' method should set \'depth\' attribute to \'1\' on the new node.',
+        );
+    }
+
+    public function testCallBeforeInsertNodeWithNullValueDoesNotShiftLeftValues(): void
+    {
+        $this->createDatabase();
+
+        $behavior = new class extends NestedSetsBehavior {
+            public function callBeforeInsertNode(int|null $value, int $depth): void
+            {
+                $this->beforeInsertNode($value, $depth);
+            }
+
+            public function setNodeToNull(): void
+            {
+                $this->node = null;
+            }
+        };
+
+        $newNode = new Tree(['name' => 'Test Node']);
+
+        $newNode->attachBehavior('testBehavior', $behavior);
+        $behavior->setNodeToNull();
+        $behavior->callBeforeInsertNode(5, 1);
+
+        self::assertEquals(
+            5,
+            $newNode->lft,
+            '\'beforeInsertNode\' should set \'lft\' attribute to \'5\' on the new node.',
+        );
+        self::assertEquals(
+            6,
+            $newNode->rgt,
+            '\'beforeInsertNode\' should set \'rgt\' attribute to \'6\' on the new node.',
+        );
+
+        $actualDepth = $newNode->getAttribute('depth');
+
+        self::assertEquals(
+            1,
+            $actualDepth,
+            '\'beforeInsertNode\' method should set \'depth\' attribute to \'1\' on the new node.',
+        );
+    }
+
+    public function testAppendChildNodeToRootCreatesValidTreeStructure(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        self::assertEquals(
+            1,
+            $root->lft,
+            'Root node left value should be \'1\' after \'makeRoot\'.',
+        );
+        self::assertEquals(
+            2,
+            $root->rgt,
+            'Root node right value should be \'2\' after \'makeRoot\'.',
+        );
+        self::assertEquals(
+            0,
+            $root->depth,
+            'Root node depth should be \'0\' after \'makeRoot\'.',
+        );
+
+        $child = new Tree(['name' => 'Child']);
+
+        try {
+            $result = $child->appendTo($root);
+
+            self::assertTrue(
+                $result,
+                '\'appendTo\' should return \'true\' when successfully appending a child node.',
+            );
+
+            $root->refresh();
+            $child->refresh();
+
+            self::assertGreaterThan(
+                $child->lft,
+                $child->rgt,
+                'Child node right value should be greater than its left value after \'appendTo\'.',
+            );
+            self::assertEquals(
+                1,
+                $child->depth,
+                'Child node depth should be \'1\' after being appended to the root node.',
+            );
+        } catch (Exception $e) {
+            self::fail('Real insertion failed: ' . $e->getMessage());
+        }
+    }
 }
