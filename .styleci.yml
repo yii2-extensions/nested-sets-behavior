@@ -84,3 +84,4 @@ enabled:
 
 disabled:
   - function_declaration
+  - no_unneeded_parentheses
