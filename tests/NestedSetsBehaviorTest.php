@@ -1782,4 +1782,76 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $childNode->appendTo($parentNode);
     }
+
+    public function testTransactionRollbackOnDeleteWithChildrenFailure(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(10);
+
+        self::assertNotNull(
+            $node,
+            'Node with ID \'10\' should exist before attempting to delete with children.',
+        );
+        self::assertFalse(
+            $node->isTransactional(ActiveRecord::OP_DELETE),
+            'Node should not be transactional for delete operation.',
+        );
+
+        $mockBehavior = $this->getMockBuilder(NestedSetsBehavior::class)
+            ->onlyMethods(['deleteWithChildrenInternal'])
+            ->getMock();
+        $mockBehavior
+            ->method('deleteWithChildrenInternal')
+            ->willThrowException(new Exception('Simulated delete failure'));
+
+        $node->detachBehavior('nestedSetsBehavior');
+
+        self::assertNull(
+            $node->getBehavior('nestedSetsBehavior'),
+            'Behavior must be detached before testing rollback.',
+        );
+
+        $node->attachBehavior('nestedSetsBehavior', $mockBehavior);
+
+        $behavior = $node->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            NestedSetsBehavior::class,
+            $behavior,
+            'Behavior must be attached to the node before testing rollback.',
+        );
+
+        $initialCount = Tree::find()->count();
+
+        try {
+            $node->deleteWithChildren();
+
+            self::fail('Expected exception was not thrown.');
+        } catch (Exception $e) {
+            self::assertEquals(
+                'Simulated delete failure',
+                $e->getMessage(),
+                'Exception message should match the simulated failure.',
+            );
+        }
+
+        self::assertEquals(
+            $initialCount,
+            Tree::find()->count(),
+            'No nodes should be deleted after rollback.',
+        );
+        self::assertNotNull(
+            Tree::findOne(10),
+            'Node with ID \'10\' should still exist after rollback.',
+        );
+        self::assertNotNull(
+            Tree::findOne(11),
+            'Child node with ID \'11\' should still exist after rollback.',
+        );
+        self::assertNotNull(
+            Tree::findOne(12),
+            'Child node with ID \'12\' should still exist after rollback.',
+        );
+    }
 }
