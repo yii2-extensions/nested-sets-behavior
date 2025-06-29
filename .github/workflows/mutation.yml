@@ -22,5 +22,6 @@ jobs:
     uses: php-forge/actions/.github/workflows/infection.yml@main
     with:
       phpstan: true
+      tools: infection/infection:dev-master
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
