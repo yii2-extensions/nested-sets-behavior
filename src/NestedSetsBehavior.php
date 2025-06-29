@@ -363,10 +363,6 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
-        if ($this->node?->getIsNewRecord() === false) {
-            $this->node->refresh();
-        }
-
         $nodeLeftValue = $this->node?->getAttribute($this->leftAttribute) ?? 0;
         $nodeRightValue = $this->node?->getAttribute($this->rightAttribute) ?? 0;
 
