@@ -1719,4 +1719,21 @@ final class NestedSetsBehaviorTest extends TestCase
             self::fail('Real insertion failed: ' . $e->getMessage());
         }
     }
+
+    public function testThrowExceptionWhenAppendToParentWithNullRightValue(): void
+    {
+        $this->createDatabase();
+
+        $parentNode = new Tree(['name' => 'Parent Node']);
+
+        $parentNode->makeRoot();
+        $parentNode->setAttribute('rgt', null);
+
+        $childNode = new Tree(['name' => 'Child Node']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Value cannot be \'null\' in \'beforeInsertNode()\' method.');
+
+        $childNode->appendTo($parentNode);
+    }
 }
