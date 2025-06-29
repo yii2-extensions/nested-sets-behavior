@@ -1719,4 +1719,62 @@ final class NestedSetsBehaviorTest extends TestCase
             self::fail('Real insertion failed: ' . $e->getMessage());
         }
     }
+
+    public function testNullCoalescingOperatorInBeforeInsertNode(): void
+    {
+        $this->createDatabase();
+
+        $behavior = new class extends NestedSetsBehavior {
+            /**
+             * @phpstan-return array<array{input: mixed, output: mixed}>
+             */
+            public function testNullCoalescing(): array
+            {
+                $testCases = [];
+
+                $values = [null, 0, 1, 5, -1];
+
+                foreach ($values as $value) {
+                    $result = $value ?? 0;
+                    $testCases[] = ['input' => $value, 'output' => $result];
+                }
+
+                return $testCases;
+            }
+        };
+
+        $node = new Tree(['name' => 'Test']);
+
+        $node->attachBehavior('testBehavior', $behavior);
+        $results = $behavior->testNullCoalescing();
+        $nullCase = array_filter($results, static fn($case): bool => $case['input'] === null);
+
+        self::assertCount(
+            1,
+            $nullCase,
+            'There should be exactly one test case where the input is \'null\'.',
+        );
+
+        $nullCaseValues = array_values($nullCase);
+
+        self::assertNotEmpty(
+            $nullCaseValues,
+            'The test results must contain a case with \'null\' input.',
+        );
+        self::assertEquals(
+            0,
+            $nullCaseValues[0]['output'],
+            'Output for null input must be \'0\' when using the \'null\' coalescing operator.',
+        );
+
+        $nonNullCases = array_filter($results, static fn($case): bool => $case['input'] !== null);
+
+        foreach ($nonNullCases as $case) {
+            self::assertEquals(
+                $case['input'],
+                $case['output'],
+                'Output for \'non-null\' input must match the input value when using the \'null\' coalescing operator.',
+            );
+        }
+    }
 }
