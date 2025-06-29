@@ -377,7 +377,7 @@ class NestedSetsBehavior extends Behavior
                 0,
             ),
             $this->operation === self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
-            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null =>  $this->beforeInsertNode(
+            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNode(
                 $this->node->getAttribute($this->leftAttribute) + 1,
                 1,
             ),
