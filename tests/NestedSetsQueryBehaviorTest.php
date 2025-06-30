@@ -75,47 +75,37 @@ final class NestedSetsQueryBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
+        $rootA = new MultipleTree(['name' => 'Root A']);
+
+        $rootA->makeRoot();
+
+        $rootC = new MultipleTree(['name' => 'Root C']);
+
+        $rootC->makeRoot();
+
+        $rootB = new MultipleTree(['name' => 'Root B']);
+
+        $rootB->makeRoot();
+
+        $rootD = new MultipleTree(['name' => 'Root D']);
+
+        $rootD->makeRoot();
         $command = $this->getDb()->createCommand();
 
-        $command->insert(
-            'multiple_tree',
-            [
-                'id' => 10,
-                'name' => 'Root A',
-                'lft' => 1,
-                'rgt' => 2,
-                'tree' => 1,
-                'depth' => 0,
-            ],
-        )->execute();
-        $command->insert(
-            'multiple_tree',
-            [
-                'id' => 5,
-                'name' => 'Root B',
-                'lft' => 1,
-                'rgt' => 2,
-                'tree' => 2,
-                'depth' => 0,
-            ],
-        )->execute();
-        $command->insert(
-            'multiple_tree',
-            [
-                'id' => 15,
-                'name' => 'Root C',
-                'lft' => 1,
-                'rgt' => 2,
-                'tree' => 3,
-                'depth' => 0,
-            ],
-        )->execute();
+        $command->update('multiple_tree', ['tree' => 1], ['name' => 'Root A'])->execute();
+        $command->update('multiple_tree', ['tree' => 2], ['name' => 'Root B'])->execute();
+        $command->update('multiple_tree', ['tree' => 3], ['name' => 'Root C'])->execute();
+        $command->update('multiple_tree', ['tree' => 4], ['name' => 'Root D'])->execute();
 
         $rootsList = MultipleTree::find()->roots()->all();
 
-        $expectedOrderById = ['Root B', 'Root A', 'Root C'];
+        $expectedOrder = ['Root A', 'Root B', 'Root C', 'Root D'];
 
-        self::assertCount(3, $rootsList);
+        self::assertCount(
+            4,
+            $rootsList,
+            'Roots list should contain exactly \'4\' elements.',
+        );
 
         foreach ($rootsList as $index => $root) {
             self::assertInstanceOf(
@@ -123,11 +113,11 @@ final class NestedSetsQueryBehaviorTest extends TestCase
                 $root,
                 "Root at index {$index} should be an instance of \'MultipleTree\'.",
             );
-            if (isset($expectedOrderById[$index])) {
+            if (isset($expectedOrder[$index])) {
                 self::assertEquals(
-                    $expectedOrderById[$index],
+                    $expectedOrder[$index],
                     $root->getAttribute('name'),
-                    "Root at index {$index} should be {$expectedOrderById[$index]} when ordered by ID.",
+                    "Root at index {$index} should be {$expectedOrder[$index]} in correct \'tree\' order.",
                 );
             }
         }
