@@ -4,7 +4,13 @@ declare(strict_types=1);
 
 use yii\db\{ActiveQuery, ActiveRecord};
 use yii2\extensions\nestedsets\{NestedSetsBehavior, NestedSetsQueryBehavior};
-use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, MultipleTreeQuery, Tree, TreeQuery};
+use yii2\extensions\nestedsets\tests\support\model\{
+    MultipleTree,
+    MultipleTreeQuery,
+    Tree,
+    TreeQuery,
+    TreeWithStrictValidation,
+};
 
 return [
     'behaviors' => [
@@ -25,6 +31,9 @@ return [
         ],
         TreeQuery::class => [
             NestedSetsQueryBehavior::class,
+        ],
+        TreeWithStrictValidation::class => [
+            NestedSetsBehavior::class,
         ],
     ],
 ];
