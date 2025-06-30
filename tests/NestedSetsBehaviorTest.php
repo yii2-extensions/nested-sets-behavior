@@ -2243,4 +2243,32 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'moveNode\' method should remain protected to allow subclass customization.',
         );
     }
+
+    public function testProtectedMoveNodeAsRootRemainsAccessibleToSubclasses(): void
+    {
+        $this->createDatabase();
+
+        $sourceNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Source Node',
+                'tree' => 5,
+            ],
+        );
+
+        $sourceNode->makeRoot();
+        $sourceBehavior = $sourceNode->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $sourceBehavior,
+            '\'ExtendableMultipleTree\' should use \'ExtendableNestedSetsBehavior\'.',
+        );
+
+        $sourceBehavior->exposedMoveNodeAsRoot();
+
+        self::assertTrue(
+            $sourceBehavior->wasMethodCalled('moveNodeAsRoot'),
+            '\'moveNodeAsRoot\' method should remain protected to allow subclass customization.',
+        );
+    }
 }
