@@ -10,7 +10,13 @@ use yii\base\NotSupportedException;
 use yii\db\{ActiveRecord, Exception, StaleObjectException};
 use yii\helpers\ArrayHelper;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
-use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeWithStrictValidation};
+use yii2\extensions\nestedsets\tests\support\model\{
+    ExtendableMultipleTree,
+    MultipleTree,
+    Tree,
+    TreeWithStrictValidation,
+};
+use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
 use function get_class;
 use function sprintf;
@@ -2043,6 +2049,40 @@ final class NestedSetsBehaviorTest extends TestCase
             'x',
             $childNode2->name,
             'Node name should remain unchanged after \'prependTo()\' with \'runValidation=false\'.',
+        );
+    }
+
+    public function testProtectedApplyTreeAttributeConditionRemainAccessibleToSubclasses(): void
+    {
+        $this->createDatabase();
+
+        $testNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Extensibility Test Node',
+                'tree' => 1,
+            ],
+        );
+
+        $extendableBehavior = $testNode->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $extendableBehavior,
+            '\'ExtendableMultipleTree\' should use \'ExtendableNestedSetsBehavior\'.',
+        );
+
+        $condition = ['name' => 'test'];
+
+        $extendableBehavior->exposedApplyTreeAttributeCondition($condition);
+
+        self::assertTrue(
+            $extendableBehavior->wasMethodCalled('applyTreeAttributeCondition'),
+            '\'applyTreeAttributeCondition\' method should remain protected to allow subclass access.',
+        );
+        self::assertEquals(
+            ['and', ['name' => 'test'], ['tree' => 1]],
+            $condition,
+            '\'Tree\' attribute condition should be applied correctly when \'treeAttribute\' is enabled.',
         );
     }
 }
