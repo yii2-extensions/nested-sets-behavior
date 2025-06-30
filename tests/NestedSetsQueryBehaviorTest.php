@@ -189,4 +189,65 @@ final class NestedSetsQueryBehaviorTest extends TestCase
             }
         }
     }
+
+    public function testRootsMethodRequiresLeftAttributeOrderingForSingleTreeScenario(): void
+    {
+        $this->createDatabase();
+
+        $root1 = new MultipleTree(['name' => 'Root 1']);
+
+        $root1->makeRoot();
+
+        $root2 = new MultipleTree(['name' => 'Root 2']);
+
+        $root2->makeRoot();
+
+        $root3 = new MultipleTree(['name' => 'Root 3']);
+
+        $root3->makeRoot();
+
+        $command = $this->getDb()->createCommand();
+
+        $command->update('multiple_tree', ['tree' => 3, 'lft' => 1, 'rgt' => 2], ['name' => 'Root 1'])->execute();
+        $command->update('multiple_tree', ['tree' => 1, 'lft' => 1, 'rgt' => 2], ['name' => 'Root 2'])->execute();
+        $command->update('multiple_tree', ['tree' => 5, 'lft' => 1, 'rgt' => 2], ['name' => 'Root 3'])->execute();
+
+        $roots = MultipleTree::find()->roots()->all();
+
+        self::assertCount(
+            3,
+            $roots,
+            'Should return exactly \'3\' root nodes.',
+        );
+
+        $expectedOrder = ['Root 2', 'Root 1', 'Root 3'];
+        $expectedTreeValues = [1, 3, 5];
+
+        foreach ($roots as $index => $root) {
+            self::assertInstanceOf(
+                MultipleTree::class,
+                $root,
+                "Root at index {$index} should be an instance of 'MultipleTree'."
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $root->getAttribute('name'),
+                    "Root at index {$index} should be {$expectedOrder[$index]} when ordered by 'tree' then 'left' " .
+                    'attribute.',
+                );
+                self::assertEquals(
+                    $expectedTreeValues[$index],
+                    $root->getAttribute('tree'),
+                    "Root at index {$index} should have tree value {$expectedTreeValues[$index]}.",
+                );
+                self::assertEquals(
+                    1,
+                    $root->getAttribute('lft'),
+                    "Root at index {$index} should have left value \'1\' (all roots must have \'lft=1\').",
+                );
+            }
+        }
+    }
 }
