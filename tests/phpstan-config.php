@@ -5,6 +5,7 @@ declare(strict_types=1);
 use yii\db\{ActiveQuery, ActiveRecord};
 use yii2\extensions\nestedsets\{NestedSetsBehavior, NestedSetsQueryBehavior};
 use yii2\extensions\nestedsets\tests\support\model\{
+    ExtendableMultipleTree,
     MultipleTree,
     MultipleTreeQuery,
     Tree,
@@ -19,6 +20,9 @@ return [
         ],
         ActiveQuery::class => [
             NestedSetsQueryBehavior::class,
+        ],
+        ExtendableMultipleTree::class => [
+            NestedSetsBehavior::class,
         ],
         MultipleTree::class => [
             NestedSetsBehavior::class,
