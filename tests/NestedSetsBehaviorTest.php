@@ -20,6 +20,7 @@ use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
 use function get_class;
 use function sprintf;
+use function sort;
 
 final class NestedSetsBehaviorTest extends TestCase
 {
@@ -2269,6 +2270,55 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertTrue(
             $sourceBehavior->wasMethodCalled('moveNodeAsRoot'),
             '\'moveNodeAsRoot\' method should remain protected to allow subclass customization.',
+        );
+    }
+
+    public function testChildrenAreReturnedInCorrectOrderByLeftAttribute(): void
+    {
+        $this->generateFixtureTree();
+
+        $treeChildren = Tree::findOne(9)?->children()->all() ?? [];
+
+        self::assertNotEmpty(
+            $treeChildren,
+            'Tree node with ID \'9\' should have children.',
+        );
+
+        $leftValues = [];
+
+        foreach ($treeChildren as $child) {
+            $leftValues[] = $child->getAttribute('lft');
+        }
+
+        $sortedLeftValues = $leftValues;
+        sort($sortedLeftValues);
+
+        self::assertEquals(
+            $sortedLeftValues,
+            $leftValues,
+            'Children should be ordered by \'left\' attribute in ascending order.',
+        );
+
+        $multipleTreeChildren = MultipleTree::findOne(31)?->children()->all() ?? [];
+
+        self::assertNotEmpty(
+            $multipleTreeChildren,
+            'MultipleTree node with ID \'31\' should have children.',
+        );
+
+        $leftValues = [];
+
+        foreach ($multipleTreeChildren as $child) {
+            $leftValues[] = $child->getAttribute('lft');
+        }
+
+        $sortedLeftValues = $leftValues;
+        sort($sortedLeftValues);
+
+        self::assertEquals(
+            $sortedLeftValues,
+            $leftValues,
+            'MultipleTree children should be ordered by \'left\' attribute in ascending order.',
         );
     }
 }
