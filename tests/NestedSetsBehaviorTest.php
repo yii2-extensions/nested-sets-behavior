@@ -18,8 +18,8 @@ use yii2\extensions\nestedsets\tests\support\model\{
 };
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
+use function array_map;
 use function get_class;
-use function sort;
 use function sprintf;
 
 final class NestedSetsBehaviorTest extends TestCase
@@ -2273,7 +2273,7 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testChildrenAreReturnedInCorrectOrderByLeftAttribute(): void
+    public function testChildrenMethodReturnsResultsInCorrectLeftAttributeOrder(): void
     {
         $this->generateFixtureTree();
 
@@ -2284,19 +2284,32 @@ final class NestedSetsBehaviorTest extends TestCase
             'Tree node with ID \'9\' should have children.',
         );
 
-        $leftValues = [];
+        /** @phpstan-var array<int, array{id: int}> $expectedTreeChildren */
+        $expectedTreeChildren = require "{$this->fixtureDirectory}/test-children.php";
 
-        foreach ($treeChildren as $child) {
-            $leftValues[] = $child->getAttribute('lft');
-        }
-
-        $sortedLeftValues = $leftValues;
-        sort($sortedLeftValues);
+        $actualIds = array_map(
+            static fn($child): mixed => $child->getAttribute('id'),
+            $treeChildren,
+        );
+        $expectedIds = array_map(
+            static fn($child): mixed => $child['id'],
+            $expectedTreeChildren,
+        );
 
         self::assertEquals(
-            $sortedLeftValues,
-            $leftValues,
-            'Children should be ordered by \'left\' attribute in ascending order.',
+            $expectedIds,
+            $actualIds,
+            'Children should be returned in the exact order defined by \'left\' attribute (ascending).',
+        );
+
+        $leftValues = array_map(
+            static fn($child): mixed => $child->getAttribute('lft'),
+            $treeChildren,
+        );
+
+        self::assertTrue(
+            $this->isArraySortedAscending($leftValues),
+            '\'Left\' attribute values should be in ascending order.',
         );
 
         $multipleTreeChildren = MultipleTree::findOne(31)?->children()->all() ?? [];
@@ -2306,46 +2319,128 @@ final class NestedSetsBehaviorTest extends TestCase
             'MultipleTree node with ID \'31\' should have children.',
         );
 
-        $leftValues = [];
+        /** @phpstan-var array<int, array{id: int}> $expectedMultipleTreeChildren */
+        $expectedMultipleTreeChildren = require "{$this->fixtureDirectory}/test-children-multiple-tree.php";
 
-        foreach ($multipleTreeChildren as $child) {
-            $leftValues[] = $child->getAttribute('lft');
-        }
-
-        $sortedLeftValues = $leftValues;
-        sort($sortedLeftValues);
+        $actualMultipleIds = array_map(
+            static fn($child): mixed => $child->getAttribute('id'),
+            $multipleTreeChildren,
+        );
+        $expectedMultipleIds = array_map(
+            static fn($child): mixed => $child['id'],
+            $expectedMultipleTreeChildren,
+        );
 
         self::assertEquals(
-            $sortedLeftValues,
-            $leftValues,
-            'MultipleTree children should be ordered by \'left\' attribute in ascending order.',
+            $expectedMultipleIds,
+            $actualMultipleIds,
+            'MultipleTree children should be returned in the exact order defined by \'left\' attribute (ascending).',
+        );
+
+        $multipleLeftValues = array_map(
+            static fn($child): mixed => $child->getAttribute('lft'),
+            $multipleTreeChildren,
+        );
+
+        self::assertTrue(
+            $this->isArraySortedAscending($multipleLeftValues),
+            'MultipleTree \'left\' attribute values should be in ascending order.',
         );
     }
 
-    public function testParentsAreReturnedInCorrectOrderByLeftAttribute(): void
+    public function testParentsMethodReturnsResultsInCorrectLeftAttributeOrder(): void
     {
         $this->generateFixtureTree();
 
-        $treeParents = Tree::findOne(12)?->parents()->all() ?? [];
+        $treeParents = Tree::findOne(11)?->parents()->all() ?? [];
 
         self::assertNotEmpty(
             $treeParents,
-            'Tree node with ID \'12\' should have parents.',
+            'Tree node with ID \'11\' should have parents.',
         );
 
-        $leftValues = [];
+        /** @phpstan-var array<int, array{id: int}> $expectedTreeParents */
+        $expectedTreeParents = require "{$this->fixtureDirectory}/test-parents.php";
 
-        foreach ($treeParents as $parent) {
-            $leftValues[] = $parent->getAttribute('lft');
-        }
-
-        $sortedLeftValues = $leftValues;
-        sort($sortedLeftValues);
+        $actualIds = array_map(
+            static fn($parent): mixed => $parent->getAttribute('id'),
+            $treeParents,
+        );
+        $expectedIds = array_map(
+            static fn($parent): mixed => $parent['id'],
+            $expectedTreeParents,
+        );
 
         self::assertEquals(
-            $sortedLeftValues,
-            $leftValues,
-            'Parents should be ordered by \'left\' attribute in ascending order.',
+            $expectedIds,
+            $actualIds,
+            'Parents should be returned in the exact order defined by \'left\' attribute (ascending).',
         );
+
+        $leftValues = array_map(
+            static fn($parent): mixed => $parent->getAttribute('lft'),
+            $treeParents,
+        );
+
+        self::assertTrue(
+            $this->isArraySortedAscending($leftValues),
+            'Parent \'left\' attribute values should be in ascending order.',
+        );
+    }
+
+    public function testLeavesMethodReturnsResultsInCorrectLeftAttributeOrder(): void
+    {
+        $this->generateFixtureTree();
+
+        $treeLeaves = Tree::findOne(9)?->leaves()->all() ?? [];
+
+        self::assertNotEmpty(
+            $treeLeaves,
+            'Tree node with ID \'9\' should have leaf nodes.',
+        );
+
+        /** @phpstan-var array<int, array{id: int}> $expectedTreeLeaves */
+        $expectedTreeLeaves = require "{$this->fixtureDirectory}/test-leaves.php";
+
+        $actualIds = array_map(
+            static fn($leaf): mixed => $leaf->getAttribute('id'),
+            $treeLeaves,
+        );
+        $expectedIds = array_map(
+            static fn($leaf): mixed => $leaf['id'],
+            $expectedTreeLeaves,
+        );
+
+        self::assertEquals(
+            $expectedIds,
+            $actualIds,
+            'Leaves should be returned in the exact order defined by \'left\' attribute (ascending).',
+        );
+
+        $leftValues = array_map(
+            static fn($leaf): mixed => $leaf->getAttribute('lft'),
+            $treeLeaves,
+        );
+
+        self::assertTrue(
+            $this->isArraySortedAscending($leftValues),
+            'Leaf \'left\' attribute values should be in ascending order.',
+        );
+    }
+
+    /**
+     * @phpstan-param array<int, mixed> $array
+     */
+    private function isArraySortedAscending(array $array): bool
+    {
+        $count = count($array);
+
+        for ($i = 1; $i < $count; $i++) {
+            if (isset($array[$i], $array[$i - 1]) === false || $array[$i] < $array[$i - 1]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
