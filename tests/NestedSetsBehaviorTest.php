@@ -2052,7 +2052,7 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testProtectedApplyTreeAttributeConditionRemainAccessibleToSubclasses(): void
+    public function testProtectedApplyTreeAttributeConditionRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
 
@@ -2086,7 +2086,7 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testProtectedBeforeInsertNodeRemainAccessibleToSubclasses(): void
+    public function testProtectedBeforeInsertNodeRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
 
