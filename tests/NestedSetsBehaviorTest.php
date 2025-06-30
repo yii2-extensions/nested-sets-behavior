@@ -2207,7 +2207,7 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testProtectedMoveNodeRemainAccessibleToSubclasses(): void
+    public function testProtectedMoveNodeRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
 
