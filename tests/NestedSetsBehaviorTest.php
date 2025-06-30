@@ -2006,11 +2006,11 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $childNode = new TreeWithStrictValidation(
             [
-                'name' => '',
+                'name' => 'x',
             ],
         );
 
-        $resultWithValidation = $childNode->prependTo($parentNode, true);
+        $resultWithValidation = $childNode->prependTo($parentNode);
         $hasError1 = $childNode->hasErrors();
 
         self::assertFalse(
@@ -2024,7 +2024,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $childNode2 = new TreeWithStrictValidation(
             [
-                'name' => '',
+                'name' => 'x',
             ],
         );
 
@@ -2038,6 +2038,11 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertFalse(
             $hasError2,
             'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
+        );
+        self::assertSame(
+            'x',
+            $childNode2->name,
+            'Node name should remain unchanged after \'prependTo()\' with \'runValidation=false\'.',
         );
     }
 }
