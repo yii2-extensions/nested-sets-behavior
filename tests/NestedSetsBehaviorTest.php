@@ -2169,4 +2169,41 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'beforeInsertRootNode\' should set \'depth\' attribute to \'0\'.',
         );
     }
+
+    public function testProtectedShiftLeftRightAttributeRemainsAccessibleToSubclasses(): void
+    {
+        $this->createDatabase();
+
+        $parentNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Parent Node',
+                'tree' => 3,
+            ],
+        );
+
+        $parentNode->makeRoot();
+
+        $childNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Child Node',
+                'tree' => 3,
+            ],
+        );
+
+        $childNode->appendTo($parentNode);
+        $childBehavior = $childNode->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $childBehavior,
+            '\'ExtendableMultipleTree\' should use \'ExtendableNestedSetsBehavior\'.',
+        );
+
+        $childBehavior->exposedShiftLeftRightAttribute(1, 2);
+
+        self::assertTrue(
+            $childBehavior->wasMethodCalled('shiftLeftRightAttribute'),
+            '\'shiftLeftRightAttribute\' method should remain protected to allow subclass customization.',
+        );
+    }
 }
