@@ -2126,4 +2126,47 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'beforeInsertNode\' should set the \'depth\' attribute correctly.',
         );
     }
+
+    public function testProtectedBeforeInsertRootNodeRemainsAccessibleToSubclasses(): void
+    {
+        $this->createDatabase();
+
+        $rootTestNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Root Test Node',
+                'tree' => 2,
+            ],
+        );
+
+        $rootBehavior = $rootTestNode->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $rootBehavior,
+            '\'ExtendableMultipleTree\' should use \'ExtendableNestedSetsBehavior\'.',
+        );
+
+        $rootBehavior->exposedBeforeInsertRootNode();
+
+        self::assertTrue(
+            $rootBehavior->wasMethodCalled('beforeInsertRootNode'),
+            '\'beforeInsertRootNode\' method should remain protected to allow subclass customization.',
+        );
+
+        self::assertEquals(
+            1,
+            $rootTestNode->lft,
+            '\'beforeInsertRootNode\' should set \'left\' attribute to \'1\'.',
+        );
+        self::assertEquals(
+            2,
+            $rootTestNode->rgt,
+            '\'beforeInsertRootNode\' should set \'right\' attribute to \'2\'.',
+        );
+        self::assertEquals(
+            0,
+            $rootTestNode->depth,
+            '\'beforeInsertRootNode\' should set \'depth\' attribute to \'0\'.',
+        );
+    }
 }
