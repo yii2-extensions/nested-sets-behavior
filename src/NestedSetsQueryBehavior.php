@@ -86,7 +86,7 @@ class NestedSetsQueryBehavior extends Behavior
      *
      * Selects nodes where the left attribute equals `1`, indicating root nodes in the hierarchical structure.
      *
-     * If the model defines a primary key, the result is ordered by that attribute in ascending order.
+     * The result is ordered by the left attribute, and if the tree attribute is enabled, by the tree attribute as well.
      *
      * This method is useful for efficiently fetching all root nodes in single-tree or multi-tree scenarios managed by
      * the nested sets pattern.
@@ -105,13 +105,15 @@ class NestedSetsQueryBehavior extends Behavior
     {
         $class = $this->getOwner()->modelClass;
         $model = new $class();
-        $sortAttribute = $model::primaryKey()[0] ?? null;
+
+        $columns = [$model->leftAttribute => SORT_ASC];
+
+        if ($model->treeAttribute !== false) {
+            $columns = [$model->treeAttribute => SORT_ASC] + $columns;
+        }
 
         $activeQuery = $this->getOwner()->andWhere([$model->leftAttribute => 1]);
-
-        if ($sortAttribute !== null) {
-            $activeQuery->addOrderBy([$sortAttribute => SORT_ASC]);
-        }
+        $activeQuery->addOrderBy($columns);
 
         return $activeQuery;
     }

@@ -75,20 +75,31 @@ final class NestedSetsQueryBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
-        $rootD = new MultipleTree(['name' => 'Root D']);
-        $rootD->makeRoot();
-
-        $rootB = new MultipleTree(['name' => 'Root B']);
-        $rootB->makeRoot();
-
         $rootA = new MultipleTree(['name' => 'Root A']);
+
         $rootA->makeRoot();
 
         $rootC = new MultipleTree(['name' => 'Root C']);
+
         $rootC->makeRoot();
 
+        $rootB = new MultipleTree(['name' => 'Root B']);
+
+        $rootB->makeRoot();
+
+        $rootD = new MultipleTree(['name' => 'Root D']);
+
+        $rootD->makeRoot();
+        $command = $this->getDb()->createCommand();
+
+        $command->update('multiple_tree', ['tree' => 1], ['name' => 'Root A'])->execute();
+        $command->update('multiple_tree', ['tree' => 2], ['name' => 'Root B'])->execute();
+        $command->update('multiple_tree', ['tree' => 3], ['name' => 'Root C'])->execute();
+        $command->update('multiple_tree', ['tree' => 4], ['name' => 'Root D'])->execute();
+
         $rootsList = MultipleTree::find()->roots()->all();
-        $expectedOrder = ['Root D', 'Root B', 'Root A', 'Root C'];
+
+        $expectedOrder = ['Root A', 'Root B', 'Root C', 'Root D'];
 
         self::assertCount(
             4,
@@ -102,17 +113,11 @@ final class NestedSetsQueryBehaviorTest extends TestCase
                 $root,
                 "Root at index {$index} should be an instance of \'MultipleTree\'.",
             );
-            self::assertArrayHasKey(
-                $index,
-                $expectedOrder,
-                "Expected order array should have key at index {$index}.",
-            );
-
             if (isset($expectedOrder[$index])) {
                 self::assertEquals(
                     $expectedOrder[$index],
                     $root->getAttribute('name'),
-                    "Root at index {$index} should be {$expectedOrder[$index]} in correct \'id\' order.",
+                    "Root at index {$index} should be {$expectedOrder[$index]} in correct \'tree\' order.",
                 );
             }
         }
