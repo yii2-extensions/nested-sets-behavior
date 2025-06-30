@@ -1935,4 +1935,64 @@ final class NestedSetsBehaviorTest extends TestCase
             'Node should exist in database after inserting before target node with validation disabled.',
         );
     }
+
+    public function testMakeRootWithRunValidationParameterUsingStrictValidation(): void
+    {
+        $this->createDatabase();
+
+        $invalidNode = new TreeWithStrictValidation(['name' => 'x']);
+
+        $result1 = $invalidNode->makeRoot();
+        $hasError1 = $invalidNode->hasErrors();
+
+        self::assertFalse(
+            $result1,
+            '\'makeRoot()\' should return \'false\' when \'runValidation=true\' and data fails validation.',
+        );
+        self::assertTrue(
+            $hasError1,
+            'Node should have validation errors when \'runValidation=true\' and data is invalid.',
+        );
+
+        $invalidNode2 = new TreeWithStrictValidation(['name' => 'x']);
+
+        $result2 = $invalidNode2->makeRoot(false);
+        $hasError2 = $invalidNode2->hasErrors();
+
+        self::assertTrue(
+            $result2,
+            '\'makeRoot()\' should return \'true\' when \'runValidation=false\', even with invalid data ' .
+            'that would fail validation.',
+        );
+        self::assertFalse(
+            $hasError2,
+            'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
+        );
+
+        $persistedNode = TreeWithStrictValidation::findOne($invalidNode2->id);
+
+        self::assertNotNull(
+            $persistedNode,
+            'Node should exist in database after makeRoot with validation disabled.',
+        );
+        self::assertTrue(
+            $persistedNode->isRoot(),
+            'Node should be a root node after makeRoot operation.',
+        );
+        self::assertEquals(
+            1,
+            $persistedNode->lft,
+            'Root node should have left value of 1.',
+        );
+        self::assertEquals(
+            2,
+            $persistedNode->rgt,
+            'Root node should have right value of 2.',
+        );
+        self::assertEquals(
+            0,
+            $persistedNode->depth,
+            'Root node should have depth of 0.',
+        );
+    }
 }
