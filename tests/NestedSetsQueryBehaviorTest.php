@@ -85,7 +85,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
                 'lft' => 1,
                 'rgt' => 2,
                 'tree' => 1,
-                'depth' => 0
+                'depth' => 0,
             ],
         )->execute();
         $command->insert(
@@ -96,7 +96,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
                 'lft' => 1,
                 'rgt' => 2,
                 'tree' => 2,
-                'depth' => 0
+                'depth' => 0,
             ],
         )->execute();
         $command->insert(
@@ -107,7 +107,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
                 'lft' => 1,
                 'rgt' => 2,
                 'tree' => 3,
-                'depth' => 0
+                'depth' => 0,
             ],
         )->execute();
 
