@@ -19,8 +19,8 @@ use yii2\extensions\nestedsets\tests\support\model\{
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
 use function get_class;
-use function sprintf;
 use function sort;
+use function sprintf;
 
 final class NestedSetsBehaviorTest extends TestCase
 {
@@ -2319,6 +2319,33 @@ final class NestedSetsBehaviorTest extends TestCase
             $sortedLeftValues,
             $leftValues,
             'MultipleTree children should be ordered by \'left\' attribute in ascending order.',
+        );
+    }
+
+    public function testParentsAreReturnedInCorrectOrderByLeftAttribute(): void
+    {
+        $this->generateFixtureTree();
+
+        $treeParents = Tree::findOne(12)?->parents()->all() ?? [];
+
+        self::assertNotEmpty(
+            $treeParents,
+            'Tree node with ID \'12\' should have parents.',
+        );
+
+        $leftValues = [];
+
+        foreach ($treeParents as $parent) {
+            $leftValues[] = $parent->getAttribute('lft');
+        }
+
+        $sortedLeftValues = $leftValues;
+        sort($sortedLeftValues);
+
+        self::assertEquals(
+            $sortedLeftValues,
+            $leftValues,
+            'Parents should be ordered by \'left\' attribute in ascending order.',
         );
     }
 }
