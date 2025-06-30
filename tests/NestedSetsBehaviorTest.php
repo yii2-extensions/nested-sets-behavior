@@ -623,7 +623,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $node,
-            'Node with ID \'9\' must exist before attempting to append to a node in another tree.',
+            'Node with ID \'9\' must exist before attempting to \'appendTo()\' a node in another tree.',
         );
 
         $node->name = 'Updated node 2';
@@ -632,7 +632,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $childOfNode,
-            'Target node with ID \'53\' must exist before attempting to append to it.',
+            'Target node with ID \'53\' must exist before attempting to \'appendTo()\' it.',
         );
 
         self::assertTrue(
@@ -719,7 +719,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $node,
-            'Node with ID \'9\' must exist before calling insertBefore() on another node.',
+            'Node with ID \'9\' must exist before calling \'insertBefore()\' on another node.',
         );
 
         $node->name = 'Updated node 2';
@@ -728,7 +728,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $childOfNode,
-            'Target node with ID \'2\' must exist before calling insertBefore() on it.',
+            'Target node with ID \'2\' must exist before calling \'insertBefore()\' on it.',
         );
         self::assertTrue(
             $node->insertBefore($childOfNode),
@@ -739,7 +739,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $node,
-            'Node with ID \'31\' must exist before calling insertBefore() on another node.',
+            'Node with ID \'31\' must exist before calling \'insertBefore()\' on another node.',
         );
 
         $node->name = 'Updated node 2';
@@ -748,11 +748,11 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $childOfNode,
-            'Target node with ID \'24\' must exist before calling insertBefore() on it.',
+            'Target node with ID \'24\' must exist before calling \'insertBefore()\' on it.',
         );
         self::assertTrue(
             $node->insertBefore($childOfNode),
-            'insertBefore() should return true when moving node \'31\' before node \'24\' in MultipleTree.',
+            '\'insertBefore()\' should return \'true\' when moving node \'31\' before node \'24\' in \'MultipleTree\'.',
         );
 
         $simpleXML = $this->loadFixtureXML('test-insert-before-exists-up.xml');
@@ -760,7 +760,7 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
-            'Resulting dataset after insertBefore() must match the expected XML structure.',
+            'Resulting dataset after \'insertBefore()\' must match the expected XML structure.',
         );
     }
 
@@ -772,7 +772,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $node,
-            'Node with ID \'9\' should exist before calling insertBefore() on another node.',
+            'Node with ID \'9\' should exist before calling \'insertBefore()\' on another node.',
         );
 
         $node->name = 'Updated node 2';
@@ -781,18 +781,18 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $childOfNode,
-            'Target node with ID \'16\' should exist before calling insertBefore() on it.',
+            'Target node with ID \'16\' should exist before calling \'insertBefore()\' on it.',
         );
         self::assertTrue(
             $node->insertBefore($childOfNode),
-            'insertBefore() should return true when moving node \'9\' before node \'16\' in Tree.',
+            '\'insertBefore()\' should return \'true\' when moving node \'9\' before node \'16\' in \'Tree\'.',
         );
 
         $node = MultipleTree::findOne(31);
 
         self::assertNotNull(
             $node,
-            'Node with ID \'31\' should exist before calling insertBefore() on another node.',
+            'Node with ID \'31\' should exist before calling \'insertBefore()\' on another node.',
         );
 
         $node->name = 'Updated node 2';
@@ -801,11 +801,11 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $childOfNode,
-            'Target node with ID \'38\' should exist before calling insertBefore() on it.',
+            'Target node with ID \'38\' should exist before calling \'insertBefore()\' on it.',
         );
         self::assertTrue(
             $node->insertBefore($childOfNode),
-            'insertBefore() should return true when moving node \'31\' before node \'38\' in MultipleTree.',
+            '\'insertBefore()\' should return \'true\' when moving node \'31\' before node \'38\' in \'MultipleTree\'.',
         );
 
         $simpleXML = $this->loadFixtureXML('test-insert-before-exists-down.xml');
@@ -813,7 +813,7 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertEquals(
             $this->buildFlatXMLDataSet($this->getDataSet()),
             $simpleXML->asXML(),
-            'Resulting dataset after insertBefore() must match the expected XML structure.',
+            'Resulting dataset after \'insertBefore()\' must match the expected XML structure.',
         );
     }
 
@@ -1719,7 +1719,7 @@ final class NestedSetsBehaviorTest extends TestCase
             self::assertEquals(
                 1,
                 $child->depth,
-                'Child node depth should be \'1\' after being appended to the root node.',
+                'Child node depth should be \'1\' after being \'appendTo\' the root node.',
             );
         } catch (Exception $e) {
             self::fail('Real insertion failed: ' . $e->getMessage());
@@ -1753,12 +1753,12 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertEquals(
             2,
             $child->lft,
-            'Child node left value should be \'2\' after being appended to the root node.',
+            'Child node left value should be \'2\' after being \'appendTo\' to the root node.',
         );
         self::assertEquals(
             3,
             $child->rgt,
-            'Child node right value should be \'3\' after being appended to the root node.',
+            'Child node right value should be \'3\' after being \'appendTo\' the root node.',
         );
         self::assertNotEquals(
             0,
@@ -1979,26 +1979,26 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertNotNull(
             $persistedNode,
-            'Node should exist in database after makeRoot with validation disabled.',
+            'Node should exist in database after \'makeRoot\' with validation disabled.',
         );
         self::assertTrue(
             $persistedNode->isRoot(),
-            'Node should be a root node after makeRoot operation.',
+            'Node should be a root node after \'makeRoot\' operation.',
         );
         self::assertEquals(
             1,
             $persistedNode->lft,
-            'Root node should have left value of 1.',
+            'Root node should have left value of \'1\'.',
         );
         self::assertEquals(
             2,
             $persistedNode->rgt,
-            'Root node should have right value of 2.',
+            'Root node should have right value of \'2\'.',
         );
         self::assertEquals(
             0,
             $persistedNode->depth,
-            'Root node should have depth of 0.',
+            'Root node should have depth of \'0\'.',
         );
     }
 
@@ -2021,7 +2021,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertFalse(
             $resultWithValidation,
-            "\'prependTo()\' with \'runValidation=true\' should return \'false\' when validation fails.",
+            '\'prependTo()\' with \'runValidation=true\' should return \'false\' when validation fails.',
         );
         self::assertTrue(
             $hasError1,
@@ -2310,13 +2310,14 @@ final class NestedSetsBehaviorTest extends TestCase
             self::assertInstanceOf(
                 Tree::class,
                 $child,
-                "Child at index {$index} should be an instance of \'Tree\'.",
+                "Child at index {$index} should be an instance of 'Tree'.",
             );
+
             if (isset($expectedOrder[$index])) {
                 self::assertEquals(
                     $expectedOrder[$index],
                     $child->getAttribute('name'),
-                    "Child at index {$index} should be {$expectedOrder[$index]} in correct \'lft\' order.",
+                    "Child at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
                 );
             }
         }
