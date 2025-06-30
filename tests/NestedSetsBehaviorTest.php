@@ -1895,7 +1895,7 @@ final class NestedSetsBehaviorTest extends TestCase
             'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
         );
 
-        $persistedNode= TreeWithStrictValidation::findOne($invalidNode2->id);
+        $persistedNode = TreeWithStrictValidation::findOne($invalidNode2->id);
 
         self::assertNotNull(
             $persistedNode,
