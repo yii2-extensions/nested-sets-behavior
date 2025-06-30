@@ -190,62 +190,55 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         }
     }
 
-    public function testRootsMethodRequiresLeftAttributeOrderingForSingleTreeScenario(): void
+    public function testLeavesMethodMaintainsLeftAttributeOrderingWhenTreeAttributeIsDisabled(): void
     {
         $this->createDatabase();
 
-        $root1 = new MultipleTree(['name' => 'Root 1']);
+        $root = new Tree(['name' => 'Root']);
 
-        $root1->makeRoot();
+        $root->makeRoot();
 
-        $root2 = new MultipleTree(['name' => 'Root 2']);
+        $child1 = new Tree(['name' => 'Leaf A']);
 
-        $root2->makeRoot();
+        $child1->appendTo($root);
 
-        $root3 = new MultipleTree(['name' => 'Root 3']);
+        $child2 = new Tree(['name' => 'Leaf B']);
 
-        $root3->makeRoot();
+        $child2->appendTo($root);
 
         $command = $this->getDb()->createCommand();
 
-        $command->update('multiple_tree', ['tree' => 3, 'lft' => 1, 'rgt' => 2], ['name' => 'Root 1'])->execute();
-        $command->update('multiple_tree', ['tree' => 1, 'lft' => 1, 'rgt' => 2], ['name' => 'Root 2'])->execute();
-        $command->update('multiple_tree', ['tree' => 5, 'lft' => 1, 'rgt' => 2], ['name' => 'Root 3'])->execute();
+        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Leaf B'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Leaf A'])->execute();
 
-        $roots = MultipleTree::find()->roots()->all();
+        $leaves = Tree::find()->leaves()->all();
+
+        $expectedLeaves = ['Leaf A', 'Leaf B'];
+        $expectedLft = [2, 4];
 
         self::assertCount(
-            3,
-            $roots,
-            'Should return exactly \'3\' root nodes.',
+            2,
+            $leaves,
+            'Should return exactly \'2\' leaf nodes.',
         );
 
-        $expectedOrder = ['Root 2', 'Root 1', 'Root 3'];
-        $expectedTreeValues = [1, 3, 5];
-
-        foreach ($roots as $index => $root) {
+        foreach ($leaves as $index => $leaf) {
             self::assertInstanceOf(
-                MultipleTree::class,
-                $root,
-                "Root at index {$index} should be an instance of 'MultipleTree'."
+                Tree::class,
+                $leaf,
+                "Leaf at index {$index} should be an instance of 'Tree'.",
             );
 
-            if (isset($expectedOrder[$index])) {
+            if (isset($expectedLeaves[$index])) {
                 self::assertEquals(
-                    $expectedOrder[$index],
-                    $root->getAttribute('name'),
-                    "Root at index {$index} should be {$expectedOrder[$index]} when ordered by 'tree' then 'left' " .
-                    'attribute.',
+                    $expectedLeaves[$index],
+                    $leaf->getAttribute('name'),
+                    "Leaf at index {$index} should be {$expectedLeaves[$index]} in correct order.",
                 );
                 self::assertEquals(
-                    $expectedTreeValues[$index],
-                    $root->getAttribute('tree'),
-                    "Root at index {$index} should have tree value {$expectedTreeValues[$index]}.",
-                );
-                self::assertEquals(
-                    1,
-                    $root->getAttribute('lft'),
-                    "Root at index {$index} should have left value \'1\' (all roots must have \'lft=1\').",
+                    $expectedLft[$index],
+                    $leaf->getAttribute('lft'),
+                    "Leaf at index {$index} should have left value {$expectedLft[$index]}.",
                 );
             }
         }
