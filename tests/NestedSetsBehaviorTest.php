@@ -1869,19 +1869,21 @@ final class NestedSetsBehaviorTest extends TestCase
         $invalidNode = new TreeWithStrictValidation(['name' => 'x']);
 
         $result1 = $invalidNode->appendTo($targetNode, true);
+        $hasError1 = $invalidNode->hasErrors();
 
         self::assertFalse(
             $result1,
             '\'appendTo()\' should return \'false\' when \'runValidation=true\' and data fails validation.',
         );
         self::assertTrue(
-            $invalidNode->hasErrors(),
+            $hasError1,
             'Node should have validation errors when \'runValidation=true\' and data is invalid.',
         );
 
         $invalidNode2 = new TreeWithStrictValidation(['name' => 'x']);
 
         $result2 = $invalidNode2->appendTo($targetNode, false);
+        $hasError2 = $invalidNode2->hasErrors();
 
         self::assertTrue(
             $result2,
@@ -1889,15 +1891,20 @@ final class NestedSetsBehaviorTest extends TestCase
             'that would fail validation.',
         );
         self::assertFalse(
-            $invalidNode2->hasErrors(),
+            $hasError2,
             'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
         );
 
-        $invalidNode2 = TreeWithStrictValidation::findOne($invalidNode2->id);
+        $persistedNode= TreeWithStrictValidation::findOne($invalidNode2->id);
 
         self::assertNotNull(
-            $invalidNode2,
-            "Node with ID '{$invalidNode2?->id}' should exist after appending to target node.",
+            $persistedNode,
+            "Node with ID '{$persistedNode?->id}' should exist after appending to target node.",
+        );
+        self::assertNotEquals(
+            $hasError1,
+            $hasError2,
+            'Validation error states should differ between \'runValidation=true\' and \'runValidation=false\'.',
         );
     }
 }
