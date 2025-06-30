@@ -1830,4 +1830,56 @@ final class NestedSetsBehaviorTest extends TestCase
             'Node should exist in database after appending to target node with validation disabled.',
         );
     }
+
+    public function testInsertAfterWithRunValidationParameterUsingStrictValidation(): void
+    {
+        $this->generateFixtureTree();
+
+        $targetNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $targetNode,
+            'Target node with ID \'9\' should exist before calling \'insertAfter\'.',
+        );
+        self::assertFalse(
+            $targetNode->isRoot(),
+            'Target node with ID \'9\' should not be root for \'insertAfter\' operation.',
+        );
+
+        $invalidNode = new TreeWithStrictValidation(['name' => 'x']);
+
+        $result1 = $invalidNode->insertAfter($targetNode);
+        $hasError1 = $invalidNode->hasErrors();
+
+        self::assertFalse(
+            $result1,
+            '\'insertAfter()\' should return \'false\' when \'runValidation=true\' and data fails validation.',
+        );
+        self::assertTrue(
+            $hasError1,
+            'Node should have validation errors when \'runValidation=true\' and data is invalid.',
+        );
+
+        $invalidNode2 = new TreeWithStrictValidation(['name' => 'x']);
+
+        $result2 = $invalidNode2->insertAfter($targetNode, false);
+        $hasError2 = $invalidNode2->hasErrors();
+
+        self::assertTrue(
+            $result2,
+            '\'insertAfter()\' should return \'true\' when \'runValidation=false\', even with invalid data ' .
+            'that would fail validation.',
+        );
+        self::assertFalse(
+            $hasError2,
+            'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
+        );
+
+        $persistedNode = TreeWithStrictValidation::findOne($invalidNode2->id);
+
+        self::assertNotNull(
+            $persistedNode,
+            'Node should exist in database after inserting after target node with validation disabled.',
+        );
+    }
 }
