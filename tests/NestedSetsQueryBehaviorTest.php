@@ -75,26 +75,47 @@ final class NestedSetsQueryBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
-        $rootD = new MultipleTree(['name' => 'Root D']);
-        $rootD->makeRoot();
+        $command = $this->getDb()->createCommand();
 
-        $rootB = new MultipleTree(['name' => 'Root B']);
-        $rootB->makeRoot();
-
-        $rootA = new MultipleTree(['name' => 'Root A']);
-        $rootA->makeRoot();
-
-        $rootC = new MultipleTree(['name' => 'Root C']);
-        $rootC->makeRoot();
+        $command->insert(
+            'multiple_tree',
+            [
+                'id' => 10,
+                'name' => 'Root A',
+                'lft' => 1,
+                'rgt' => 2,
+                'tree' => 1,
+                'depth' => 0
+            ],
+        )->execute();
+        $command->insert(
+            'multiple_tree',
+            [
+                'id' => 5,
+                'name' => 'Root B',
+                'lft' => 1,
+                'rgt' => 2,
+                'tree' => 2,
+                'depth' => 0
+            ],
+        )->execute();
+        $command->insert(
+            'multiple_tree',
+            [
+                'id' => 15,
+                'name' => 'Root C',
+                'lft' => 1,
+                'rgt' => 2,
+                'tree' => 3,
+                'depth' => 0
+            ],
+        )->execute();
 
         $rootsList = MultipleTree::find()->roots()->all();
-        $expectedOrder = ['Root D', 'Root B', 'Root A', 'Root C'];
 
-        self::assertCount(
-            4,
-            $rootsList,
-            'Roots list should contain exactly \'4\' elements.',
-        );
+        $expectedOrderById = ['Root B', 'Root A', 'Root C'];
+
+        self::assertCount(3, $rootsList);
 
         foreach ($rootsList as $index => $root) {
             self::assertInstanceOf(
@@ -102,17 +123,11 @@ final class NestedSetsQueryBehaviorTest extends TestCase
                 $root,
                 "Root at index {$index} should be an instance of \'MultipleTree\'.",
             );
-            self::assertArrayHasKey(
-                $index,
-                $expectedOrder,
-                "Expected order array should have key at index {$index}.",
-            );
-
-            if (isset($expectedOrder[$index])) {
+            if (isset($expectedOrderById[$index])) {
                 self::assertEquals(
-                    $expectedOrder[$index],
+                    $expectedOrderById[$index],
                     $root->getAttribute('name'),
-                    "Root at index {$index} should be {$expectedOrder[$index]} in correct \'id\' order.",
+                    "Root at index {$index} should be {$expectedOrderById[$index]} when ordered by ID.",
                 );
             }
         }
