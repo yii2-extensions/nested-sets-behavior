@@ -10,7 +10,7 @@ use yii\base\NotSupportedException;
 use yii\db\{ActiveRecord, Exception, StaleObjectException};
 use yii\helpers\ArrayHelper;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
-use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
+use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeWithStrictValidation};
 
 use function get_class;
 use function sprintf;
@@ -1855,23 +1855,49 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testAppendToWithExplicitValidationParameter(): void
+    public function testAppendToWithRunValidationParameterUsingStrictValidation(): void
     {
         $this->generateFixtureTree();
 
-        $node = new Tree(['name' => 'Test Node']);
         $targetNode = Tree::findOne(2);
 
-        self::assertNotNull($targetNode, 'Target node with ID \'2\' should exist before calling \'appendTo\'.');
+        self::assertNotNull(
+            $targetNode,
+            'Target node with ID \'2\' should exist before calling \'appendTo\'.',
+        );
 
-        $result1 = $node->appendTo($targetNode, true);
+        $invalidNode = new TreeWithStrictValidation(['name' => 'x']);
 
-        self::assertTrue($result1, '\'appendTo()\' should succeed with validation enabled.');
+        $result1 = $invalidNode->appendTo($targetNode, true);
 
-        $node2 = new Tree(['name' => 'Test Node 2']);
+        self::assertFalse(
+            $result1,
+            '\'appendTo()\' should return \'false\' when \'runValidation=true\' and data fails validation.',
+        );
+        self::assertTrue(
+            $invalidNode->hasErrors(),
+            'Node should have validation errors when \'runValidation=true\' and data is invalid.',
+        );
 
-        $result2 = $node2->appendTo($targetNode, false);
+        $invalidNode2 = new TreeWithStrictValidation(['name' => 'x']);
 
-        self::assertTrue($result2, '\'appendTo()\' should succeed with validation disabled.');
+        $result2 = $invalidNode2->appendTo($targetNode, false);
+
+        self::assertTrue(
+            $result2,
+            '\'appendTo()\' should return \'true\' when \'runValidation=false\', even with invalid data ' .
+            'that would fail validation.',
+        );
+        self::assertFalse(
+            $invalidNode2->hasErrors(),
+            'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
+        );
+
+        $invalidNode2 = TreeWithStrictValidation::findOne($invalidNode2->id);
+
+        self::assertNotNull(
+            $invalidNode2,
+            "Node with ID '{$invalidNode2?->id}' should exist after appending to target node.",
+        );
     }
 }
