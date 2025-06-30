@@ -2310,6 +2310,12 @@ final class NestedSetsBehaviorTest extends TestCase
         $childrenList = $root->children()->all();
         $expectedOrder = ['Child B', 'Child C', 'Child A'];
 
+        self::assertCount(
+            3,
+            $childrenList,
+            'Children list should contain exactly 3 elements.',
+        );
+
         for ($i = 0; $i < 3; $i++) {
             if (isset($childrenList[$i]) === true) {
                 self::assertEquals(
