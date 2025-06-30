@@ -2276,47 +2276,42 @@ final class NestedSetsBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $childB = new Tree(['name' => 'Child B']);
+        $childC = new Tree(['name' => 'Child C']);
+        $childA = new Tree(['name' => 'Child A']);
+
+        $childB->appendTo($root);
+        $childC->appendTo($root);
+        $childA->appendTo($root);
+
         $command = $this->getDb()->createCommand();
-        $xml = $this->loadFixtureXML('test-disorder.xml');
 
-        $children = $xml->children();
+        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Child B'])->execute();
+        $command->update('tree', ['lft' => 6, 'rgt' => 7], ['name' => 'Child C'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Child A'])->execute();
+        $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
 
-        self::assertNotNull(
-            $children,
-            'XML children should not be \'null\'.',
-        );
-
-        foreach ($children as $element => $treeElement) {
-            if ($element === 'tree') {
-                $command->insert(
-                    'tree',
-                    [
-                        'name' => (string) $treeElement['name'],
-                        'lft' => (int) $treeElement['lft'],
-                        'rgt' => (int) $treeElement['rgt'],
-                        'depth' => (int) $treeElement['depth'],
-                    ],
-                )->execute();
-            }
-        }
-
-        $root = Tree::findOne(1);
-
-        self::assertNotNull(
-            $root,
-            'Root node with ID \'1\' should exist in the database.',
-        );
-
+        $root->refresh();
         $childrenList = $root->children()->all();
-        $expectedOrder = ['Child B', 'Child C', 'Child A'];
+
+        $expectedOrder = ['Child A', 'Child B', 'Child C'];
 
         self::assertCount(
             3,
             $childrenList,
-            'Children list should contain exactly 3 elements.',
+            'Children list should contain exactly \'3\' elements.',
         );
 
         foreach ($childrenList as $index => $child) {
+            self::assertInstanceOf(
+                Tree::class,
+                $child,
+                "Child at index {$index} should be an instance of \'Tree\'.",
+            );
             if (isset($expectedOrder[$index])) {
                 self::assertEquals(
                     $expectedOrder[$index],
