@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+    <!-- Root node -->
+    <tree id="1" lft="1" rgt="8" depth="0" name="Root"/>
+
+    <!-- Children with INTENTIONALLY DISORDERED lft values to test ORDER BY dependency -->
+    <!-- Normal logical order would be: Child A(lft=2), Child B(lft=4), Child C(lft=6) -->
+    <!-- But we arrange them with swapped lft values to test if ORDER BY clause works -->
+    <!-- This child should be LAST in tree order (lft=6) but is inserted FIRST in XML -->
+    <tree id="2" lft="6" rgt="7" depth="1" name="Child A"/>
+
+    <!-- This child should be FIRST in tree order (lft=2) but is inserted SECOND in XML -->
+    <tree id="3" lft="2" rgt="3" depth="1" name="Child B"/>
+
+    <!-- This child should be MIDDLE in tree order (lft=4) but is inserted THIRD in XML -->
+    <tree id="4" lft="4" rgt="5" depth="1" name="Child C"/>
+</dataset>

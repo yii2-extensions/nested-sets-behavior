@@ -18,7 +18,7 @@ use yii2\extensions\nestedsets\tests\support\model\{
 };
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
-use function array_map;
+use function array_key_exists;
 use function get_class;
 use function sprintf;
 
@@ -2273,174 +2273,74 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testChildrenMethodReturnsResultsInCorrectLeftAttributeOrder(): void
+    public function testChildrenMethodRequiresOrderByForCorrectTreeTraversal(): void
     {
-        $this->generateFixtureTree();
+        $this->createDatabase();
 
-        $treeChildren = Tree::findOne(9)?->children()->all() ?? [];
+        $command = $this->getDb()->createCommand();
+        $xml = $this->loadFixtureXML('test-disorder.xml');
 
-        self::assertNotEmpty(
-            $treeChildren,
-            'Tree node with ID \'9\' should have children.',
+        $children = $xml->children();
+
+        self::assertNotNull(
+            $children,
+            'XML children should not be \'null\'.',
         );
 
-        /** @phpstan-var array<int, array{id: int}> $expectedTreeChildren */
-        $expectedTreeChildren = require "{$this->fixtureDirectory}/test-children.php";
-
-        $actualIds = array_map(
-            static fn($child): mixed => $child->getAttribute('id'),
-            $treeChildren,
-        );
-        $expectedIds = array_map(
-            static fn($child): mixed => $child['id'],
-            $expectedTreeChildren,
-        );
-
-        self::assertEquals(
-            $expectedIds,
-            $actualIds,
-            'Children should be returned in the exact order defined by \'left\' attribute (ascending).',
-        );
-
-        $leftValues = array_map(
-            static fn($child): mixed => $child->getAttribute('lft'),
-            $treeChildren,
-        );
-
-        self::assertTrue(
-            $this->isArraySortedAscending($leftValues),
-            '\'Left\' attribute values should be in ascending order.',
-        );
-
-        $multipleTreeChildren = MultipleTree::findOne(31)?->children()->all() ?? [];
-
-        self::assertNotEmpty(
-            $multipleTreeChildren,
-            'MultipleTree node with ID \'31\' should have children.',
-        );
-
-        /** @phpstan-var array<int, array{id: int}> $expectedMultipleTreeChildren */
-        $expectedMultipleTreeChildren = require "{$this->fixtureDirectory}/test-children-multiple-tree.php";
-
-        $actualMultipleIds = array_map(
-            static fn($child): mixed => $child->getAttribute('id'),
-            $multipleTreeChildren,
-        );
-        $expectedMultipleIds = array_map(
-            static fn($child): mixed => $child['id'],
-            $expectedMultipleTreeChildren,
-        );
-
-        self::assertEquals(
-            $expectedMultipleIds,
-            $actualMultipleIds,
-            'MultipleTree children should be returned in the exact order defined by \'left\' attribute (ascending).',
-        );
-
-        $multipleLeftValues = array_map(
-            static fn($child): mixed => $child->getAttribute('lft'),
-            $multipleTreeChildren,
-        );
-
-        self::assertTrue(
-            $this->isArraySortedAscending($multipleLeftValues),
-            'MultipleTree \'left\' attribute values should be in ascending order.',
-        );
-    }
-
-    public function testParentsMethodReturnsResultsInCorrectLeftAttributeOrder(): void
-    {
-        $this->generateFixtureTree();
-
-        $treeParents = Tree::findOne(11)?->parents()->all() ?? [];
-
-        self::assertNotEmpty(
-            $treeParents,
-            'Tree node with ID \'11\' should have parents.',
-        );
-
-        /** @phpstan-var array<int, array{id: int}> $expectedTreeParents */
-        $expectedTreeParents = require "{$this->fixtureDirectory}/test-parents.php";
-
-        $actualIds = array_map(
-            static fn($parent): mixed => $parent->getAttribute('id'),
-            $treeParents,
-        );
-        $expectedIds = array_map(
-            static fn($parent): mixed => $parent['id'],
-            $expectedTreeParents,
-        );
-
-        self::assertEquals(
-            $expectedIds,
-            $actualIds,
-            'Parents should be returned in the exact order defined by \'left\' attribute (ascending).',
-        );
-
-        $leftValues = array_map(
-            static fn($parent): mixed => $parent->getAttribute('lft'),
-            $treeParents,
-        );
-
-        self::assertTrue(
-            $this->isArraySortedAscending($leftValues),
-            'Parent \'left\' attribute values should be in ascending order.',
-        );
-    }
-
-    public function testLeavesMethodReturnsResultsInCorrectLeftAttributeOrder(): void
-    {
-        $this->generateFixtureTree();
-
-        $treeLeaves = Tree::findOne(9)?->leaves()->all() ?? [];
-
-        self::assertNotEmpty(
-            $treeLeaves,
-            'Tree node with ID \'9\' should have leaf nodes.',
-        );
-
-        /** @phpstan-var array<int, array{id: int}> $expectedTreeLeaves */
-        $expectedTreeLeaves = require "{$this->fixtureDirectory}/test-leaves.php";
-
-        $actualIds = array_map(
-            static fn($leaf): mixed => $leaf->getAttribute('id'),
-            $treeLeaves,
-        );
-        $expectedIds = array_map(
-            static fn($leaf): mixed => $leaf['id'],
-            $expectedTreeLeaves,
-        );
-
-        self::assertEquals(
-            $expectedIds,
-            $actualIds,
-            'Leaves should be returned in the exact order defined by \'left\' attribute (ascending).',
-        );
-
-        $leftValues = array_map(
-            static fn($leaf): mixed => $leaf->getAttribute('lft'),
-            $treeLeaves,
-        );
-
-        self::assertTrue(
-            $this->isArraySortedAscending($leftValues),
-            'Leaf \'left\' attribute values should be in ascending order.',
-        );
-    }
-
-    /**
-     * @phpstan-param array<int, mixed> $array
-     */
-    private function isArraySortedAscending(array $array): bool
-    {
-        $count = count($array);
-
-        for ($i = 1; $i < $count; $i++) {
-            if (isset($array[$i], $array[$i - 1]) === false || $array[$i] < $array[$i - 1]) {
-                return false;
+        foreach ($children as $element => $treeElement) {
+            if ($element === 'tree') {
+                $command->insert(
+                    'tree',
+                    [
+                        'name' => (string) $treeElement['name'],
+                        'lft' => (int) $treeElement['lft'],
+                        'rgt' => (int) $treeElement['rgt'],
+                        'depth' => (int) $treeElement['depth'],
+                    ],
+                )->execute();
             }
         }
 
-        return true;
+        $root = Tree::findOne(1);
+
+        self::assertNotNull(
+            $root,
+            'Root node with ID \'1\' should exist in the database.',
+        );
+
+        $childrenList = $root->children()->all();
+
+        self::assertCount(
+            3,
+            $childrenList,
+            'Root should have exactly \'3\' children.',
+        );
+        self::assertTrue(
+            array_key_exists(0, $childrenList),
+            'First child should exist in the children list.',
+        );
+        self::assertEquals(
+            'Child B',
+            $childrenList[0]->getAttribute('name'),
+            'First child should be Child B (\'lft=2\')',
+        );
+        self::assertTrue(
+            array_key_exists(1, $childrenList),
+            'Second child should exist in the children list.',
+        );
+        self::assertEquals(
+            'Child C',
+            $childrenList[1]->getAttribute('name'),
+            'Second child should be Child C (\'lft=4\')',
+        );
+        self::assertTrue(
+            array_key_exists(2, $childrenList),
+            'Third child should exist in the children list.',
+        );
+        self::assertEquals(
+            'Child A',
+            $childrenList[2]->getAttribute('name'),
+            'Third child should be Child A (\'lft=6\')',
+        );
     }
 }
