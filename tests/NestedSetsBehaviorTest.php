@@ -2308,35 +2308,16 @@ final class NestedSetsBehaviorTest extends TestCase
         );
 
         $childrenList = $root->children()->all();
+        $expectedOrder = ['Child B', 'Child C', 'Child A'];
 
-        self::assertCount(
-            3,
-            $childrenList,
-            'Root should have exactly \'3\' children.',
-        );
-
-        if (isset($childrenList[0])) {
-            self::assertEquals(
-                'Child B',
-                $childrenList[0]->getAttribute('name'),
-                'First child should be Child B (\'lft=2\')',
-            );
-        }
-
-        if (isset($childrenList[1])) {
-            self::assertEquals(
-                'Child C',
-                $childrenList[1]->getAttribute('name'),
-                'Second child should be Child C (\'lft=4\')',
-            );
-        }
-
-        if (isset($childrenList[2])) {
-            self::assertEquals(
-                'Child A',
-                $childrenList[2]->getAttribute('name'),
-                'Third child should be Child A (\'lft=6\')',
-            );
+        for ($i = 0; $i < 3; $i++) {
+            if (isset($childrenList[$i]) === true) {
+                self::assertEquals(
+                    $expectedOrder[$i],
+                    $childrenList[$i]->getAttribute('name'),
+                    "Child at index {$i} should be {$expectedOrder[$i]} in correct \'lft\' order.",
+                );
+            }
         }
     }
 }
