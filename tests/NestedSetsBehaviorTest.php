@@ -1995,4 +1995,49 @@ final class NestedSetsBehaviorTest extends TestCase
             'Root node should have depth of 0.',
         );
     }
+
+    public function testPrependToWithRunValidationParameterUsingStrictValidation(): void
+    {
+        $this->createDatabase();
+
+        $parentNode = new TreeWithStrictValidation(['name' => 'Valid Parent']);
+
+        $parentNode->makeRoot(false);
+
+        $childNode = new TreeWithStrictValidation(
+            [
+                'name' => '',
+            ],
+        );
+
+        $resultWithValidation = $childNode->prependTo($parentNode, true);
+        $hasError1 = $childNode->hasErrors();
+
+        self::assertFalse(
+            $resultWithValidation,
+            "\'prependTo()\' with \'runValidation=true\' should return \'false\' when validation fails.",
+        );
+        self::assertTrue(
+            $hasError1,
+            'Node should have validation errors when \'runValidation=true\' and data is invalid.',
+        );
+
+        $childNode2 = new TreeWithStrictValidation(
+            [
+                'name' => '',
+            ],
+        );
+
+        $resultWithoutValidation = $childNode2->prependTo($parentNode, false);
+        $hasError2 = $childNode2->hasErrors();
+
+        self::assertTrue(
+            $resultWithoutValidation,
+            '\'prependTo()\' with \'runValidation=false\' should return \'true\' when validation is skipped.',
+        );
+        self::assertFalse(
+            $hasError2,
+            'Node should not have validation errors when \'runValidation=false\' because validation was skipped.',
+        );
+    }
 }
