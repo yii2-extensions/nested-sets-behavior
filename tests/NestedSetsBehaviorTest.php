@@ -1854,4 +1854,24 @@ final class NestedSetsBehaviorTest extends TestCase
             'Child node with ID \'12\' should still exist after rollback.',
         );
     }
+
+    public function testAppendToWithExplicitValidationParameter(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'Test Node']);
+        $targetNode = Tree::findOne(2);
+
+        self::assertNotNull($targetNode, 'Target node with ID \'2\' should exist before calling \'appendTo\'.');
+
+        $result1 = $node->appendTo($targetNode, true);
+
+        self::assertTrue($result1, '\'appendTo()\' should succeed with validation enabled.');
+
+        $node2 = new Tree(['name' => 'Test Node 2']);
+
+        $result2 = $node2->appendTo($targetNode, false);
+
+        self::assertTrue($result2, '\'appendTo()\' should succeed with validation disabled.');
+    }
 }
