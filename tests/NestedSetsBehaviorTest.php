@@ -2206,4 +2206,41 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'shiftLeftRightAttribute\' method should remain protected to allow subclass customization.',
         );
     }
+
+    public function testProtectedMoveNodeRemainAccessibleToSubclasses(): void
+    {
+        $this->createDatabase();
+
+        $sourceNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Source Node',
+                'tree' => 4,
+            ],
+        );
+
+        $sourceNode->makeRoot();
+
+        $targetNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Target Node',
+                'tree' => 4,
+            ],
+        );
+
+        $targetNode->appendTo($sourceNode);
+        $sourceBehavior = $sourceNode->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $sourceBehavior,
+            '\'ExtendableMultipleTree\' should use \'ExtendableNestedSetsBehavior\'.',
+        );
+
+        $sourceBehavior->exposedMoveNode($targetNode, 5, 2);
+
+        self::assertTrue(
+            $sourceBehavior->wasMethodCalled('moveNode'),
+            '\'moveNode\' method should remain protected to allow subclass customization.',
+        );
+    }
 }
