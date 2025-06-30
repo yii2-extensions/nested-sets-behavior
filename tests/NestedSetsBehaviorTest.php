@@ -2052,7 +2052,7 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testProtectedApplyTreeAttributeConditionRemainAccessibleToSubclasses(): void
+    public function testProtectedApplyTreeAttributeConditionRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
 
@@ -2083,6 +2083,47 @@ final class NestedSetsBehaviorTest extends TestCase
             ['and', ['name' => 'test'], ['tree' => 1]],
             $condition,
             '\'Tree\' attribute condition should be applied correctly when \'treeAttribute\' is enabled.',
+        );
+    }
+
+    public function testProtectedBeforeInsertNodeRemainsAccessibleToSubclasses(): void
+    {
+        $this->createDatabase();
+
+        $testNode = new ExtendableMultipleTree([
+            'name' => 'Extensibility Test Node',
+            'tree' => 1,
+        ]);
+
+        $extendableBehavior = $testNode->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $extendableBehavior,
+            '\'ExtendableMultipleTree\' should use \'ExtendableNestedSetsBehavior\'.',
+        );
+
+        $extendableBehavior->exposedBeforeInsertNode(5, 1);
+
+        self::assertTrue(
+            $extendableBehavior->wasMethodCalled('beforeInsertNode'),
+            '\'beforeInsertNode\' method should remain protected to allow subclass customization.',
+        );
+
+        self::assertEquals(
+            5,
+            $testNode->lft,
+            '\'beforeInsertNode\' should set the \'left\' attribute correctly.',
+        );
+        self::assertEquals(
+            6,
+            $testNode->rgt,
+            '\'beforeInsertNode\' should set the \'right\' attribute correctly.',
+        );
+        self::assertEquals(
+            1,
+            $testNode->depth,
+            '\'beforeInsertNode\' should set the \'depth\' attribute correctly.',
         );
     }
 }
