@@ -2010,7 +2010,7 @@ final class NestedSetsBehaviorTest extends TestCase
             ],
         );
 
-        $resultWithValidation = $childNode->prependTo($parentNode, true);
+        $resultWithValidation = $childNode->prependTo($parentNode);
         $hasError1 = $childNode->hasErrors();
 
         self::assertFalse(
