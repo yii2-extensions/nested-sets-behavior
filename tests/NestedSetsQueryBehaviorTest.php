@@ -70,4 +70,51 @@ final class NestedSetsQueryBehaviorTest extends TestCase
 
         $behavior->leaves();
     }
+
+    public function testRootsMethodRequiresOrderByForCorrectTreeTraversal(): void
+    {
+        $this->createDatabase();
+
+        $rootD = new MultipleTree(['name' => 'Root D']);
+        $rootD->makeRoot();
+
+        $rootB = new MultipleTree(['name' => 'Root B']);
+        $rootB->makeRoot();
+
+        $rootA = new MultipleTree(['name' => 'Root A']);
+        $rootA->makeRoot();
+
+        $rootC = new MultipleTree(['name' => 'Root C']);
+        $rootC->makeRoot();
+
+        $rootsList = MultipleTree::find()->roots()->all();
+        $expectedOrder = ['Root D', 'Root B', 'Root A', 'Root C'];
+
+        self::assertCount(
+            4,
+            $rootsList,
+            'Roots list should contain exactly \'4\' elements.',
+        );
+
+        foreach ($rootsList as $index => $root) {
+            self::assertInstanceOf(
+                MultipleTree::class,
+                $root,
+                "Root at index {$index} should be an instance of \'MultipleTree\'.",
+            );
+            self::assertArrayHasKey(
+                $index,
+                $expectedOrder,
+                "Expected order array should have key at index {$index}.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $root->getAttribute('name'),
+                    "Root at index {$index} should be {$expectedOrder[$index]} in correct \'id\' order.",
+                );
+            }
+        }
+    }
 }
