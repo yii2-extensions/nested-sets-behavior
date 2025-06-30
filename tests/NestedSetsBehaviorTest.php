@@ -18,7 +18,6 @@ use yii2\extensions\nestedsets\tests\support\model\{
 };
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
-use function array_key_exists;
 use function get_class;
 use function sprintf;
 
@@ -2315,8 +2314,8 @@ final class NestedSetsBehaviorTest extends TestCase
             $childrenList,
             'Root should have exactly \'3\' children.',
         );
-        self::assertTrue(
-            array_key_exists(0, $childrenList),
+        self::assertArrayHasKey(
+            0, $childrenList,
             'First child should exist in the children list.',
         );
         self::assertEquals(
@@ -2324,8 +2323,8 @@ final class NestedSetsBehaviorTest extends TestCase
             $childrenList[0]->getAttribute('name'),
             'First child should be Child B (\'lft=2\')',
         );
-        self::assertTrue(
-            array_key_exists(1, $childrenList),
+        self::assertArrayHasKey(
+            1, $childrenList,
             'Second child should exist in the children list.',
         );
         self::assertEquals(
@@ -2333,8 +2332,8 @@ final class NestedSetsBehaviorTest extends TestCase
             $childrenList[1]->getAttribute('name'),
             'Second child should be Child C (\'lft=4\')',
         );
-        self::assertTrue(
-            array_key_exists(2, $childrenList),
+        self::assertArrayHasKey(
+            2, $childrenList,
             'Third child should exist in the children list.',
         );
         self::assertEquals(
