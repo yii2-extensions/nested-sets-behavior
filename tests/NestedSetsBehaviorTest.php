@@ -2271,4 +2271,59 @@ final class NestedSetsBehaviorTest extends TestCase
             '\'moveNodeAsRoot\' method should remain protected to allow subclass customization.',
         );
     }
+
+    public function testChildrenMethodRequiresOrderByForCorrectTreeTraversal(): void
+    {
+        $this->createDatabase();
+
+        $command = $this->getDb()->createCommand();
+        $xml = $this->loadFixtureXML('test-disorder.xml');
+
+        $children = $xml->children();
+
+        self::assertNotNull(
+            $children,
+            'XML children should not be \'null\'.',
+        );
+
+        foreach ($children as $element => $treeElement) {
+            if ($element === 'tree') {
+                $command->insert(
+                    'tree',
+                    [
+                        'name' => (string) $treeElement['name'],
+                        'lft' => (int) $treeElement['lft'],
+                        'rgt' => (int) $treeElement['rgt'],
+                        'depth' => (int) $treeElement['depth'],
+                    ],
+                )->execute();
+            }
+        }
+
+        $root = Tree::findOne(1);
+
+        self::assertNotNull(
+            $root,
+            'Root node with ID \'1\' should exist in the database.',
+        );
+
+        $childrenList = $root->children()->all();
+        $expectedOrder = ['Child B', 'Child C', 'Child A'];
+
+        self::assertCount(
+            3,
+            $childrenList,
+            'Children list should contain exactly 3 elements.',
+        );
+
+        foreach ($childrenList as $index => $child) {
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $child->getAttribute('name'),
+                    "Child at index {$index} should be {$expectedOrder[$index]} in correct \'lft\' order.",
+                );
+            }
+        }
+    }
 }
