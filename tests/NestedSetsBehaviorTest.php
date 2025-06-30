@@ -2295,6 +2295,7 @@ final class NestedSetsBehaviorTest extends TestCase
         $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Child A'])->execute();
         $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
 
+        $root->refresh();
         $childrenList = $root->children()->all();
 
         $expectedOrder = ['Child A', 'Child B', 'Child C'];
