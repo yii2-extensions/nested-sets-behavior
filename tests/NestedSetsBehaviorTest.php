@@ -1868,7 +1868,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $invalidNode = new TreeWithStrictValidation(['name' => 'x']);
 
-        $result1 = $invalidNode->appendTo($targetNode, true);
+        $result1 = $invalidNode->appendTo($targetNode);
         $hasError1 = $invalidNode->hasErrors();
 
         self::assertFalse(
