@@ -1284,7 +1284,7 @@ class NestedSetsBehavior extends Behavior
                 $treeValue,
                 $depthValue,
                 $leftValue,
-                ($value - $leftValue),
+                $value - $leftValue,
                 $rightValue,
             );
             $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
@@ -1323,7 +1323,7 @@ class NestedSetsBehavior extends Behavior
             $treeValue,
             -$depthValue,
             $leftValue,
-            (1 - $leftValue),
+            1 - $leftValue,
             $rightValue,
         );
         $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
