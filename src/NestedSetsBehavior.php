@@ -1413,16 +1413,16 @@ class NestedSetsBehavior extends Behavior
      * This operation is essential for maintaining the integrity of the nested set structure when reorganizing nodes
      * between trees or promoting a node to root in a multi-tree configuration.
      *
-     * @param mixed $nodeRootValue Value to assign to the tree attribute for all nodes in the moved subtree.
-     * @param mixed $treeValue Current tree attribute value of the nodes being moved.
+     * @param mixed $newTreeValue Value to assign to the tree attribute for all nodes in the moved subtree.
+     * @param mixed $currentTreeValue Current tree attribute value of the nodes being moved.
      * @param int $depth Depth offset to apply to all nodes in the subtree.
      * @param int $leftValue Left boundary value of the subtree to move.
      * @param int $positionOffset Amount to shift left and right attribute values for the subtree.
      * @param int $rightValue Right boundary value of the subtree to move.
      */
     private function moveSubtreeToTargetTree(
-        mixed $nodeRootValue,
-        mixed $treeValue,
+        mixed $newTreeValue,
+        mixed $currentTreeValue,
         int $depth,
         int $leftValue,
         int $positionOffset,
@@ -1439,7 +1439,7 @@ class NestedSetsBehavior extends Behavior
                 $this->depthAttribute => new Expression(
                     $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', $depth),
                 ),
-                $this->treeAttribute => $nodeRootValue,
+                $this->treeAttribute => $newTreeValue
             ],
             [
                 'and',
@@ -1454,7 +1454,7 @@ class NestedSetsBehavior extends Behavior
                     $rightValue,
                 ],
                 [
-                    $this->treeAttribute => $treeValue,
+                    $this->treeAttribute => $currentTreeValue
                 ],
             ],
         );
