@@ -18,12 +18,12 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertEquals(
             require "{$this->fixtureDirectory}/test-leaves-query.php",
             ArrayHelper::toArray(Tree::find()->leaves()->all()),
-            'Should return correct leaf nodes for \'Tree\' model.',
+            "Should return correct leaf nodes for 'Tree' model.",
         );
         self::assertEquals(
             require "{$this->fixtureDirectory}/test-leaves-multiple-tree-query.php",
             ArrayHelper::toArray(MultipleTree::find()->leaves()->all()),
-            'Should return correct leaf nodes for \'MultipleTree\' model.',
+            "Should return correct leaf nodes for 'MultipleTree' model.",
         );
     }
 
@@ -34,12 +34,12 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertEquals(
             require "{$this->fixtureDirectory}/test-roots-query.php",
             ArrayHelper::toArray(Tree::find()->roots()->all()),
-            'Should return correct root nodes for \'Tree\' model.',
+            "Should return correct root nodes for 'Tree' model.",
         );
         self::assertEquals(
             require "{$this->fixtureDirectory}/test-roots-multiple-tree-query.php",
             ArrayHelper::toArray(MultipleTree::find()->roots()->all()),
-            'Should return correct root nodes for \'MultipleTree\' model.',
+            "Should return correct root nodes for 'MultipleTree' model.",
         );
     }
 
@@ -104,7 +104,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertCount(
             4,
             $rootsList,
-            'Roots list should contain exactly \'4\' elements.',
+            "Roots list should contain exactly '4' elements.",
         );
 
         foreach ($rootsList as $index => $root) {
@@ -145,7 +145,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertCount(
             2,
             $initialLeaves,
-            'Should have exactly \'2\' initial leaf nodes.',
+            "Should have exactly '2' initial leaf nodes.",
         );
 
         $command = $this->getDb()->createCommand();
@@ -165,7 +165,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertCount(
             2,
             $leaves,
-            'Should return exactly \'2\' leaf nodes.',
+            "Should return exactly '2' leaf nodes.",
         );
 
         foreach ($leaves as $index => $leaf) {
@@ -205,12 +205,12 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertStringContainsString(
             'ORDER BY',
             $sql,
-            '\'roots()\' query should include \'ORDER BY\' clause for consistent results.',
+            "'roots()' query should include 'ORDER BY' clause for consistent results.",
         );
         self::assertStringContainsString(
             '`lft`',
             $sql,
-            '\'roots()\' query should order by \'left\' attribute for deterministic ordering.',
+            "'roots()' query should order by 'left' attribute for deterministic ordering.",
         );
 
         $roots = $query->all();
@@ -218,14 +218,14 @@ final class NestedSetsQueryBehaviorTest extends TestCase
         self::assertCount(
             1,
             $roots,
-            'Should return exactly \'1\' root node when \'treeAttribute\' is disabled.',
+            "Should return exactly '1' root node when 'treeAttribute' is disabled.",
         );
 
         if (isset($roots[0])) {
             self::assertInstanceOf(
                 Tree::class,
                 $roots[0],
-                'Root node should be an instance of \'Tree\'.',
+                "Root node should be an instance of 'Tree'.",
             );
             self::assertEquals(
                 'Root',
@@ -235,7 +235,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
             self::assertEquals(
                 1,
                 $roots[0]->getAttribute('lft'),
-                'Root should have left value of \'1\' indicating it is a root node.',
+                "Root should have left value of '1' indicating it is a root node.",
             );
         }
     }
