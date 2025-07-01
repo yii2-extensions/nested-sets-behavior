@@ -1250,7 +1250,7 @@ class NestedSetsBehavior extends Behavior
                 );
             }
 
-            $this->shiftLeftRightAttribute($rightValue + 1, -$delta);
+            $this->shiftLeftRightAttribute($rightValue, -$delta);
         } else {
             $leftAttribute = $db->quoteColumnName($this->leftAttribute);
             $rightAttribute = $db->quoteColumnName($this->rightAttribute);
