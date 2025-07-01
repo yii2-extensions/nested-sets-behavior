@@ -1439,7 +1439,7 @@ class NestedSetsBehavior extends Behavior
                 $this->depthAttribute => new Expression(
                     $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', $depth),
                 ),
-                $this->treeAttribute => $newTreeValue
+                $this->treeAttribute => $newTreeValue,
             ],
             [
                 'and',
@@ -1454,7 +1454,7 @@ class NestedSetsBehavior extends Behavior
                     $rightValue,
                 ],
                 [
-                    $this->treeAttribute => $currentTreeValue
+                    $this->treeAttribute => $currentTreeValue,
                 ],
             ],
         );
