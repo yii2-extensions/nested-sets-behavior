@@ -809,15 +809,17 @@ class NestedSetsBehavior extends Behavior
      * Sets the internal operation state to {@see self::OPERATION_MAKE_ROOT} and triggers the save process on the owner
      * model.
      *
-     * - If the attached {@see ActiveRecord} is a new record, this method creates it as the root node of a new tree.
+     * - If the attached {@see ActiveRecord} is a new record, this method creates it as the root node of a new tree,
+     *   setting `left=1`, `right=2`, and `depth=0`.
      * - If the record already exists, it moves the node to become the root node, updating the nested set structure
-     *   accordingly.
+     *   accordingly and adjusting all affected nodes in the tree.
      *
      * This operation is essential for initializing or reorganizing hierarchical data structures, such as category
      * trees, where nodes can be promoted to root status or new trees can be started.
      *
      * The actual creation or movement is performed by saving the owner model, which triggers the appropriate lifecycle
-     * events and updates the tree structure.
+     * events and updates the tree structure. Upon successful save, the model is automatically refreshed to ensure all
+     * nested set attributes reflect their current database values.
      *
      * @param bool $runValidation Whether to perform validation before saving the record.
      * @param array|null $attributes List of attributes that need to be saved. Defaults to `null`, meaning all
@@ -829,7 +831,13 @@ class NestedSetsBehavior extends Behavior
      *
      * Usage example:
      * ```php
+     * // Create a new root node
+     * $category = new Category(['name' => 'Electronics']);
      * $category->makeRoot();
+     *
+     * // Move existing node to become root
+     * $existingNode = Category::findOne(5);
+     * $existingNode->makeRoot();
      * ```
      *
      * @phpstan-param array<string, mixed>|null $attributes
@@ -838,7 +846,15 @@ class NestedSetsBehavior extends Behavior
     {
         $this->operation = self::OPERATION_MAKE_ROOT;
 
-        return $this->getOwner()->save($runValidation, $attributes);
+        $owner = $this->getOwner();
+
+        $result = $owner->save($runValidation, $attributes);
+
+        if ($result === true) {
+            $owner->refresh();
+        }
+
+        return $result;
     }
 
     /**
@@ -1234,7 +1250,7 @@ class NestedSetsBehavior extends Behavior
                 );
             }
 
-            $this->shiftLeftRightAttribute($rightValue + 1, -$delta);
+            $this->shiftLeftRightAttribute($rightValue, -$delta);
         } else {
             $leftAttribute = $db->quoteColumnName($this->leftAttribute);
             $rightAttribute = $db->quoteColumnName($this->rightAttribute);
