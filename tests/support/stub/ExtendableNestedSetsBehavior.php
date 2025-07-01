@@ -54,14 +54,14 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     {
         $this->calledMethods['moveNode'] = true;
 
-        $this->moveNode($node, $value, $depth);
+        $this->moveNode($node, null, $value, $depth);
     }
 
     public function exposedMoveNodeAsRoot(): void
     {
         $this->calledMethods['moveNodeAsRoot'] = true;
 
-        $this->moveNodeAsRoot();
+        $this->moveNodeAsRoot(null);
     }
 
     public function exposedShiftLeftRightAttribute(int $value, int $delta): void

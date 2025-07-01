@@ -6,7 +6,9 @@ namespace yii2\extensions\nestedsets;
 
 use LogicException;
 use yii\base\{Behavior, NotSupportedException};
-use yii\db\{ActiveQuery, ActiveRecord, Exception, Expression};
+use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception, Expression};
+
+use function sprintf;
 
 /**
  * Nested set behavior for managing hierarchical data in {@see ActiveRecord} models.
@@ -118,6 +120,8 @@ class NestedSetsBehavior extends Behavior
      * Name of the attribute that stores the tree identifier for supporting multiple trees.
      */
     public string|false $treeAttribute = false;
+
+    private Connection|null $db = null;
 
     /**
      * Handles post-deletion updates for the nested set structure.
@@ -247,17 +251,19 @@ class NestedSetsBehavior extends Behavior
      */
     public function afterUpdate(): void
     {
+        $treeValue = $this->treeAttribute !== false ? $this->getOwner()->getAttribute($this->treeAttribute) : null;
+
         match (true) {
             $this->operation === self::OPERATION_APPEND_TO && $this->node !== null =>
-                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute), 1),
+                $this->moveNode($this->node, $treeValue, $this->node->getAttribute($this->rightAttribute), 1),
             $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null =>
-                $this->moveNode($this->node, $this->node->getAttribute($this->rightAttribute) + 1, 0),
+                $this->moveNode($this->node, $treeValue, $this->node->getAttribute($this->rightAttribute) + 1, 0),
             $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null =>
-                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute), 0),
+                $this->moveNode($this->node, $treeValue, $this->node->getAttribute($this->leftAttribute), 0),
             $this->operation === self::OPERATION_MAKE_ROOT =>
-                $this->moveNodeAsRoot(),
+                $this->moveNodeAsRoot($treeValue),
             $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null =>
-                $this->moveNode($this->node, $this->node->getAttribute($this->leftAttribute) + 1, 1),
+                $this->moveNode($this->node, $treeValue, $this->node->getAttribute($this->leftAttribute) + 1, 1),
             default => null,
         };
 
@@ -1177,24 +1183,22 @@ class NestedSetsBehavior extends Behavior
      * and supports both root and non-root node moves.
      *
      * @param ActiveRecord $node Node to be moved within the nested set tree.
+     * @param mixed $treeValue Tree attribute value to which the node will be moved, or `false` if not applicable.
      * @param int $value Left attribute value indicating the new position for the node.
      * @param int $depth Depth offset to apply to the node and its descendants after the move.
      */
-    protected function moveNode(ActiveRecord $node, int $value, int $depth): void
+    protected function moveNode(ActiveRecord $node, mixed $treeValue, int $value, int $depth): void
     {
         $db = $this->getOwner()::getDb();
-        $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
-        $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
-        $depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
         $depthAttribute = $db->quoteColumnName($this->depthAttribute);
+        $depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
+        $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
         $nodeDepthValue = $node->getAttribute($this->depthAttribute);
+        $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
 
-        $depth = $nodeDepthValue - $depthValue + $depth;
+        $depthValue = $nodeDepthValue - $depthValue + $depth;
 
-        if (
-            $this->treeAttribute === false ||
-            $this->getOwner()->getAttribute($this->treeAttribute) === $node->getAttribute($this->treeAttribute)
-        ) {
+        if ($this->treeAttribute === false || $treeValue === $node->getAttribute($this->treeAttribute)) {
             $delta = $rightValue - $leftValue + 1;
 
             $this->shiftLeftRightAttribute($value, $delta);
@@ -1221,7 +1225,7 @@ class NestedSetsBehavior extends Behavior
             $this->applyTreeAttributeCondition($condition);
             $this->getOwner()::updateAll(
                 [
-                    $this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', $depth)),
+                    $this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', $depthValue)),
                 ],
                 $condition,
             );
@@ -1252,8 +1256,6 @@ class NestedSetsBehavior extends Behavior
 
             $this->shiftLeftRightAttribute($rightValue, -$delta);
         } else {
-            $leftAttribute = $db->quoteColumnName($this->leftAttribute);
-            $rightAttribute = $db->quoteColumnName($this->rightAttribute);
             $nodeRootValue = $node->getAttribute($this->treeAttribute);
 
             foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
@@ -1277,31 +1279,13 @@ class NestedSetsBehavior extends Behavior
                 );
             }
 
-            $delta = $value - $leftValue;
-
-            $this->getOwner()::updateAll(
-                [
-                    $this->leftAttribute => new Expression($leftAttribute . sprintf('%+d', $delta)),
-                    $this->rightAttribute => new Expression($rightAttribute . sprintf('%+d', $delta)),
-                    $this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', $depth)),
-                    $this->treeAttribute => $nodeRootValue,
-                ],
-                [
-                    'and',
-                    [
-                        '>=',
-                        $this->leftAttribute,
-                        $leftValue,
-                    ],
-                    [
-                        '<=',
-                        $this->rightAttribute,
-                        $rightValue,
-                    ],
-                    [
-                        $this->treeAttribute => $this->getOwner()->getAttribute($this->treeAttribute),
-                    ],
-                ],
+            $this->moveSubtreeToTargetTree(
+                $nodeRootValue,
+                $treeValue,
+                $depthValue,
+                $leftValue,
+                ($value - $leftValue),
+                $rightValue,
             );
             $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
         }
@@ -1324,40 +1308,23 @@ class NestedSetsBehavior extends Behavior
      * - Shifts left and right boundaries of the node and its descendants to start from 1.
      * - Shifts left/right values of remaining nodes to close the gap left by the moved subtree.
      * - Updates the tree attribute to the new root identifier if multi-tree is enabled.
+     *
+     * @param mixed $treeValue Tree attribute value to which the node will be moved, or `false` if not applicable.
      */
-    protected function moveNodeAsRoot(): void
+    protected function moveNodeAsRoot(mixed $treeValue): void
     {
-        $db = $this->getOwner()::getDb();
-        $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
-        $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
         $depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
-        $treeValue = $this->treeAttribute !== false ? $this->getOwner()->getAttribute($this->treeAttribute) : null;
-        $leftAttribute = $db->quoteColumnName($this->leftAttribute);
-        $rightAttribute = $db->quoteColumnName($this->rightAttribute);
-        $depthAttribute = $db->quoteColumnName($this->depthAttribute);
-        $this->getOwner()::updateAll(
-            [
-                $this->leftAttribute => new Expression($leftAttribute . sprintf('%+d', 1 - $leftValue)),
-                $this->rightAttribute => new Expression($rightAttribute . sprintf('%+d', 1 - $leftValue)),
-                $this->depthAttribute => new Expression($depthAttribute . sprintf('%+d', -$depthValue)),
-                $this->treeAttribute => $this->getOwner()->getPrimaryKey(),
-            ],
-            [
-                'and',
-                [
-                    '>=',
-                    $this->leftAttribute,
-                    $leftValue,
-                ],
-                [
-                    '<=',
-                    $this->rightAttribute,
-                    $rightValue,
-                ],
-                [
-                    $this->treeAttribute => $treeValue,
-                ],
-            ],
+        $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
+        $nodeRootValue = $this->getOwner()->getPrimaryKey();
+        $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
+
+        $this->moveSubtreeToTargetTree(
+            $nodeRootValue,
+            $treeValue,
+            -$depthValue,
+            $leftValue,
+            (1 - $leftValue),
+            $rightValue,
         );
         $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
     }
@@ -1395,6 +1362,22 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
+     * Retrieves and caches the {@see Connection} object associated with the owner model.
+     *
+     * The connection is resolved on first access and stored for subsequent calls to improve performance and avoid
+     * redundant lookups.
+     *
+     * This method is used internally by operations that require direct database access, such as bulk updates or
+     * structural modifications to the nested set tree.
+     *
+     * @return Connection Database connection instance for the owner model.
+     */
+    private function getDb(): Connection
+    {
+        return $this->db ??= $this->getOwner()::getDb();
+    }
+
+    /**
      * Returns the {@see ActiveRecord} instance to which this behavior is currently attached.
      *
      * Ensures that the behavior has a valid owner before performing any operations that require access to the model
@@ -1416,5 +1399,64 @@ class NestedSetsBehavior extends Behavior
         }
 
         return $this->owner;
+    }
+
+    /**
+     * Moves a subtree to a different tree or position within a multi-tree nested set structure.
+     *
+     * Updates the left, right, and depth attributes, as well as the tree attribute, for all nodes in the specified
+     * subtree.
+     *
+     * This method is used internally when moving a node and its descendants across trees or to a new root, ensuring
+     * that all affected nodes are updated in a single bulk operation.
+     *
+     * This operation is essential for maintaining the integrity of the nested set structure when reorganizing nodes
+     * between trees or promoting a node to root in a multi-tree configuration.
+     *
+     * @param mixed $nodeRootValue Value to assign to the tree attribute for all nodes in the moved subtree.
+     * @param mixed $treeValue Current tree attribute value of the nodes being moved.
+     * @param int $depth Depth offset to apply to all nodes in the subtree.
+     * @param int $leftValue Left boundary value of the subtree to move.
+     * @param int $positionOffset Amount to shift left and right attribute values for the subtree.
+     * @param int $rightValue Right boundary value of the subtree to move.
+     */
+    private function moveSubtreeToTargetTree(
+        mixed $nodeRootValue,
+        mixed $treeValue,
+        int $depth,
+        int $leftValue,
+        int $positionOffset,
+        int $rightValue,
+    ): void {
+        $this->getOwner()::updateAll(
+            [
+                $this->leftAttribute => new Expression(
+                    $this->getDb()->quoteColumnName($this->leftAttribute) . sprintf('%+d', $positionOffset),
+                ),
+                $this->rightAttribute => new Expression(
+                    $this->getDb()->quoteColumnName($this->rightAttribute) . sprintf('%+d', $positionOffset),
+                ),
+                $this->depthAttribute => new Expression(
+                    $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', $depth),
+                ),
+                $this->treeAttribute => $nodeRootValue,
+            ],
+            [
+                'and',
+                [
+                    '>=',
+                    $this->leftAttribute,
+                    $leftValue,
+                ],
+                [
+                    '<=',
+                    $this->rightAttribute,
+                    $rightValue,
+                ],
+                [
+                    $this->treeAttribute => $treeValue,
+                ],
+            ],
+        );
     }
 }
