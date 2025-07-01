@@ -189,4 +189,54 @@ final class NestedSetsQueryBehaviorTest extends TestCase
             }
         }
     }
+
+    public function testRootsMethodRequiresLeftAttributeOrderingWhenTreeAttributeIsDisabled(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $query = Tree::find()->roots();
+
+        $sql = $query->createCommand()->getRawSql();
+
+        self::assertStringContainsString(
+            'ORDER BY',
+            $sql,
+            '\'roots()\' query should include \'ORDER BY\' clause for consistent results.',
+        );
+        self::assertStringContainsString(
+            '`lft`',
+            $sql,
+            '\'roots()\' query should order by \'left\' attribute for deterministic ordering.',
+        );
+
+        $roots = $query->all();
+
+        self::assertCount(
+            1,
+            $roots,
+            'Should return exactly \'1\' root node when \'treeAttribute\' is disabled.',
+        );
+
+        if (isset($roots[0])) {
+            self::assertInstanceOf(
+                Tree::class,
+                $roots[0],
+                'Root node should be an instance of \'Tree\'.',
+            );
+            self::assertEquals(
+                'Root',
+                $roots[0]->getAttribute('name'),
+                'Root should have the correct name.',
+            );
+            self::assertEquals(
+                1,
+                $roots[0]->getAttribute('lft'),
+                'Root should have left value of \'1\' indicating it is a root node.',
+            );
+        }
+    }
 }
