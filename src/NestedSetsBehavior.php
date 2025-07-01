@@ -1199,7 +1199,7 @@ class NestedSetsBehavior extends Behavior
 
             $this->shiftLeftRightAttribute($value, $delta);
 
-            if ($leftValue >= $value) {
+            if ($leftValue > $value) {
                 $leftValue += $delta;
                 $rightValue += $delta;
             }
