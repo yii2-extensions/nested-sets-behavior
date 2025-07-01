@@ -2322,4 +2322,135 @@ final class NestedSetsBehaviorTest extends TestCase
             }
         }
     }
+
+    public function testMakeRootRefreshIsNecessaryForCorrectAttributeValues(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Original Root']);
+
+        $root->makeRoot();
+
+        $child1 = new MultipleTree(['name' => 'Child 1']);
+
+        $child1->appendTo($root);
+
+        $child2 = new MultipleTree(['name' => 'Child 2']);
+
+        $child2->appendTo($root);
+
+        $grandchild = new MultipleTree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child1);
+
+        $nodeToPromote = MultipleTree::findOne($child1->id);
+
+        self::assertNotNull(
+            $nodeToPromote,
+            'Child node should exist before promoting to root.',
+        );
+        self::assertFalse(
+            $nodeToPromote->isRoot(),
+            "Node should not be root before 'makeRoot()' operation.",
+        );
+
+        $originalLeft = $nodeToPromote->getAttribute('lft');
+        $originalRight = $nodeToPromote->getAttribute('rgt');
+        $originalDepth = $nodeToPromote->getAttribute('depth');
+        $originalTree = $nodeToPromote->getAttribute('tree');
+
+        $result = $nodeToPromote->makeRoot();
+
+        self::assertTrue(
+            $result,
+            "'makeRoot()' should return 'true' when converting node to root.",
+        );
+        self::assertTrue(
+            $nodeToPromote->isRoot(),
+            "Node should be identified as root after 'makeRoot()' - this requires 'refresh()' to work.",
+        );
+        self::assertEquals(
+            1,
+            $nodeToPromote->getAttribute('lft'),
+            "Root node left value should be '1' after 'makeRoot()' - requires 'refresh()' to see updated value.",
+        );
+        self::assertEquals(
+            4,
+            $nodeToPromote->getAttribute('rgt'),
+            "Root node right value should be '4' after 'makeRoot()' - requires 'refresh()' to see updated value.",
+        );
+        self::assertEquals(
+            0,
+            $nodeToPromote->getAttribute('depth'),
+            "Root node depth should be '0' after 'makeRoot()' - requires 'refresh()' to see updated value.",
+        );
+        self::assertEquals(
+            $nodeToPromote->getAttribute('id'),
+            $nodeToPromote->getAttribute('tree'),
+            "Tree attribute should equal node ID for new root - requires 'refresh()' to see updated value.",
+        );
+        self::assertNotEquals(
+            $originalLeft,
+            $nodeToPromote->getAttribute('lft'),
+            "Left value should have changed from original after 'makeRoot()'.",
+        );
+        self::assertNotEquals(
+            $originalRight,
+            $nodeToPromote->getAttribute('rgt'),
+            "Right value should have changed from original after 'makeRoot()'.",
+        );
+        self::assertNotEquals(
+            $originalDepth,
+            $nodeToPromote->getAttribute('depth'),
+            "Depth should have changed from original after 'makeRoot()'.",
+        );
+        self::assertNotEquals(
+            $originalTree,
+            $nodeToPromote->getAttribute('tree'),
+            "Tree should have changed from original after 'makeRoot()'.",
+        );
+
+        $grandchildAfter = MultipleTree::findOne($grandchild->id);
+
+        self::assertNotNull(
+            $grandchildAfter,
+            "'Grandchild' should still exist after parent became root.",
+        );
+        self::assertEquals(
+            $nodeToPromote->getAttribute('tree'),
+            $grandchildAfter->getAttribute('tree'),
+            "'Grandchild' should be in the same tree as the new root.",
+        );
+        self::assertEquals(
+            1,
+            $grandchildAfter->getAttribute('depth'),
+            "'Grandchild' depth should be recalculated relative to new root.",
+        );
+
+        $reloadedNode = MultipleTree::findOne($nodeToPromote->id);
+
+        self::assertNotNull(
+            $reloadedNode,
+            "Node should exist in database after 'makeRoot()'.",
+        );
+        self::assertTrue(
+            $reloadedNode->isRoot(),
+            'Reloaded node should be root.',
+        );
+        self::assertEquals(
+            1,
+            $reloadedNode->getAttribute('lft'),
+            "Reloaded node should have 'left=1'.",
+        );
+        self::assertEquals(
+            4,
+            $reloadedNode->getAttribute('rgt'),
+            "Reloaded node should have 'right=4'.",
+        );
+        self::assertEquals(
+            0,
+            $reloadedNode->getAttribute('depth'),
+            "Reloaded node should have 'depth=0'.",
+        );
+    }
 }
