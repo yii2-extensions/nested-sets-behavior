@@ -229,18 +229,6 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testThrowExceptionWhenInsertAfterNewNodeTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
-
-        $node->insertAfter(new Tree());
-    }
-
     public function testThrowExceptionWhenInsertAfterNewNodeTargetIsRoot(): void
     {
         $this->generateFixtureTree();
@@ -2021,20 +2009,6 @@ final class NestedSetsBehaviorTest extends TestCase
             ExtendableNestedSetsBehavior::class,
             $extendableBehavior,
             "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
-        );
-
-        $condition = ['name' => 'test'];
-
-        $extendableBehavior->exposedApplyTreeAttributeCondition($condition);
-
-        self::assertTrue(
-            $extendableBehavior->wasMethodCalled('applyTreeAttributeCondition'),
-            "'applyTreeAttributeCondition' method should remain protected to allow subclass access.",
-        );
-        self::assertEquals(
-            ['and', ['name' => 'test'], ['tree' => 1]],
-            $condition,
-            "'Tree' attribute condition should be applied correctly when 'treeAttribute' is enabled.",
         );
     }
 

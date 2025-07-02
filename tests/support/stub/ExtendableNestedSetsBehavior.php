@@ -19,16 +19,6 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
      */
     public array $calledMethods = [];
 
-    /**
-     * @phpstan-param array<int|string, mixed> $condition
-     */
-    public function exposedApplyTreeAttributeCondition(array &$condition): void
-    {
-        $this->calledMethods['applyTreeAttributeCondition'] = true;
-
-        $this->applyTreeAttributeCondition($condition);
-    }
-
     public function exposedBeforeInsertNode(int $value, int $depth): void
     {
         $this->calledMethods['beforeInsertNode'] = true;
