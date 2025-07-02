@@ -84,7 +84,7 @@ final class QueryConditionBuilder
             $condition[] = ['<=', $depthAttribute, $parentDepth + $maxRelativeDepth];
         }
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             $condition[] = [$treeAttribute => $treeValue];
         }
 
@@ -176,7 +176,7 @@ final class QueryConditionBuilder
             ];
         }
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             if (isset($condition[0]) && $condition[0] === 'and') {
                 $condition[] = [$treeAttribute => $treeValue];
             }
@@ -214,7 +214,7 @@ final class QueryConditionBuilder
     ): array {
         $condition = [$leftAttribute => $rightValue + 1];
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             $condition = ['and', $condition, [$treeAttribute => $treeValue]];
         }
 
@@ -276,7 +276,7 @@ final class QueryConditionBuilder
             $condition[] = ['>=', $depthAttribute, $childDepth - $maxRelativeDepth];
         }
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             $condition[] = [$treeAttribute => $treeValue];
         }
 
@@ -312,7 +312,7 @@ final class QueryConditionBuilder
     ): array {
         $condition = [$rightAttribute => $leftValue - 1];
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             $condition = ['and', $condition, [$treeAttribute => $treeValue]];
         }
 
@@ -362,7 +362,7 @@ final class QueryConditionBuilder
             ['<=', $rightAttribute, $rightValue],
         ];
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             $condition[] = [$treeAttribute => $treeValue];
         }
 
@@ -398,7 +398,7 @@ final class QueryConditionBuilder
     ): array {
         $condition = ['>=', $attribute, $value];
 
-        if ($treeAttribute !== false && $treeValue !== null) {
+        if ($treeAttribute !== false) {
             $condition = ['and', $condition, [$treeAttribute => $treeValue]];
         }
 
