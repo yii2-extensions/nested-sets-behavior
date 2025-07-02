@@ -300,6 +300,10 @@ class NestedSetsBehavior extends Behavior
      *
      * @return bool Whether the operation was successful and the node was appended or moved.
      *
+     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
+     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
+     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
+     *
      * Usage example:
      * ```php
      * $category->appendTo($parentCategory);
@@ -593,6 +597,10 @@ class NestedSetsBehavior extends Behavior
      *
      * @return bool Whether the operation was successful and the node was inserted or moved.
      *
+     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
+     * database transactions if the model's {@see ActiveRecord::isTransactional()} method returns `true` for the
+     * current scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
+     *
      * Usage example:
      * ```php
      * $category->insertAfter($siblingCategory);
@@ -633,6 +641,10 @@ class NestedSetsBehavior extends Behavior
      * @throws Exception if an unexpected error occurs during execution.
      *
      * @return bool Whether the operation was successful and the node was inserted or moved.
+     *
+     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
+     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
+     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
      *
      * Usage example:
      * ```php
@@ -804,6 +816,10 @@ class NestedSetsBehavior extends Behavior
      *
      * @return bool Whether the operation was successful and the node was created or moved as root.
      *
+     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
+     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
+     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
+     *
      * Usage example:
      * ```php
      * // Create a new root node
@@ -939,6 +955,10 @@ class NestedSetsBehavior extends Behavior
      * @throws Exception if an unexpected error occurs during execution.
      *
      * @return bool Whether the operation was successful and the node was prepended or moved.
+     *
+     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
+     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
+     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
      *
      * Usage example:
      * ```php
