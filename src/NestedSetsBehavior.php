@@ -379,17 +379,17 @@ class NestedSetsBehavior extends Behavior
     {
         match (true) {
             $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forAppendTo($this->node, $this->rightAttribute)
+                NodeContext::forAppendTo($this->node, $this->rightAttribute),
             ),
             $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forInsertAfter($this->node, $this->rightAttribute)
+                NodeContext::forInsertAfter($this->node, $this->rightAttribute),
             ),
             $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forInsertBefore($this->node, $this->leftAttribute)
+                NodeContext::forInsertBefore($this->node, $this->leftAttribute),
             ),
             $this->operation === self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
             $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forPrependTo($this->node, $this->leftAttribute)
+                NodeContext::forPrependTo($this->node, $this->leftAttribute),
             ),
             default => throw new NotSupportedException(
                 'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
