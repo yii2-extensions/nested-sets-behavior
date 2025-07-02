@@ -178,7 +178,7 @@ final class NestedSetsUpdateManager
         foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
             $this->modelClass::updateAll(
                 $this->expressionBuilder->createSingleAttributeUpdate($attribute, $positionOffset),
-                $this->conditionBuilder->createMovementCondition($leftValue, $rightValue, $treeValue),
+                $this->conditionBuilder->reateSubtreeCondition($leftValue, $rightValue, $treeValue),
             );
         }
     }

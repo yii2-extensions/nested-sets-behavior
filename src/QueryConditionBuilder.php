@@ -130,22 +130,6 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition for moving nodes within the same tree boundaries.
-     *
-     * @param int $leftValue Left boundary of the moving subtree.
-     * @param int $rightValue Right boundary of the moving subtree.
-     * @param mixed $treeValue Tree attribute value for scoping.
-     *
-     * @return array Movement condition for same-tree operations.
-     *
-     * @phpstan-return array<int|string, mixed>
-     */
-    public function createMovementCondition(int $leftValue, int $rightValue, mixed $treeValue): array
-    {
-        return $this->createSubtreeCondition($leftValue, $rightValue, $treeValue);
-    }
-
-    /**
      * Creates a condition for cross-tree operations.
      *
      * @param string $attribute Attribute to filter ('lft' or 'rgt').
