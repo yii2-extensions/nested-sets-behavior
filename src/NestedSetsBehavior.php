@@ -262,19 +262,16 @@ class NestedSetsBehavior extends Behavior
 
         if ($this->operation === self::OPERATION_MAKE_ROOT) {
             $this->moveNodeAsRoot($currentOwnerTreeValue);
-            $this->resetOperationState();
             return;
         }
 
         if ($this->node === null) {
-            $this->resetOperationState();
             return;
         }
 
         $context = $this->createMoveContext($this->node, $this->operation);
 
         $this->moveNode($context);
-        $this->resetOperationState();
     }
 
     /**
@@ -1490,16 +1487,5 @@ class NestedSetsBehavior extends Behavior
                 ],
             ],
         );
-    }
-
-    /**
-     * Resets the internal operation state after completing a nested set operation.
-     *
-     * Clears the current operation type and target node reference to prepare for subsequent operations..
-     */
-    private function resetOperationState(): void
-    {
-        $this->operation = null;
-        $this->node = null;
     }
 }
