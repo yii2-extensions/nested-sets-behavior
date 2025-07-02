@@ -1092,24 +1092,6 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Prepares the current node for insertion using a NodeContext.
-     *
-     * Sets the left, right, and depth attributes of the node to be inserted, based on the provided context which
-     * encapsulates the target node, operation type, and calculated values.
-     *
-     * This method delegates to {@see beforeInsertNode()} using the values from the NodeContext, ensuring consistency
-     * and reducing code duplication.
-     *
-     * @param NodeContext $context Immutable context containing all necessary data for node insertion.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     */
-    protected function beforeInsertNodeWithContext(NodeContext $context): void
-    {
-        $this->beforeInsertNode($context->targetPositionValue, $context->depthLevelDelta);
-    }
-
-    /**
      * Prepares the current node for insertion as a root node in the nested set tree.
      *
      * Sets the left, right, and depth attributes of the node to their initial values, establishing it as the root node
@@ -1357,6 +1339,24 @@ class NestedSetsBehavior extends Behavior
                 $condition,
             );
         }
+    }
+
+    /**
+     * Prepares the current node for insertion using a NodeContext.
+     *
+     * Sets the left, right, and depth attributes of the node to be inserted, based on the provided context which
+     * encapsulates the target node, operation type, and calculated values.
+     *
+     * This method delegates to {@see beforeInsertNode()} using the values from the NodeContext, ensuring consistency
+     * and reducing code duplication.
+     *
+     * @param NodeContext $context Immutable context containing all necessary data for node insertion.
+     *
+     * @throws Exception if an unexpected error occurs during execution.
+     */
+    private function beforeInsertNodeWithContext(NodeContext $context): void
+    {
+        $this->beforeInsertNode($context->targetPositionValue, $context->depthLevelDelta);
     }
 
     /**
