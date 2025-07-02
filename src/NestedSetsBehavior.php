@@ -131,6 +131,16 @@ class NestedSetsBehavior extends Behavior
     private Connection|null $db = null;
 
     /**
+     * Update manager instance for centralized database operations.
+     *
+     * Manages the creation and execution of complex update operations through centralized condition and expression
+     * builders, ensuring consistency and reducing code duplication.
+     *
+     * @phpstan-var NestedSetsUpdateManager<T>|null
+     */
+    private NestedSetsUpdateManager|null $updateManager = null;
+
+    /**
      * Handles post-deletion updates for the nested set structure.
      *
      * Updates left, right, and depth attributes of affected nodes after a node is deleted, ensuring the tree remains
@@ -149,47 +159,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function afterDelete(): void
     {
-        $leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
-        $rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
-
-        if ($this->operation === self::OPERATION_DELETE_WITH_CHILDREN || $this->getOwner()->isLeaf()) {
-            $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
-        } else {
-            $condition = [
-                'and',
-                [
-                    '>=',
-                    $this->leftAttribute,
-                    $this->getOwner()->getAttribute($this->leftAttribute),
-                ],
-                [
-                    '<=',
-                    $this->rightAttribute,
-                    $this->getOwner()->getAttribute($this->rightAttribute),
-                ],
-            ];
-
-            $this->applyTreeAttributeCondition($condition);
-            $db = $this->getOwner()::getDb();
-            $this->getOwner()::updateAll(
-                [
-                    $this->leftAttribute => new Expression(
-                        $db->quoteColumnName($this->leftAttribute) . sprintf('%+d', -1),
-                    ),
-                    $this->rightAttribute => new Expression(
-                        $db->quoteColumnName($this->rightAttribute) . sprintf('%+d', -1),
-                    ),
-                    $this->depthAttribute => new Expression(
-                        $db->quoteColumnName($this->depthAttribute) . sprintf('%+d', -1),
-                    ),
-                ],
-                $condition,
-            );
-            $this->shiftLeftRightAttribute($rightValue, -2);
-        }
-
-        $this->operation = null;
-        $this->node = null;
+        $this->getUpdateManager()->updateSubtreeForDeletion($this->operation);
     }
 
     /**
@@ -211,26 +181,9 @@ class NestedSetsBehavior extends Behavior
      */
     public function afterInsert(): void
     {
-        if ($this->operation === self::OPERATION_MAKE_ROOT && $this->treeAttribute !== false) {
-            $this->getOwner()->setAttribute($this->treeAttribute, $this->getOwner()->getPrimaryKey());
-            $primaryKey = $this->getOwner()::primaryKey();
-
-            if (isset($primaryKey[0]) === false) {
-                throw new Exception('"' . get_class($this->getOwner()) . '" must have a primary key.');
-            }
-
-            $this->getOwner()::updateAll(
-                [
-                    $this->treeAttribute => $this->getOwner()->getAttribute($this->treeAttribute),
-                ],
-                [
-                    $primaryKey[0] => $this->getOwner()->getAttribute($this->treeAttribute),
-                ],
-            );
+        if ($this->operation === self::OPERATION_MAKE_ROOT) {
+            $this->getUpdateManager()->updateTreeAttributeForRoot();
         }
-
-        $this->operation = null;
-        $this->node = null;
     }
 
     /**
@@ -1088,7 +1041,7 @@ class NestedSetsBehavior extends Behavior
             $this->getOwner()->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
         }
 
-        $this->shiftLeftRightAttribute($value, 2);
+        $this->getUpdateManager()->shiftLeftRightAttribute($value, 2);
     }
 
     /**
@@ -1182,7 +1135,7 @@ class NestedSetsBehavior extends Behavior
         if ($this->treeAttribute === false || $targetNodeTreeValue === $currentOwnerTreeValue) {
             $subtreeSize = $ownerRightValue - $ownerLeftValue + 1;
 
-            $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
+            $this->getUpdateManager()->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
 
             if ($ownerLeftValue >= $context->targetPositionValue) {
                 $ownerLeftValue += $subtreeSize;
@@ -1238,7 +1191,7 @@ class NestedSetsBehavior extends Behavior
                 );
             }
 
-            $this->shiftLeftRightAttribute($ownerRightValue, -$subtreeSize);
+            $this->getUpdateManager()->shiftLeftRightAttribute($ownerRightValue, -$subtreeSize);
         } else {
             foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
                 $this->getOwner()::updateAll(
@@ -1269,7 +1222,10 @@ class NestedSetsBehavior extends Behavior
                 $context->targetPositionValue - $ownerLeftValue,
                 $ownerRightValue,
             );
-            $this->shiftLeftRightAttribute($ownerRightValue, $ownerLeftValue - $ownerRightValue - 1);
+            $this->getUpdateManager()->shiftLeftRightAttribute(
+                $ownerRightValue,
+                $ownerLeftValue - $ownerRightValue - 1,
+            );
         }
     }
 
@@ -1308,37 +1264,7 @@ class NestedSetsBehavior extends Behavior
             1 - $leftValue,
             $rightValue,
         );
-        $this->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
-    }
-
-    /**
-     * Shifts left and right attribute values for nodes after a structural change in the nested set tree.
-     *
-     * Updates the left and right boundary attributes of all nodes whose attribute value is greater than or equal to the
-     * specified value, applying the given delta.
-     *
-     * This operation is essential for maintaining the integrity of the nested set structure after insertions,
-     * deletions, or moves, ensuring that all affected nodes are correctly renumbered.
-     *
-     * The method applies the tree attribute condition if multi-tree support is enabled, restricting the update to nodes
-     * within the same tree.
-     *
-     * @param int $value Attribute value from which to start shifting (inclusive).
-     * @param int $delta Amount to add to the attribute value for affected nodes (can be negative).
-     */
-    protected function shiftLeftRightAttribute(int $value, int $delta): void
-    {
-        foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
-            $condition = ['>=', $attribute, $value];
-
-            $this->applyTreeAttributeCondition($condition);
-            $this->getOwner()::updateAll(
-                [
-                    $attribute => new Expression($this->getDb()->quoteColumnName($attribute) . sprintf('%+d', $delta)),
-                ],
-                $condition,
-            );
-        }
+        $this->getUpdateManager()->shiftLeftRightAttribute($rightValue, $leftValue - $rightValue - 1);
     }
 
     /**
@@ -1468,35 +1394,30 @@ class NestedSetsBehavior extends Behavior
         int $positionOffset,
         int $rightValue,
     ): void {
-        $this->getOwner()::updateAll(
-            [
-                $this->leftAttribute => new Expression(
-                    $this->getDb()->quoteColumnName($this->leftAttribute) . sprintf('%+d', $positionOffset),
-                ),
-                $this->rightAttribute => new Expression(
-                    $this->getDb()->quoteColumnName($this->rightAttribute) . sprintf('%+d', $positionOffset),
-                ),
-                $this->depthAttribute => new Expression(
-                    $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', $depth),
-                ),
-                $this->treeAttribute => $targetNodeTreeValue,
-            ],
-            [
-                'and',
-                [
-                    '>=',
-                    $this->leftAttribute,
-                    $leftValue,
-                ],
-                [
-                    '<=',
-                    $this->rightAttribute,
-                    $rightValue,
-                ],
-                [
-                    $this->treeAttribute => $currentOwnerTreeValue,
-                ],
-            ],
+        $this->getUpdateManager()->moveSubtreeToTargetTree(
+            $leftValue,
+            $rightValue,
+            $positionOffset,
+            $depth,
+            $currentOwnerTreeValue,
+            $targetNodeTreeValue,
+        );
+    }
+
+    /**
+     * Gets or creates the update manager instance.
+     *
+     * @return NestedSetsUpdateManager<T> Update manager for database operations.
+     */
+    private function getUpdateManager(): NestedSetsUpdateManager
+    {
+        return $this->updateManager ??= new NestedSetsUpdateManager(
+            $this->getOwner(),
+            $this->getOwner()::class,
+            $this->leftAttribute,
+            $this->rightAttribute,
+            $this->depthAttribute,
+            $this->treeAttribute,
         );
     }
 }

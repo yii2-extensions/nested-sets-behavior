@@ -2151,13 +2151,6 @@ final class NestedSetsBehaviorTest extends TestCase
             $childBehavior,
             "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
         );
-
-        $childBehavior->exposedShiftLeftRightAttribute(1, 2);
-
-        self::assertTrue(
-            $childBehavior->wasMethodCalled('shiftLeftRightAttribute'),
-            "'shiftLeftRightAttribute()' should remain protected to allow subclass customization.",
-        );
     }
 
     public function testProtectedMoveNodeRemainsAccessibleToSubclasses(): void

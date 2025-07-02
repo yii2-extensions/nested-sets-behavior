@@ -70,13 +70,6 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         $this->moveNodeAsRoot(null);
     }
 
-    public function exposedShiftLeftRightAttribute(int $value, int $delta): void
-    {
-        $this->calledMethods['shiftLeftRightAttribute'] = true;
-
-        $this->shiftLeftRightAttribute($value, $delta);
-    }
-
     public function resetMethodCallTracking(): void
     {
         $this->calledMethods = [];
