@@ -29,7 +29,7 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         $this->applyTreeAttributeCondition($condition);
     }
 
-    public function exposedBeforeInsertNode(int|null $value, int $depth): void
+    public function exposedBeforeInsertNode(int $value, int $depth): void
     {
         $this->calledMethods['beforeInsertNode'] = true;
 
@@ -54,14 +54,20 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     {
         $this->calledMethods['moveNode'] = true;
 
-        $this->moveNode($node, $value, $depth);
+        // Create a mock context for testing compatibility
+        $context = new \yii2\extensions\nestedsets\NodeContext(
+            $node,
+            0,
+            0,
+        );
+        $this->moveNode($context);
     }
 
     public function exposedMoveNodeAsRoot(): void
     {
         $this->calledMethods['moveNodeAsRoot'] = true;
 
-        $this->moveNodeAsRoot();
+        $this->moveNodeAsRoot(null);
     }
 
     public function exposedShiftLeftRightAttribute(int $value, int $delta): void

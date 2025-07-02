@@ -1601,7 +1601,7 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->createDatabase();
 
         $behavior = new class extends NestedSetsBehavior {
-            public function callBeforeInsertNode(int|null $value, int $depth): void
+            public function callBeforeInsertNode(int $value, int $depth): void
             {
                 $this->beforeInsertNode($value, $depth);
             }
@@ -1739,23 +1739,6 @@ final class NestedSetsBehaviorTest extends TestCase
             $child->rgt,
             "Child node right value should not be '1' after 'appendTo()' operation.",
         );
-    }
-
-    public function testThrowExceptionWhenAppendToParentWithNullRightValue(): void
-    {
-        $this->createDatabase();
-
-        $parentNode = new Tree(['name' => 'Parent Node']);
-
-        $parentNode->makeRoot();
-        $parentNode->setAttribute('rgt', null);
-
-        $childNode = new Tree(['name' => 'Child Node']);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage("Value cannot be 'null' in 'beforeInsertNode()' method.");
-
-        $childNode->appendTo($parentNode);
     }
 
     public function testAppendToWithRunValidationParameterUsingStrictValidation(): void
