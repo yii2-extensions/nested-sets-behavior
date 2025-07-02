@@ -54,7 +54,14 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     {
         $this->calledMethods['moveNode'] = true;
 
-        $this->moveNode($node, null, $value, $depth);
+        // Create a mock context for testing compatibility
+        $context = new \yii2\extensions\nestedsets\NodeContext(
+            $node,
+            'appendTo',
+            0,
+            0
+        );
+        $this->moveNode($context);
     }
 
     public function exposedMoveNodeAsRoot(): void
