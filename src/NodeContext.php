@@ -29,7 +29,8 @@ final class NodeContext
         public readonly string $operation,
         public readonly int $targetPositionValue,
         public readonly int $depthLevelDelta,
-    ) {}
+    ) {
+    }
 
     /**
      * Creates context for append-to operation (last child).
@@ -125,15 +126,13 @@ final class NodeContext
     public function getTargetDepth(string $depthAttribute): int
     {
         /** @var int $depth */
-        $depth = $this->targetNode->getAttribute($depthAttribute);
-
-        return $depth;
+        return $this->targetNode->getAttribute($depthAttribute);
     }
 
     /**
      * Returns the tree attribute value of the target node.
      *
-     * @param string|false $treeAttribute Name of the tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of the tree attribute or `false` if disabled.
      *
      * @return mixed Tree attribute value or `null` if tree attribute is disabled.
      */
