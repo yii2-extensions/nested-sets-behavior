@@ -377,6 +377,10 @@ class NestedSetsBehavior extends Behavior
      */
     public function beforeInsert(): void
     {
+        if ($this->node?->getIsNewRecord() === true) {
+            throw new Exception('Can not create a node when the target node is new record.');
+        }
+
         match (true) {
             $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
                 NodeContext::forAppendTo($this->node, $this->rightAttribute),
@@ -1069,10 +1073,6 @@ class NestedSetsBehavior extends Behavior
      */
     protected function beforeInsertNode(int $value, int $depth): void
     {
-        if ($this->node?->getIsNewRecord() === true) {
-            throw new Exception('Can not create a node when the target node is new record.');
-        }
-
         if ($depth === 0 && $this->node?->isRoot() === true) {
             throw new Exception('Can not create a node when the target node is root.');
         }
@@ -1106,7 +1106,7 @@ class NestedSetsBehavior extends Behavior
      */
     protected function beforeInsertNodeWithContext(NodeContext $context): void
     {
-        $this->beforeInsertNode($context->getTargetPositionValue(), $context->getDepthLevelDelta());
+        $this->beforeInsertNode($context->targetPositionValue, $context->depthLevelDelta);
     }
 
     /**
@@ -1195,14 +1195,14 @@ class NestedSetsBehavior extends Behavior
         $ownerLeftValue = $this->getOwner()->getAttribute($this->leftAttribute);
         $ownerRightValue = $this->getOwner()->getAttribute($this->rightAttribute);
 
-        $depthOffset = $targetNodeDepthValue - $ownerDepthValue + $context->getDepthLevelDelta();
+        $depthOffset = $targetNodeDepthValue - $ownerDepthValue + $context->depthLevelDelta;
 
         if ($this->treeAttribute === false || $targetNodeTreeValue === $currentOwnerTreeValue) {
             $subtreeSize = $ownerRightValue - $ownerLeftValue + 1;
 
-            $this->shiftLeftRightAttribute($context->getTargetPositionValue(), $subtreeSize);
+            $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
 
-            if ($ownerLeftValue >= $context->getTargetPositionValue()) {
+            if ($ownerLeftValue >= $context->targetPositionValue) {
                 $ownerLeftValue += $subtreeSize;
                 $ownerRightValue += $subtreeSize;
             }
@@ -1249,7 +1249,7 @@ class NestedSetsBehavior extends Behavior
                     [
                         $attribute => new Expression(
                             $this->getDb()->quoteColumnName($attribute) .
-                            sprintf('%+d', $context->getTargetPositionValue() - $ownerLeftValue),
+                            sprintf('%+d', $context->targetPositionValue - $ownerLeftValue),
                         ),
                     ],
                     $condition,
@@ -1270,7 +1270,7 @@ class NestedSetsBehavior extends Behavior
                         [
                             '>=',
                             $attribute,
-                            $context->getTargetPositionValue(),
+                            $context->targetPositionValue,
                         ],
                         [
                             $this->treeAttribute => $targetNodeTreeValue,
@@ -1284,7 +1284,7 @@ class NestedSetsBehavior extends Behavior
                 $currentOwnerTreeValue,
                 $depthOffset,
                 $ownerLeftValue,
-                $context->getTargetPositionValue() - $ownerLeftValue,
+                $context->targetPositionValue - $ownerLeftValue,
                 $ownerRightValue,
             );
             $this->shiftLeftRightAttribute($ownerRightValue, $ownerLeftValue - $ownerRightValue - 1);

@@ -26,8 +26,8 @@ final class NodeContext
 {
     public function __construct(
         private readonly ActiveRecord $targetNode,
-        private readonly int|null $targetPositionValue,
-        private readonly int $depthLevelDelta,
+        public readonly int $targetPositionValue,
+        public readonly int $depthLevelDelta,
     ) {}
 
     /**
@@ -112,11 +112,6 @@ final class NodeContext
         );
     }
 
-    public function getDepthLevelDelta(): int
-    {
-        return $this->depthLevelDelta;
-    }
-
     /**
      * Returns the depth value of the target node.
      *
@@ -129,16 +124,6 @@ final class NodeContext
     public function getTargetDepth(string $depthAttribute): int
     {
         return $this->targetNode->getAttribute($depthAttribute);
-    }
-
-    /**
-     * Returns the target position value used for node movement.
-     *
-     * @return int Target position value, or 0 if not set.
-     */
-    public function getTargetPositionValue(): int
-    {
-        return (int) $this->targetPositionValue;
     }
 
     /**
