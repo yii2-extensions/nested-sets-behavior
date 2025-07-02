@@ -138,7 +138,7 @@ final class NodeContext
      */
     public function getTargetPositionValue(): int
     {
-        return $this->targetPositionValue ?? 0;
+        return (int) $this->targetPositionValue;
     }
 
     /**
