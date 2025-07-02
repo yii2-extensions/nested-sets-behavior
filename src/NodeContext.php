@@ -29,8 +29,7 @@ final class NodeContext
         public readonly string $operation,
         public readonly int $targetPositionValue,
         public readonly int $depthLevelDelta,
-    ) {
-    }
+    ) {}
 
     /**
      * Creates context for append-to operation (last child).
@@ -39,16 +38,15 @@ final class NodeContext
      * @param string $rightAttribute Name of the right attribute.
      *
      * @return self New instance with the specified parameters for append-to operation.
+     *
+     * @phpstan-param 'rgt' $rightAttribute
      */
     public static function forAppendTo(ActiveRecord $targetNode, string $rightAttribute): self
     {
-        /** @phpstan-var int $rightValue */
-        $rightValue = $targetNode->getAttribute($rightAttribute);
-
         return new self(
             targetNode: $targetNode,
             operation: NestedSetsBehavior::OPERATION_APPEND_TO,
-            targetPositionValue: $rightValue,
+            targetPositionValue: $targetNode->getAttribute($rightAttribute),
             depthLevelDelta: 1,
         );
     }
@@ -60,10 +58,11 @@ final class NodeContext
      * @param string $rightAttribute Name of the right attribute.
      *
      * @return self New instance with the specified parameters for insert-after operation.
+     *
+     * @phpstan-param 'rgt' $rightAttribute
      */
     public static function forInsertAfter(ActiveRecord $targetNode, string $rightAttribute): self
     {
-        /** @phpstan-var int $rightValue */
         $rightValue = $targetNode->getAttribute($rightAttribute);
 
         return new self(
@@ -81,10 +80,11 @@ final class NodeContext
      * @param string $leftAttribute Name of the left attribute.
      *
      * @return self New instance with the specified parameters for insert-before operation.
+     *
+     * @phpstan-param 'lft' $leftAttribute
      */
     public static function forInsertBefore(ActiveRecord $targetNode, string $leftAttribute): self
     {
-        /** @var int $leftValue */
         $leftValue = $targetNode->getAttribute($leftAttribute);
 
         return new self(
@@ -102,10 +102,11 @@ final class NodeContext
      * @param string $leftAttribute Name of the left attribute.
      *
      * @return self New instance with the specified parameters for prepend-to operation.
+     *
+     * @phpstan-param 'lft' $leftAttribute
      */
     public static function forPrependTo(ActiveRecord $targetNode, string $leftAttribute): self
     {
-        /** @var int $leftValue */
         $leftValue = $targetNode->getAttribute($leftAttribute);
 
         return new self(
@@ -122,10 +123,12 @@ final class NodeContext
      * @param string $depthAttribute Name of the depth attribute.
      *
      * @return int Depth value of the target node.
+     *
+     * @phpstan-param 'depth' $depthAttribute
      */
     public function getTargetDepth(string $depthAttribute): int
     {
-        return (int) $this->targetNode->getAttribute($depthAttribute);
+        return $this->targetNode->getAttribute($depthAttribute);
     }
 
     /**

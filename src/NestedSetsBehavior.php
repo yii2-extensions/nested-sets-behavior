@@ -34,7 +34,6 @@ use function sprintf;
  * - Supports custom attribute names for left, right, depth, and tree columns.
  *
  * @phpstan-template T of ActiveRecord
- *
  * @phpstan-extends Behavior<T>
  *
  * @property int $depth
@@ -301,6 +300,7 @@ class NestedSetsBehavior extends Behavior
      * $category->appendTo($parentCategory);
      * ```
      *
+     * @phpstan-param T $node
      * @phpstan-param array<string, mixed>|null $attributes
      */
     public function appendTo(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
