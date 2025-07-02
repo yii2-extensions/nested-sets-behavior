@@ -34,6 +34,7 @@ use function sprintf;
  * - Supports custom attribute names for left, right, depth, and tree columns.
  *
  * @phpstan-template T of ActiveRecord
+ *
  * @phpstan-extends Behavior<T>
  *
  * @property int $depth
