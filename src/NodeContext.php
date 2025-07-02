@@ -29,8 +29,7 @@ final class NodeContext
         public readonly string $operation,
         public readonly int $targetPositionValue,
         public readonly int $depthLevelDelta,
-    ) {
-    }
+    ) {}
 
     /**
      * Creates context for append-to operation (last child).
