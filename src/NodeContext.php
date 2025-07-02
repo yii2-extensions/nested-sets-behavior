@@ -25,10 +25,9 @@ use yii\db\ActiveRecord;
 final class NodeContext
 {
     public function __construct(
-        public readonly ActiveRecord $targetNode,
-        public readonly string $operation,
-        public readonly int $targetPositionValue,
-        public readonly int $depthLevelDelta,
+        private readonly ActiveRecord $targetNode,
+        private readonly int|null $targetPositionValue,
+        private readonly int $depthLevelDelta,
     ) {}
 
     /**
@@ -45,7 +44,6 @@ final class NodeContext
     {
         return new self(
             targetNode: $targetNode,
-            operation: NestedSetsBehavior::OPERATION_APPEND_TO,
             targetPositionValue: $targetNode->getAttribute($rightAttribute),
             depthLevelDelta: 1,
         );
@@ -67,7 +65,6 @@ final class NodeContext
 
         return new self(
             targetNode: $targetNode,
-            operation: NestedSetsBehavior::OPERATION_INSERT_AFTER,
             targetPositionValue: $rightValue + 1,
             depthLevelDelta: 0,
         );
@@ -89,7 +86,6 @@ final class NodeContext
 
         return new self(
             targetNode: $targetNode,
-            operation: NestedSetsBehavior::OPERATION_INSERT_BEFORE,
             targetPositionValue: $leftValue,
             depthLevelDelta: 0,
         );
@@ -111,10 +107,14 @@ final class NodeContext
 
         return new self(
             targetNode: $targetNode,
-            operation: NestedSetsBehavior::OPERATION_PREPEND_TO,
             targetPositionValue: $leftValue + 1,
             depthLevelDelta: 1,
         );
+    }
+
+    public function getDepthLevelDelta(): int
+    {
+        return $this->depthLevelDelta;
     }
 
     /**
@@ -129,6 +129,16 @@ final class NodeContext
     public function getTargetDepth(string $depthAttribute): int
     {
         return $this->targetNode->getAttribute($depthAttribute);
+    }
+
+    /**
+     * Returns the target position value used for node movement.
+     *
+     * @return int Target position value, or 0 if not set.
+     */
+    public function getTargetPositionValue(): int
+    {
+        return $this->targetPositionValue ?? 0;
     }
 
     /**

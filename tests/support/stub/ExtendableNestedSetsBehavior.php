@@ -29,7 +29,7 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         $this->applyTreeAttributeCondition($condition);
     }
 
-    public function exposedBeforeInsertNode(int|null $value, int $depth): void
+    public function exposedBeforeInsertNode(int $value, int $depth): void
     {
         $this->calledMethods['beforeInsertNode'] = true;
 
@@ -57,7 +57,6 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         // Create a mock context for testing compatibility
         $context = new \yii2\extensions\nestedsets\NodeContext(
             $node,
-            'appendTo',
             0,
             0,
         );

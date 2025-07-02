@@ -378,22 +378,18 @@ class NestedSetsBehavior extends Behavior
     public function beforeInsert(): void
     {
         match (true) {
-            $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNode(
-                $this->node->getAttribute($this->rightAttribute),
-                1,
+            $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
+                NodeContext::forAppendTo($this->node, $this->rightAttribute)
             ),
-            $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null => $this->beforeInsertNode(
-                $this->node->getAttribute($this->rightAttribute) + 1,
-                0,
+            $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null => $this->beforeInsertNodeWithContext(
+                NodeContext::forInsertAfter($this->node, $this->rightAttribute)
             ),
-            $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null => $this->beforeInsertNode(
-                $this->node->getAttribute($this->leftAttribute),
-                0,
+            $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null => $this->beforeInsertNodeWithContext(
+                NodeContext::forInsertBefore($this->node, $this->leftAttribute)
             ),
             $this->operation === self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
-            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNode(
-                $this->node->getAttribute($this->leftAttribute) + 1,
-                1,
+            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
+                NodeContext::forPrependTo($this->node, $this->leftAttribute)
             ),
             default => throw new NotSupportedException(
                 'Method "' . get_class($this->getOwner()) . '::insert" is not supported for inserting new nodes.',
@@ -1066,12 +1062,12 @@ class NestedSetsBehavior extends Behavior
      * This method is called internally before inserting a node as a child or sibling, ensuring the nested set
      * attributes are correctly initialized.
      *
-     * @param int|null $value Left attribute value for the new node, or `null` if not applicable.
+     * @param int $value Left attribute value for the new node, or `null` if not applicable.
      * @param int $depth Depth offset relative to the target node (`0` for sibling, `1` for child).
      *
      * @throws Exception if an unexpected error occurs during execution.
      */
-    protected function beforeInsertNode(int|null $value, int $depth): void
+    protected function beforeInsertNode(int $value, int $depth): void
     {
         if ($this->node?->getIsNewRecord() === true) {
             throw new Exception('Can not create a node when the target node is new record.');
@@ -1079,10 +1075,6 @@ class NestedSetsBehavior extends Behavior
 
         if ($depth === 0 && $this->node?->isRoot() === true) {
             throw new Exception('Can not create a node when the target node is root.');
-        }
-
-        if ($value === null) {
-            throw new Exception('Value cannot be \'null\' in \'beforeInsertNode()\' method.');
         }
 
         $this->getOwner()->setAttribute($this->leftAttribute, $value);
@@ -1097,6 +1089,24 @@ class NestedSetsBehavior extends Behavior
         }
 
         $this->shiftLeftRightAttribute($value, 2);
+    }
+
+    /**
+     * Prepares the current node for insertion using a NodeContext.
+     *
+     * Sets the left, right, and depth attributes of the node to be inserted, based on the provided context which
+     * encapsulates the target node, operation type, and calculated values.
+     *
+     * This method delegates to {@see beforeInsertNode()} using the values from the NodeContext, ensuring consistency
+     * and reducing code duplication.
+     *
+     * @param NodeContext $context Immutable context containing all necessary data for node insertion.
+     *
+     * @throws Exception if an unexpected error occurs during execution.
+     */
+    protected function beforeInsertNodeWithContext(NodeContext $context): void
+    {
+        $this->beforeInsertNode($context->getTargetPositionValue(), $context->getDepthLevelDelta());
     }
 
     /**
@@ -1185,14 +1195,14 @@ class NestedSetsBehavior extends Behavior
         $ownerLeftValue = $this->getOwner()->getAttribute($this->leftAttribute);
         $ownerRightValue = $this->getOwner()->getAttribute($this->rightAttribute);
 
-        $depthOffset = $targetNodeDepthValue - $ownerDepthValue + $context->depthLevelDelta;
+        $depthOffset = $targetNodeDepthValue - $ownerDepthValue + $context->getDepthLevelDelta();
 
         if ($this->treeAttribute === false || $targetNodeTreeValue === $currentOwnerTreeValue) {
             $subtreeSize = $ownerRightValue - $ownerLeftValue + 1;
 
-            $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
+            $this->shiftLeftRightAttribute($context->getTargetPositionValue(), $subtreeSize);
 
-            if ($ownerLeftValue >= $context->targetPositionValue) {
+            if ($ownerLeftValue >= $context->getTargetPositionValue()) {
                 $ownerLeftValue += $subtreeSize;
                 $ownerRightValue += $subtreeSize;
             }
@@ -1238,7 +1248,8 @@ class NestedSetsBehavior extends Behavior
                 $this->getOwner()::updateAll(
                     [
                         $attribute => new Expression(
-                            $this->getDb()->quoteColumnName($attribute) . sprintf('%+d', $context->targetPositionValue - $ownerLeftValue),
+                            $this->getDb()->quoteColumnName($attribute) .
+                            sprintf('%+d', $context->getTargetPositionValue() - $ownerLeftValue),
                         ),
                     ],
                     $condition,
@@ -1259,7 +1270,7 @@ class NestedSetsBehavior extends Behavior
                         [
                             '>=',
                             $attribute,
-                            $context->targetPositionValue,
+                            $context->getTargetPositionValue(),
                         ],
                         [
                             $this->treeAttribute => $targetNodeTreeValue,
@@ -1273,7 +1284,7 @@ class NestedSetsBehavior extends Behavior
                 $currentOwnerTreeValue,
                 $depthOffset,
                 $ownerLeftValue,
-                $context->targetPositionValue - $ownerLeftValue,
+                $context->getTargetPositionValue() - $ownerLeftValue,
                 $ownerRightValue,
             );
             $this->shiftLeftRightAttribute($ownerRightValue, $ownerLeftValue - $ownerRightValue - 1);
