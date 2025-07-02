@@ -59,7 +59,7 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
             $node,
             'appendTo',
             0,
-            0
+            0,
         );
         $this->moveNode($context);
     }

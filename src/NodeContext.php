@@ -125,8 +125,7 @@ final class NodeContext
      */
     public function getTargetDepth(string $depthAttribute): int
     {
-        /** @var int $depth */
-        return $this->targetNode->getAttribute($depthAttribute);
+        return (int) $this->targetNode->getAttribute($depthAttribute);
     }
 
     /**
