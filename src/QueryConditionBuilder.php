@@ -44,7 +44,7 @@ final class QueryConditionBuilder
      * @param int $leftValue Parent node left value.
      * @param string $rightAttribute Name of the right boundary attribute.
      * @param int $rightValue Parent node right value.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      * @param string|null $depthAttribute Name of the depth attribute, or `null` if depth filtering is not needed.
      * @param int|null $parentDepth Parent node depth value, required if $maxRelativeDepth is provided.
@@ -134,7 +134,7 @@ final class QueryConditionBuilder
      *
      * @param string $leftAttribute Name of the left boundary attribute.
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      * @param int|null $parentLeftValue Optional parent left value to restrict search to a subtree.
      * @param int|null $parentRightValue Optional parent right value to restrict search to a subtree.
@@ -193,7 +193,7 @@ final class QueryConditionBuilder
      *
      * @param string $leftAttribute Name of the left boundary attribute.
      * @param int $rightValue Reference node right value.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      *
      * @return array Condition array for finding the next sibling.
@@ -236,7 +236,7 @@ final class QueryConditionBuilder
      * @param int $leftValue Child node left value.
      * @param string $rightAttribute Name of the right boundary attribute.
      * @param int $rightValue Child node right value.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      * @param string|null $depthAttribute Name of the depth attribute, or `null` if depth filtering is not needed.
      * @param int|null $childDepth Child node depth value, required if $maxRelativeDepth is provided.
@@ -291,7 +291,7 @@ final class QueryConditionBuilder
      *
      * @param string $rightAttribute Name of the right boundary attribute.
      * @param int $leftValue Reference node left value.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      *
      * @return array Condition array for finding the previous sibling.
@@ -335,7 +335,7 @@ final class QueryConditionBuilder
      * @param int $leftValue Left boundary value.
      * @param string $rightAttribute Name of the right boundary attribute.
      * @param int $rightValue Right boundary value.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      *
      * @return array Condition array for finding nodes within the specified range.
@@ -377,7 +377,7 @@ final class QueryConditionBuilder
      *
      * @param string $attribute Name of the attribute to check (left or right).
      * @param int $value Minimum value for the attribute.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
      *
      * @return array Condition array for shifting operations.
@@ -414,7 +414,7 @@ final class QueryConditionBuilder
      * @param int $leftValue Left boundary value of the subtree.
      * @param string $rightAttribute Name of the right boundary attribute.
      * @param int $rightValue Right boundary value of the subtree.
-     * @param string|false $treeAttribute Name of tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
      * @param mixed $currentTreeValue Current tree value of the subtree.
      *
      * @return array Condition array for subtree movement.
@@ -424,7 +424,6 @@ final class QueryConditionBuilder
      * $condition = QueryConditionBuilder::createSubtreeMoveCondition('lft', 5, 'rgt', 10, 'tree', 1);
      * MyModel::updateAll(['tree' => 2], $condition);
      * ```
-     *
      */
     public static function createSubtreeMoveCondition(
         string $leftAttribute,
