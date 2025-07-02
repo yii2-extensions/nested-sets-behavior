@@ -1429,71 +1429,6 @@ final class NestedSetsBehaviorTest extends TestCase
         $behavior->parents();
     }
 
-    public function testReturnAffectedRowsAndUpdateTreeAfterDeleteWithChildrenWhenManualTransactionIsUsed(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(10);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '10' should exist before attempting to delete with children using manual transaction.",
-        );
-        self::assertEquals(
-            'Node 2.1',
-            $node->getAttribute('name'),
-            "Node with ID '10' should have the name 'Node 2.1' before deletion.",
-        );
-        self::assertFalse(
-            $node->isTransactional(ActiveRecord::OP_DELETE),
-            "Node with ID '10' should not use transactional delete (manual transaction expected).",
-        );
-
-        $initialCount = (int) Tree::find()->count();
-        $toDeleteCount = (int) Tree::find()
-            ->andWhere(['>=', 'lft', $node->getAttribute('lft')])
-            ->andWhere(['<=', 'rgt', $node->getAttribute('rgt')])
-            ->count();
-
-        self::assertEquals(
-            3,
-            $toDeleteCount,
-            "Node '2.1' should have itself and '2' children (total '3' nodes to delete).",
-        );
-
-        $result = (int) $node->deleteWithChildren();
-
-        self::assertEquals(
-            $toDeleteCount,
-            $result,
-            "'deleteWithChildren()' should return the number of affected rows equal to the nodes deleted.",
-        );
-
-        $finalCount = (int) Tree::find()->count();
-
-        self::assertEquals(
-            $initialCount - $toDeleteCount,
-            $finalCount,
-            'Tree node count after deletion should decrease by the number of deleted nodes.',
-        );
-        self::assertNull(
-            Tree::findOne(10),
-            "Node with ID '10' should not exist after deletion.",
-        );
-        self::assertNull(
-            Tree::findOne(11),
-            "Node with ID '11' should not exist after deletion.",
-        );
-        self::assertNull(
-            Tree::findOne(12),
-            "Node with ID '12' should not exist after deletion.",
-        );
-        self::assertNotNull(
-            Tree::findOne(1),
-            "Root node with ID '1' should still exist after deleting node '10' and its children.",
-        );
-    }
-
     public function testReturnFalseWhenDeleteWithChildrenIsAbortedByBeforeDelete(): void
     {
         $this->createDatabase();
@@ -1527,39 +1462,6 @@ final class NestedSetsBehaviorTest extends TestCase
             $result,
             "'deleteWithChildren()' should return 'false' when 'beforeDelete()' aborts the deletion process.",
         );
-    }
-
-    public function testThrowExceptionWhenDeleteWithChildrenThrowsExceptionInTransaction(): void
-    {
-        $this->createDatabase();
-
-        $node = new Tree(['name' => 'Root']);
-
-        $node->detachBehavior('nestedSetsBehavior');
-
-        self::assertNull(
-            $node->getBehavior('nestedSetsBehavior'),
-            'Behavior must be detached before testing exception handling.',
-        );
-
-        $nestedSetsBehavior = $this->createMock(NestedSetsBehavior::class);
-        $nestedSetsBehavior->expects(self::once())
-            ->method('deleteWithChildren')
-            ->willThrowException(new Exception('Simulated database error during deletion'));
-
-        $node->attachBehavior('nestedSetsBehavior', $nestedSetsBehavior);
-        $behavior = $node->getBehavior('nestedSetsBehavior');
-
-        self::assertInstanceOf(
-            NestedSetsBehavior::class,
-            $behavior,
-            'Behavior must be attached to the node before testing exception handling.',
-        );
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Simulated database error during deletion');
-
-        $behavior->deleteWithChildren();
     }
 
     public function testThrowExceptionWhenMakeRootIsCalledOnModelWithoutPrimaryKey(): void

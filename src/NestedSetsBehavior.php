@@ -534,24 +534,7 @@ class NestedSetsBehavior extends Behavior
     {
         $this->operation = self::OPERATION_DELETE_WITH_CHILDREN;
 
-        if ($this->getOwner()->isTransactional(ActiveRecord::OP_DELETE) !== false) {
-            return $this->deleteWithChildrenInternal();
-        }
-
-        $transaction = $this->getDb()->beginTransaction();
-
-        try {
-            match ($result = $this->deleteWithChildrenInternal()) {
-                false => $transaction->rollBack(),
-                default => $transaction->commit(),
-            };
-
-            return $result;
-        } catch (Exception $e) {
-            $transaction->rollBack();
-
-            throw $e;
-        }
+        return $this->deleteWithChildrenInternal();
     }
 
     /**
