@@ -161,25 +161,15 @@ final class QueryConditionBuilder
         int|null $parentLeftValue = null,
         int|null $parentRightValue = null,
     ): array {
-        $leafCondition = [
-            $rightAttribute => new Expression("{{{$leftAttribute}}} + 1"),
+        $condition = [
+            'and',
+            [$rightAttribute => new Expression("{{{$leftAttribute}}} + 1")],
+            ['>', $leftAttribute, $parentLeftValue],
+            ['<', $rightAttribute, $parentRightValue],
         ];
 
-        $condition = $leafCondition;
-
-        if ($parentLeftValue !== null && $parentRightValue !== null) {
-            $condition = [
-                'and',
-                $leafCondition,
-                ['>', $leftAttribute, $parentLeftValue],
-                ['<', $rightAttribute, $parentRightValue],
-            ];
-        }
-
         if ($treeAttribute !== false) {
-            if (isset($condition[0]) && $condition[0] === 'and') {
-                $condition[] = [$treeAttribute => $treeValue];
-            }
+            $condition[] = [$treeAttribute => $treeValue];
         }
 
         return $condition;
