@@ -97,6 +97,7 @@ final class QueryConditionBuilder
      * @return array Tree-scoped condition.
      *
      * @phpstan-param array<int, list<int|string>|string|int> $baseCondition
+     *
      * @phpstan-return array<string, mixed>|array<int, array<string, mixed>|string>
      */
     public function createTreeScopedCondition(array $baseCondition, mixed $treeValue): array
