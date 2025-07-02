@@ -424,6 +424,8 @@ final class QueryConditionBuilder
      * $condition = QueryConditionBuilder::createSubtreeMoveCondition('lft', 5, 'rgt', 10, 'tree', 1);
      * MyModel::updateAll(['tree' => 2], $condition);
      * ```
+     *
+     * @phpstan-return array<int|string, mixed>
      */
     public static function createSubtreeMoveCondition(
         string $leftAttribute,

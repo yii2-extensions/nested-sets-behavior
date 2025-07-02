@@ -502,7 +502,7 @@ class NestedSetsBehavior extends Behavior
             $this->getTreeValue($this->getOwner()),
             $depth !== null ? $this->depthAttribute : null,
             $depth !== null ? $this->getDepthValue() : null,
-            $depth
+            $depth,
         );
 
         return $this->getOwner()::find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
@@ -929,7 +929,7 @@ class NestedSetsBehavior extends Behavior
             $this->getTreeValue($this->getOwner()),
             $depth !== null ? $this->depthAttribute : null,
             $depth !== null ? $this->getDepthValue() : null,
-            $depth
+            $depth,
         );
 
         return $this->getOwner()::find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
@@ -1146,7 +1146,7 @@ class NestedSetsBehavior extends Behavior
                 $this->rightAttribute,
                 $ownerRightValue,
                 $this->treeAttribute,
-                $currentOwnerTreeValue
+                $currentOwnerTreeValue,
             );
 
             $this->getOwner()::updateAll(
@@ -1165,7 +1165,7 @@ class NestedSetsBehavior extends Behavior
                     $attribute,
                     $ownerRightValue,
                     $this->treeAttribute,
-                    $currentOwnerTreeValue
+                    $currentOwnerTreeValue,
                 );
 
                 $this->getOwner()::updateAll(
@@ -1186,7 +1186,7 @@ class NestedSetsBehavior extends Behavior
                     $attribute,
                     $context->targetPositionValue,
                     $this->treeAttribute,
-                    $targetNodeTreeValue
+                    $targetNodeTreeValue,
                 );
 
                 $this->getOwner()::updateAll(
@@ -1438,7 +1438,7 @@ class NestedSetsBehavior extends Behavior
             $this->rightAttribute,
             $rightValue,
             $this->treeAttribute,
-            $currentOwnerTreeValue
+            $currentOwnerTreeValue,
         );
         $this->getOwner()::updateAll(
             [
