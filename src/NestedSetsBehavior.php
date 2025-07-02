@@ -619,10 +619,6 @@ class NestedSetsBehavior extends Behavior
      */
     public function insertAfter(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
-        if ($node->getIsNewRecord() === true) {
-            throw new Exception('Can not move a node when the target node is new record.');
-        }
-
         $this->operation = self::OPERATION_INSERT_AFTER;
         $this->node = $node;
 
