@@ -15,7 +15,7 @@
     },
     "require-dev": {
         "ext-simplexml": "*",
-        "infection/infection": "^0.27|^0.29",
+        "infection/infection": "^0.27|^0.30",
         "maglnet/composer-require-checker": "^4.1",
         "php-forge/support": "^0.1",
         "phpstan/extension-installer": "^1.4",
