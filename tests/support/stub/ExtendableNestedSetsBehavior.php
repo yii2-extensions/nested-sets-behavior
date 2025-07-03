@@ -92,4 +92,9 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 
         parent::invalidateCache();
     }
+
+    public function setOperation(string|null $operation): void
+    {
+        $this->operation = $operation;
+    }
 }
