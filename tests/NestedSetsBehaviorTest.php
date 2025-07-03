@@ -2848,6 +2848,56 @@ final class NestedSetsBehaviorTest extends TestCase
         }
     }
 
+    public function testSameTreeMoveWithEqualAdjustedLeftAndTargetPosition(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child1 = new Tree(['name' => 'Child 1']);
+
+        $child1->appendTo($root);
+
+        $child2 = new Tree(['name' => 'Child 2']);
+
+        $child2->appendTo($root);
+
+        $grandchild = new Tree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child1);
+
+        $child1->refresh();
+        $child2->refresh();
+        $grandchild->refresh();
+
+        $result = $grandchild->prependTo($child2);
+
+        self::assertTrue(
+            $result,
+            "'prependTo()' should return 'true' when moving grandchild to be first child of child2.",
+        );
+
+        $grandchild->refresh();
+        $child2->refresh();
+
+        self::assertTrue(
+            $grandchild->isChildOf($child2),
+            "Grandchild should be a child of child2 after the move.",
+        );
+        self::assertGreaterThan(
+            $child2->getAttribute('lft'),
+            $grandchild->getAttribute('lft'),
+            "Grandchild left value should be greater than parent left value.",
+        );
+        self::assertLessThan(
+            $child2->getAttribute('rgt'),
+            $grandchild->getAttribute('rgt'),
+            "Grandchild right value should be less than parent right value.",
+        );
+    }
+
     public function testParentsMethodRequiresOrderByForDeterministicResults(): void
     {
         $this->createDatabase();
