@@ -1405,7 +1405,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertFalse(
             $childNode->isChildOf($parentNode),
-            'Node should not be child when left values are equal (tests <= condition).'
+            'Node should not be child when left values are equal (tests <= condition).',
         );
 
         $childNode->setAttribute('lft', $originalChildLeft);
@@ -1428,7 +1428,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertFalse(
             $childNode->isChildOf($parentNode),
-            'Node should not be child when right values are equal (tests >= condition).'
+            'Node should not be child when right values are equal (tests >= condition).',
         );
 
         $childNode->setAttribute('rgt', $originalChildRight);
