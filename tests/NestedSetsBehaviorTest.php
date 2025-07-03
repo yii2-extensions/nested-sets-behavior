@@ -1388,6 +1388,52 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
+    public function testIsChildOfReturnsFalseWhenLeftValuesAreEqual(): void
+    {
+        $this->generateFixtureTree();
+
+        $parentNode = Tree::findOne(2);
+        $childNode = Tree::findOne(3);
+
+        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
+        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
+
+        $originalChildLeft = $childNode->getAttribute('lft');
+
+        $parentLeft = $parentNode->getAttribute('lft');
+        $childNode->setAttribute('lft', $parentLeft);
+
+        self::assertFalse(
+            $childNode->isChildOf($parentNode),
+            'Node should not be child when left values are equal (tests <= condition).',
+        );
+
+        $childNode->setAttribute('lft', $originalChildLeft);
+    }
+
+    public function testIsChildOfReturnsFalseWhenRightValuesAreEqual(): void
+    {
+        $this->generateFixtureTree();
+
+        $parentNode = Tree::findOne(2);
+        $childNode = Tree::findOne(3);
+
+        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
+        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
+
+        $originalChildRight = $childNode->getAttribute('rgt');
+
+        $parentRight = $parentNode->getAttribute('rgt');
+        $childNode->setAttribute('rgt', $parentRight);
+
+        self::assertFalse(
+            $childNode->isChildOf($parentNode),
+            'Node should not be child when right values are equal (tests >= condition).',
+        );
+
+        $childNode->setAttribute('rgt', $originalChildRight);
+    }
+
     public function testIsLeafReturnsTrueForLeafAndFalseForRoot(): void
     {
         $this->generateFixtureTree();
