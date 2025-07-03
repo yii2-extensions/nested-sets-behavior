@@ -1387,7 +1387,7 @@ class NestedSetsBehavior extends Behavior
             $this->depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
         }
 
-        return $this->depthValue ??=  $this->getOwner()->getAttribute($this->depthAttribute);
+        return $this->depthValue;
     }
 
     private function getLeftValue(): int
