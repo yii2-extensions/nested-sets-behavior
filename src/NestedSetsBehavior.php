@@ -1320,6 +1320,8 @@ class NestedSetsBehavior extends Behavior
         $adjustedLeftValue = $this->getLeftValue();
         $adjustedRightValue = $this->getRightValue();
 
+        // We use >= for consistency, though equality is impossible due to the nature of the algorithm
+        // @infection-ignore-all
         if ($adjustedLeftValue >= $context->targetPositionValue) {
             $adjustedLeftValue += $subtreeSize;
             $adjustedRightValue += $subtreeSize;

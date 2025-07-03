@@ -42,11 +42,7 @@ final class NodeContext
      */
     public static function forAppendTo(ActiveRecord $targetNode, string $rightAttribute): self
     {
-        return new self(
-            targetNode: $targetNode,
-            targetPositionValue: $targetNode->getAttribute($rightAttribute),
-            depthLevelDelta: 1,
-        );
+        return new self($targetNode, $targetNode->getAttribute($rightAttribute), 1);
     }
 
     /**
@@ -63,11 +59,7 @@ final class NodeContext
     {
         $rightValue = $targetNode->getAttribute($rightAttribute);
 
-        return new self(
-            targetNode: $targetNode,
-            targetPositionValue: $rightValue + 1,
-            depthLevelDelta: 0,
-        );
+        return new self($targetNode, $rightValue + 1, 0);
     }
 
     /**
@@ -84,11 +76,7 @@ final class NodeContext
     {
         $leftValue = $targetNode->getAttribute($leftAttribute);
 
-        return new self(
-            targetNode: $targetNode,
-            targetPositionValue: $leftValue,
-            depthLevelDelta: 0,
-        );
+        return new self($targetNode, $leftValue, 0);
     }
 
     /**
@@ -105,11 +93,7 @@ final class NodeContext
     {
         $leftValue = $targetNode->getAttribute($leftAttribute);
 
-        return new self(
-            targetNode: $targetNode,
-            targetPositionValue: $leftValue + 1,
-            depthLevelDelta: 1,
-        );
+        return new self($targetNode, $leftValue + 1, 1);
     }
 
     /**
