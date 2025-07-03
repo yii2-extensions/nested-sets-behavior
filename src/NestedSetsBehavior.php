@@ -1321,7 +1321,7 @@ class NestedSetsBehavior extends Behavior
             ? $this->getLeftValue() + $subtreeSize
             : $this->getLeftValue();
 
-        $adjustedRightValue = $this->getRightValue() >= $context->targetPositionValue
+        $adjustedRightValue = $this->getLeftValue() >= $context->targetPositionValue
             ? $this->getRightValue() + $subtreeSize
             : $this->getRightValue();
 
