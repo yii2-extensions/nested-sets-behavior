@@ -1289,7 +1289,7 @@ class NestedSetsBehavior extends Behavior
     private function executeOperation(
         ActiveRecord|null $targetNode,
         string $operation,
-        bool $runValidation = true,
+        bool $runValidation,
         array|null $attributes = null,
     ): bool {
         $this->operation = $operation;
@@ -1383,12 +1383,20 @@ class NestedSetsBehavior extends Behavior
 
     private function getDepthValue(): int
     {
+        if ($this->depthValue === null) {
+            $this->depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
+        }
+
         return $this->depthValue ??=  $this->getOwner()->getAttribute($this->depthAttribute);
     }
 
     private function getLeftValue(): int
     {
-        return $this->leftValue ??= $this->getOwner()->getAttribute($this->leftAttribute);
+        if ($this->leftValue === null) {
+            $this->leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
+        }
+
+        return $this->leftValue;
     }
 
     /**
@@ -1417,7 +1425,11 @@ class NestedSetsBehavior extends Behavior
 
     private function getRightValue(): int
     {
-        return $this->rightValue ??= $this->getOwner()->getAttribute($this->rightAttribute);
+        if ($this->rightValue === null) {
+            $this->rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
+        }
+
+        return $this->rightValue;
     }
 
     /**
