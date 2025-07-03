@@ -2693,6 +2693,143 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->verifyCacheInvalidation($behavior);
     }
 
+    public function testLeavesMethodRequiresOrderByForDeterministicResults(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $leafA = new Tree(['name' => 'Leaf A']);
+
+        $leafA->appendTo($root);
+
+        $leafB = new Tree(['name' => 'Leaf B']);
+
+        $leafB->appendTo($root);
+
+        $leafC = new Tree(['name' => 'Leaf C']);
+
+        $leafC->appendTo($root);
+
+        $command = $this->getDb()->createCommand();
+
+        $command->update('tree', ['lft' => 6, 'rgt' => 7], ['name' => 'Leaf C'])->execute();
+        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Leaf B'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Leaf A'])->execute();
+        $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
+
+        $leafQuery = $root->leaves();
+        $sql = $leafQuery->createCommand()->getRawSql();
+
+        self::assertStringContainsString(
+            'ORDER BY',
+            $sql,
+            "'leaves()' query should include 'ORDER BY' clause for deterministic results.",
+        );
+        self::assertStringContainsString(
+            '`lft`',
+            $sql,
+            "'leaves()' query should order by 'left' attribute for consistent ordering.",
+        );
+
+        $leaves = $leafQuery->all();
+
+        $expectedOrder = ['Leaf A', 'Leaf B', 'Leaf C'];
+
+        self::assertCount(
+            3,
+            $leaves,
+            "Leaves list should contain exactly '3' elements.",
+        );
+
+        foreach ($leaves as $index => $leaf) {
+            self::assertInstanceOf(
+                Tree::class,
+                $leaf,
+                "Leaf at index {$index} should be an instance of 'Tree'.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $leaf->getAttribute('name'),
+                    "Leaf at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
+                );
+            }
+        }
+    }
+
+    public function testParentsMethodRequiresOrderByForDeterministicResults(): void
+    {
+        $this->createDatabase();
+
+        $rootA = new Tree(['name' => 'Root A']);
+
+        $rootA->makeRoot();
+
+        $parentB = new Tree(['name' => 'Parent B']);
+
+        $parentB->appendTo($rootA);
+
+        $parentC = new Tree(['name' => 'Parent C']);
+
+        $parentC->appendTo($parentB);
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($parentC);
+
+        $command = $this->getDb()->createCommand();
+
+        $command->update('tree', ['lft' => 4, 'rgt' => 7, 'depth' => 2], ['name' => 'Parent C'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 8, 'depth' => 1], ['name' => 'Parent B'])->execute();
+        $command->update('tree', ['lft' => 1, 'rgt' => 9, 'depth' => 0], ['name' => 'Root A'])->execute();
+        $command->update('tree', ['lft' => 5, 'rgt' => 6, 'depth' => 3], ['name' => 'Child'])->execute();
+
+        $child->refresh();
+        $parentsQuery = $child->parents();
+        $sql = $parentsQuery->createCommand()->getRawSql();
+
+        self::assertStringContainsString(
+            'ORDER BY',
+            $sql,
+            "'parents()' query should include 'ORDER BY' clause for deterministic results.",
+        );
+        self::assertStringContainsString(
+            '`lft`',
+            $sql,
+            "'parents()' query should order by 'left' attribute for consistent ordering.",
+        );
+
+        $parents = $parentsQuery->all();
+
+        $expectedOrder = ['Root A', 'Parent B', 'Parent C'];
+
+        self::assertCount(
+            3,
+            $parents,
+            "Parents list should contain exactly '3' elements.",
+        );
+
+        foreach ($parents as $index => $parent) {
+            self::assertInstanceOf(
+                Tree::class,
+                $parent,
+                "Parent at index {$index} should be an instance of 'Tree'.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $parent->getAttribute('name'),
+                    "Parent at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
+                );
+            }
+        }
+    }
+
     /**
      * @phpstan-param Behavior<ActiveRecord> $behavior
      */
