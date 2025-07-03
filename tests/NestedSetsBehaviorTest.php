@@ -1395,8 +1395,8 @@ final class NestedSetsBehaviorTest extends TestCase
         $parentNode = Tree::findOne(2);
         $childNode = Tree::findOne(3);
 
-        self::assertNotNull($parentNode, "Parent node should exist for boundary testing.");
-        self::assertNotNull($childNode, "Child node should exist for boundary testing.");
+        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
+        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
 
         $originalChildLeft = $childNode->getAttribute('lft');
 
@@ -1405,7 +1405,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertFalse(
             $childNode->isChildOf($parentNode),
-            "Node should not be child when left values are equal (tests <= condition)."
+            'Node should not be child when left values are equal (tests <= condition).'
         );
 
         $childNode->setAttribute('lft', $originalChildLeft);
@@ -1418,8 +1418,8 @@ final class NestedSetsBehaviorTest extends TestCase
         $parentNode = Tree::findOne(2);
         $childNode = Tree::findOne(3);
 
-        self::assertNotNull($parentNode, "Parent node should exist for boundary testing.");
-        self::assertNotNull($childNode, "Child node should exist for boundary testing.");
+        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
+        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
 
         $originalChildRight = $childNode->getAttribute('rgt');
 
@@ -1428,7 +1428,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertFalse(
             $childNode->isChildOf($parentNode),
-            "Node should not be child when right values are equal (tests >= condition)."
+            'Node should not be child when right values are equal (tests >= condition).'
         );
 
         $childNode->setAttribute('rgt', $originalChildRight);
