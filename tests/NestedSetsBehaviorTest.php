@@ -2884,17 +2884,17 @@ final class NestedSetsBehaviorTest extends TestCase
 
         self::assertTrue(
             $grandchild->isChildOf($child2),
-            "Grandchild should be a child of child2 after the move.",
+            'Grandchild should be a child of child2 after the move.',
         );
         self::assertGreaterThan(
             $child2->getAttribute('lft'),
             $grandchild->getAttribute('lft'),
-            "Grandchild left value should be greater than parent left value.",
+            'Grandchild left value should be greater than parent left value.',
         );
         self::assertLessThan(
             $child2->getAttribute('rgt'),
             $grandchild->getAttribute('rgt'),
-            "Grandchild right value should be less than parent right value.",
+            'Grandchild right value should be less than parent right value.',
         );
     }
 
