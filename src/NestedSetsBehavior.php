@@ -1309,7 +1309,7 @@ class NestedSetsBehavior extends Behavior
         $this->shiftLeftRightAttribute($this->getRightValue(), $this->getLeftValue() - $this->getRightValue() - 1);
     }
 
-    public function executeSameTreeMove(NodeContext $context, mixed $currentTreeValue): void
+    private function executeSameTreeMove(NodeContext $context, mixed $currentTreeValue): void
     {
         $subtreeSize = $this->getRightValue() - $this->getLeftValue() + 1;
         $targetDepthValue = $context->getTargetDepth($this->depthAttribute);
