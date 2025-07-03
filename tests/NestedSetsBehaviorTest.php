@@ -2445,6 +2445,47 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->verifyCacheInvalidation($behavior);
     }
 
+    public function testNodeStateAfterDeleteWithChildren(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $grandchild = new Tree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child);
+
+        self::assertFalse(
+            $child->getIsNewRecord(),
+            'Child node should not be marked as new record before deletion.',
+        );
+        self::assertNotEmpty(
+            $child->getOldAttributes(),
+            'Child node should have old attributes before deletion.',
+        );
+
+        $result = $child->deleteWithChildren();
+
+        self::assertNotFalse(
+            $result,
+            'DeleteWithChildren should return the number of deleted rows.',
+        );
+        self::assertTrue(
+            $child->getIsNewRecord(),
+            "Child node should be marked as new record after deletion ('setOldAttributes(null)' effect).",
+        );
+        self::assertEmpty(
+            $child->getOldAttributes(),
+            'Child node should have empty old attributes after deletion.',
+        );
+    }
+
     public function testManualCacheInvalidation(): void
     {
         $this->createDatabase();
