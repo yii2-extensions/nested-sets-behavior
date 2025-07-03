@@ -2665,6 +2665,34 @@ final class NestedSetsBehaviorTest extends TestCase
         $this->verifyCacheInvalidation($behavior);
     }
 
+    public function testAfterUpdateCacheInvalidationWhenMakeRootAndNodeItsNull(): void
+    {
+        $this->createDatabase();
+
+        $root = new ExtendableMultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child = new ExtendableMultipleTree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $behavior = $child->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $behavior,
+            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
+        );
+
+        $this->populateAndVerifyCache($behavior);
+
+        $behavior->setNode(null);
+        $behavior->afterUpdate();
+
+        $this->verifyCacheInvalidation($behavior);
+    }
+
     /**
      * @phpstan-param Behavior<ActiveRecord> $behavior
      */

@@ -93,6 +93,11 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         parent::invalidateCache();
     }
 
+    public function setNode(ActiveRecord|null $node): void
+    {
+        $this->node = $node;
+    }
+
     public function setOperation(string|null $operation): void
     {
         $this->operation = $operation;
