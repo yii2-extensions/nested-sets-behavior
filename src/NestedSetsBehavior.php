@@ -7,9 +7,7 @@ namespace yii2\extensions\nestedsets;
 use LogicException;
 use RuntimeException;
 use yii\base\{Behavior, NotSupportedException};
-use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception, Expression};
-
-use function sprintf;
+use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception};
 
 /**
  * Nested set behavior for managing hierarchical data in {@see ActiveRecord} models.
@@ -1288,7 +1286,7 @@ class NestedSetsBehavior extends Behavior
                 QueryConditionBuilder::createOffsetUpdates(
                     $this->getDb(),
                     [
-                        $attribute => $this->getRightValue() - $this->getLeftValue() + 1
+                        $attribute => $this->getRightValue() - $this->getLeftValue() + 1,
                     ],
                 ),
                 QueryConditionBuilder::createCrossTreeMoveCondition(
@@ -1331,7 +1329,7 @@ class NestedSetsBehavior extends Behavior
             QueryConditionBuilder::createOffsetUpdates(
                 $this->getDb(),
                 [
-                    $this->depthAttribute => $depthOffset
+                    $this->depthAttribute => $depthOffset,
                 ],
             ),
             QueryConditionBuilder::createRangeCondition(

@@ -276,6 +276,7 @@ final class QueryConditionBuilder
      * ```
      *
      * @phpstan-param array<string, int> $attributeOffsets
+     *
      * @phpstan-return array<string, Expression>
      */
     public static function createOffsetUpdates(Connection $db, array $attributeOffsets): array
