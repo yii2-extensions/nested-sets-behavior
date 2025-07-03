@@ -1297,11 +1297,11 @@ class NestedSetsBehavior extends Behavior
 
         $result = $this->getOwner()->save($runValidation, $attributes);
 
-        if ($result === true && $operation === self::OPERATION_APPEND_TO && $targetNode !== null) {
-            $targetNode->refresh();
+        if ($operation === self::OPERATION_APPEND_TO) {
+            $targetNode?->refresh();
         }
 
-        if ($result === true && $operation === self::OPERATION_MAKE_ROOT) {
+        if ($operation === self::OPERATION_MAKE_ROOT) {
             $this->getOwner()->refresh();
         }
 
@@ -1383,20 +1383,12 @@ class NestedSetsBehavior extends Behavior
 
     private function getDepthValue(): int
     {
-        if ($this->depthValue === null) {
-            $this->depthValue = $this->getOwner()->getAttribute($this->depthAttribute);
-        }
-
-        return $this->depthValue;
+        return $this->depthValue ??=  $this->getOwner()->getAttribute($this->depthAttribute);
     }
 
     private function getLeftValue(): int
     {
-        if ($this->leftValue === null) {
-            $this->leftValue = $this->getOwner()->getAttribute($this->leftAttribute);
-        }
-
-        return $this->leftValue;
+        return $this->leftValue ??= $this->getOwner()->getAttribute($this->leftAttribute);
     }
 
     /**
@@ -1425,11 +1417,7 @@ class NestedSetsBehavior extends Behavior
 
     private function getRightValue(): int
     {
-        if ($this->rightValue === null) {
-            $this->rightValue = $this->getOwner()->getAttribute($this->rightAttribute);
-        }
-
-        return $this->rightValue;
+        return $this->rightValue ??= $this->getOwner()->getAttribute($this->rightAttribute);
     }
 
     /**
