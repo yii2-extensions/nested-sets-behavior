@@ -332,16 +332,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function appendTo(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
-        $this->operation = self::OPERATION_APPEND_TO;
-        $this->node = $node;
-
-        $result = $this->getOwner()->save($runValidation, $attributes);
-
-        if ($result === true) {
-            $node->refresh();
-        }
-
-        return $result;
+        return $this->executeOperation($node, self::OPERATION_APPEND_TO, $runValidation, $attributes);
     }
 
     /**
@@ -633,10 +624,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function insertAfter(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
-        $this->operation = self::OPERATION_INSERT_AFTER;
-        $this->node = $node;
-
-        return $this->getOwner()->save($runValidation, $attributes);
+        return $this->executeOperation($node, self::OPERATION_INSERT_AFTER, $runValidation, $attributes);
     }
 
     /**
@@ -678,10 +666,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function insertBefore(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
-        $this->operation = self::OPERATION_INSERT_BEFORE;
-        $this->node = $node;
-
-        return $this->getOwner()->save($runValidation, $attributes);
+        return $this->executeOperation($node, self::OPERATION_INSERT_BEFORE, $runValidation, $attributes);
     }
 
     /**
@@ -864,15 +849,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function makeRoot(bool $runValidation = true, array|null $attributes = null): bool
     {
-        $this->operation = self::OPERATION_MAKE_ROOT;
-
-        $result = $this->getOwner()->save($runValidation, $attributes);
-
-        if ($result === true) {
-            $this->getOwner()->refresh();
-        }
-
-        return $result;
+        return $this->executeOperation(null, self::OPERATION_MAKE_ROOT, $runValidation, $attributes);
     }
 
     /**
@@ -1004,10 +981,7 @@ class NestedSetsBehavior extends Behavior
      */
     public function prependTo(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
-        $this->operation = self::OPERATION_PREPEND_TO;
-        $this->node = $node;
-
-        return $this->getOwner()->save($runValidation, $attributes);
+        return $this->executeOperation($node, self::OPERATION_PREPEND_TO, $runValidation, $attributes);
     }
 
     /**
@@ -1309,6 +1283,31 @@ class NestedSetsBehavior extends Behavior
         $this->shiftLeftRightAttribute($this->getRightValue(), $this->getLeftValue() - $this->getRightValue() - 1);
     }
 
+    /**
+     * @phpstan-param array<string, mixed>|null $attributes
+     */
+    private function executeOperation(
+        ActiveRecord|null $targetNode,
+        string $operation,
+        bool $runValidation,
+        array|null $attributes = null,
+    ): bool {
+        $this->operation = $operation;
+        $this->node = $targetNode;
+
+        $result = $this->getOwner()->save($runValidation, $attributes);
+
+        if ($operation === self::OPERATION_APPEND_TO) {
+            $targetNode?->refresh();
+        }
+
+        if ($operation === self::OPERATION_MAKE_ROOT) {
+            $this->getOwner()->refresh();
+        }
+
+        return $result;
+    }
+
     private function executeSameTreeMove(NodeContext $context, mixed $currentTreeValue): void
     {
         $subtreeSize = $this->getRightValue() - $this->getLeftValue() + 1;
@@ -1320,7 +1319,7 @@ class NestedSetsBehavior extends Behavior
         $adjustedLeftValue = $this->getLeftValue();
         $adjustedRightValue = $this->getRightValue();
 
-        // We use >= for consistency, though equality is impossible due to the nature of the algorithm
+        // We use '>=' for consistency, though equality is impossible due to the nature of the algorithm
         // @infection-ignore-all
         if ($adjustedLeftValue >= $context->targetPositionValue) {
             $adjustedLeftValue += $subtreeSize;
