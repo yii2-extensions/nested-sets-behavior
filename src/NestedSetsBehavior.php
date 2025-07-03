@@ -7,9 +7,7 @@ namespace yii2\extensions\nestedsets;
 use LogicException;
 use RuntimeException;
 use yii\base\{Behavior, NotSupportedException};
-use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception, Expression};
-
-use function sprintf;
+use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception};
 
 /**
  * Nested set behavior for managing hierarchical data in {@see ActiveRecord} models.
@@ -168,27 +166,23 @@ class NestedSetsBehavior extends Behavior
             $deltaValue = $this->getLeftValue() - $this->getRightValue() - 1;
         } else {
             $deltaValue = -2;
-            $condition = QueryConditionBuilder::createRangeCondition(
-                $this->leftAttribute,
-                $this->getLeftValue(),
-                $this->rightAttribute,
-                $this->getRightValue(),
-                $this->treeAttribute,
-                $this->getTreeValue($this->getOwner()),
-            );
             $this->getOwner()::updateAll(
-                [
-                    $this->leftAttribute => new Expression(
-                        $this->getDb()->quoteColumnName($this->leftAttribute) . sprintf('%+d', -1),
-                    ),
-                    $this->rightAttribute => new Expression(
-                        $this->getDb()->quoteColumnName($this->rightAttribute) . sprintf('%+d', -1),
-                    ),
-                    $this->depthAttribute => new Expression(
-                        $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', -1),
-                    ),
-                ],
-                $condition,
+                QueryConditionBuilder::createOffsetUpdates(
+                    $this->getDb(),
+                    [
+                        $this->depthAttribute => -1,
+                        $this->leftAttribute => -1,
+                        $this->rightAttribute => -1,
+                    ],
+                ),
+                QueryConditionBuilder::createRangeCondition(
+                    $this->leftAttribute,
+                    $this->getLeftValue(),
+                    $this->rightAttribute,
+                    $this->getRightValue(),
+                    $this->treeAttribute,
+                    $this->getTreeValue($this->getOwner()),
+                ),
             );
         }
 
@@ -521,19 +515,24 @@ class NestedSetsBehavior extends Behavior
      */
     public function children(int|null $depth = null): ActiveQuery
     {
-        $condition = QueryConditionBuilder::createChildrenCondition(
-            $this->leftAttribute,
-            $this->getLeftValue(),
-            $this->rightAttribute,
-            $this->getRightValue(),
-            $this->treeAttribute,
-            $this->getTreeValue($this->getOwner()),
-            $depth !== null ? $this->depthAttribute : null,
-            $depth !== null ? $this->getDepthValue() : null,
-            $depth,
-        );
-
-        return $this->getOwner()::find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
+        return $this->getOwner()::find()
+            ->andWhere(
+                QueryConditionBuilder::createChildrenCondition(
+                    $this->leftAttribute,
+                    $this->getLeftValue(),
+                    $this->rightAttribute,
+                    $this->getRightValue(),
+                    $this->treeAttribute,
+                    $this->getTreeValue($this->getOwner()),
+                    $depth !== null ? $this->depthAttribute : null,
+                    $depth !== null ? $this->getDepthValue() : null,
+                    $depth,
+                ),
+            )->addOrderBy(
+                [
+                    $this->leftAttribute => SORT_ASC,
+                ],
+            );
     }
 
     /**
@@ -802,16 +801,22 @@ class NestedSetsBehavior extends Behavior
      */
     public function leaves(): ActiveQuery
     {
-        $condition = QueryConditionBuilder::createLeavesCondition(
-            $this->leftAttribute,
-            $this->rightAttribute,
-            $this->treeAttribute,
-            $this->getTreeValue($this->getOwner()),
-            $this->getLeftValue(),
-            $this->getRightValue(),
-        );
-
-        return $this->getOwner()::find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
+        return $this->getOwner()::find()
+            ->andWhere(
+                QueryConditionBuilder::createLeavesCondition(
+                    $this->leftAttribute,
+                    $this->rightAttribute,
+                    $this->treeAttribute,
+                    $this->getTreeValue($this->getOwner()),
+                    $this->getLeftValue(),
+                    $this->getRightValue(),
+                ),
+            )
+            ->addOrderBy(
+                [
+                    $this->leftAttribute => SORT_ASC,
+                ],
+            );
     }
 
     /**
@@ -895,14 +900,14 @@ class NestedSetsBehavior extends Behavior
      */
     public function next(): ActiveQuery
     {
-        $condition = QueryConditionBuilder::createNextSiblingCondition(
-            $this->leftAttribute,
-            $this->getRightValue(),
-            $this->treeAttribute,
-            $this->getTreeValue($this->getOwner()),
+        return $this->getOwner()::find()->andWhere(
+            QueryConditionBuilder::createNextSiblingCondition(
+                $this->leftAttribute,
+                $this->getRightValue(),
+                $this->treeAttribute,
+                $this->getTreeValue($this->getOwner()),
+            ),
         );
-
-        return $this->getOwner()::find()->andWhere($condition);
     }
 
     /**
@@ -939,19 +944,25 @@ class NestedSetsBehavior extends Behavior
      */
     public function parents(int|null $depth = null): ActiveQuery
     {
-        $condition = QueryConditionBuilder::createParentsCondition(
-            $this->leftAttribute,
-            $this->getLeftValue(),
-            $this->rightAttribute,
-            $this->getRightValue(),
-            $this->treeAttribute,
-            $this->getTreeValue($this->getOwner()),
-            $depth !== null ? $this->depthAttribute : null,
-            $depth !== null ? $this->getDepthValue() : null,
-            $depth,
-        );
-
-        return $this->getOwner()::find()->andWhere($condition)->addOrderBy([$this->leftAttribute => SORT_ASC]);
+        return $this->getOwner()::find()
+            ->andWhere(
+                QueryConditionBuilder::createParentsCondition(
+                    $this->leftAttribute,
+                    $this->getLeftValue(),
+                    $this->rightAttribute,
+                    $this->getRightValue(),
+                    $this->treeAttribute,
+                    $this->getTreeValue($this->getOwner()),
+                    $depth !== null ? $this->depthAttribute : null,
+                    $depth !== null ? $this->getDepthValue() : null,
+                    $depth,
+                ),
+            )
+            ->addOrderBy(
+                [
+                    $this->leftAttribute => SORT_ASC,
+                ],
+            );
     }
 
     /**
@@ -1024,14 +1035,14 @@ class NestedSetsBehavior extends Behavior
      */
     public function prev(): ActiveQuery
     {
-        $condition = QueryConditionBuilder::createPrevSiblingCondition(
-            $this->rightAttribute,
-            $this->getLeftValue(),
-            $this->treeAttribute,
-            $this->getTreeValue($this->getOwner()),
+        return $this->getOwner()::find()->andWhere(
+            QueryConditionBuilder::createPrevSiblingCondition(
+                $this->rightAttribute,
+                $this->getLeftValue(),
+                $this->treeAttribute,
+                $this->getTreeValue($this->getOwner()),
+            ),
         );
-
-        return $this->getOwner()::find()->andWhere($condition);
     }
 
     /**
@@ -1054,17 +1065,15 @@ class NestedSetsBehavior extends Behavior
             throw new Exception('Can not create a node when the target node is root.');
         }
 
-        $owner = $this->getOwner();
-
-        $owner->setAttribute($this->leftAttribute, $value);
-        $owner->setAttribute($this->rightAttribute, $value + 1);
+        $this->getOwner()->setAttribute($this->leftAttribute, $value);
+        $this->getOwner()->setAttribute($this->rightAttribute, $value + 1);
 
         $nodeDepthValue = $this->node?->getAttribute($this->depthAttribute) ?? 0;
 
-        $owner->setAttribute($this->depthAttribute, $nodeDepthValue + $depth);
+        $this->getOwner()->setAttribute($this->depthAttribute, $nodeDepthValue + $depth);
 
         if ($this->treeAttribute !== false && $this->node !== null) {
-            $owner->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
+            $this->getOwner()->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
         }
 
         $this->shiftLeftRightAttribute($value, 2);
@@ -1087,15 +1096,13 @@ class NestedSetsBehavior extends Behavior
      */
     protected function beforeInsertRootNode(): void
     {
-        $owner = $this->getOwner();
-
-        if ($this->treeAttribute === false && $owner::find()->roots()->exists()) {
+        if ($this->treeAttribute === false && $this->getOwner()::find()->roots()->exists()) {
             throw new Exception('Can not create more than one root when "treeAttribute" is false.');
         }
 
-        $owner->setAttribute($this->leftAttribute, 1);
-        $owner->setAttribute($this->rightAttribute, 2);
-        $owner->setAttribute($this->depthAttribute, 0);
+        $this->getOwner()->setAttribute($this->leftAttribute, 1);
+        $this->getOwner()->setAttribute($this->rightAttribute, 2);
+        $this->getOwner()->setAttribute($this->depthAttribute, 0);
     }
 
     /**
@@ -1121,15 +1128,17 @@ class NestedSetsBehavior extends Behavior
             return false;
         }
 
-        $condition = QueryConditionBuilder::createRangeCondition(
-            $this->leftAttribute,
-            $this->getLeftValue(),
-            $this->rightAttribute,
-            $this->getRightValue(),
-            $this->treeAttribute,
-            $this->getTreeValue($this->getOwner()),
+        $result = $this->getOwner()::deleteAll(
+            QueryConditionBuilder::createRangeCondition(
+                $this->leftAttribute,
+                $this->getLeftValue(),
+                $this->rightAttribute,
+                $this->getRightValue(),
+                $this->treeAttribute,
+                $this->getTreeValue($this->getOwner()),
+            ),
         );
-        $result = $this->getOwner()::deleteAll($condition);
+
         $this->getOwner()->setOldAttributes(null);
         $this->getOwner()->afterDelete();
 
@@ -1146,92 +1155,13 @@ class NestedSetsBehavior extends Behavior
      */
     protected function moveNode(NodeContext $context): void
     {
-        $currentOwnerTreeValue = $this->getTreeValue($this->getOwner());
-        $targetNodeTreeValue = $context->getTargetTreeValue($this->treeAttribute);
-        $targetNodeDepthValue = $context->getTargetDepth($this->depthAttribute);
-        $depthOffset = $targetNodeDepthValue - $this->getDepthValue() + $context->depthLevelDelta;
+        $currentTreeValue = $this->getTreeValue($this->getOwner());
+        $targetTreeValue = $context->getTargetTreeValue($this->treeAttribute);
 
-        if ($this->treeAttribute === false || $targetNodeTreeValue === $currentOwnerTreeValue) {
-            $ownerLeftValue = $this->getLeftValue();
-            $ownerRightValue = $this->getRightValue();
-            $subtreeSize = $ownerRightValue - $ownerLeftValue + 1;
-
-            $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
-
-            if ($ownerLeftValue >= $context->targetPositionValue) {
-                $ownerLeftValue += $subtreeSize;
-                $ownerRightValue += $subtreeSize;
-            }
-
-            $condition = QueryConditionBuilder::createRangeCondition(
-                $this->leftAttribute,
-                $ownerLeftValue,
-                $this->rightAttribute,
-                $ownerRightValue,
-                $this->treeAttribute,
-                $currentOwnerTreeValue,
-            );
-
-            $this->getOwner()::updateAll(
-                [
-                    $this->depthAttribute => new Expression(
-                        $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', $depthOffset),
-                    ),
-                ],
-                $condition,
-            );
-
-            foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
-                $condition = QueryConditionBuilder::createRangeCondition(
-                    $attribute,
-                    $ownerLeftValue,
-                    $attribute,
-                    $ownerRightValue,
-                    $this->treeAttribute,
-                    $currentOwnerTreeValue,
-                );
-
-                $this->getOwner()::updateAll(
-                    [
-                        $attribute => new Expression(
-                            $this->getDb()->quoteColumnName($attribute) .
-                            sprintf('%+d', $context->targetPositionValue - $ownerLeftValue),
-                        ),
-                    ],
-                    $condition,
-                );
-            }
-
-            $this->shiftLeftRightAttribute($ownerRightValue, -$subtreeSize);
-        } else {
-            foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
-                $condition = QueryConditionBuilder::createCrossTreeMoveCondition(
-                    $attribute,
-                    $context->targetPositionValue,
-                    $this->treeAttribute,
-                    $targetNodeTreeValue,
-                );
-
-                $this->getOwner()::updateAll(
-                    [
-                        $attribute => new Expression(
-                            $this->getDb()->quoteColumnName($attribute) .
-                            sprintf('%+d', $this->getRightValue() - $this->getLeftValue() + 1),
-                        ),
-                    ],
-                    $condition,
-                );
-            }
-
-            $this->moveSubtreeToTargetTree(
-                $targetNodeTreeValue,
-                $currentOwnerTreeValue,
-                $depthOffset,
-                $this->getLeftValue(),
-                $context->targetPositionValue - $this->getLeftValue(),
-                $this->getRightValue(),
-            );
-            $this->shiftLeftRightAttribute($this->getRightValue(), $this->getLeftValue() - $this->getRightValue() - 1);
+        if ($this->treeAttribute === false || $currentTreeValue === $targetTreeValue) {
+            $this->executeSameTreeMove($context, $currentTreeValue);
+        } elseif ($this->treeAttribute !== false) {
+            $this->executeCrossTreeMove($context, $this->treeAttribute, $currentTreeValue, $targetTreeValue);
         }
     }
 
@@ -1258,8 +1188,8 @@ class NestedSetsBehavior extends Behavior
     protected function moveNodeAsRoot(mixed $treeValue): void
     {
         $this->moveSubtreeToTargetTree(
-            $this->getOwner()->getPrimaryKey(),
             $treeValue,
+            $this->getOwner()->getPrimaryKey(),
             -$this->getDepthValue(),
             $this->getLeftValue(),
             1 - $this->getLeftValue(),
@@ -1286,17 +1216,19 @@ class NestedSetsBehavior extends Behavior
     protected function shiftLeftRightAttribute(int $value, int $delta): void
     {
         foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
-            $condition = QueryConditionBuilder::createShiftCondition(
-                $attribute,
-                $value,
-                $this->treeAttribute,
-                $this->getTreeValue($this->getOwner()),
-            );
             $this->getOwner()::updateAll(
-                [
-                    $attribute => new Expression($this->getDb()->quoteColumnName($attribute) . sprintf('%+d', $delta)),
-                ],
-                $condition,
+                QueryConditionBuilder::createOffsetUpdates(
+                    $this->getDb(),
+                    [
+                        $attribute => $delta,
+                    ],
+                ),
+                QueryConditionBuilder::createShiftCondition(
+                    $attribute,
+                    $value,
+                    $this->treeAttribute,
+                    $this->getTreeValue($this->getOwner()),
+                ),
             );
         }
     }
@@ -1338,6 +1270,98 @@ class NestedSetsBehavior extends Behavior
             self::OPERATION_PREPEND_TO => NodeContext::forPrependTo($targetNode, $this->leftAttribute),
             default => throw new RuntimeException("Unsupported operation: {$operation}"),
         };
+    }
+
+    private function executeCrossTreeMove(
+        NodeContext $context,
+        string $treeAttribute,
+        mixed $currentTreeValue,
+        mixed $targetTreeValue,
+    ): void {
+        $targetDepthValue = $context->getTargetDepth($this->depthAttribute);
+        $depthOffset = $targetDepthValue - $this->getDepthValue() + $context->depthLevelDelta;
+
+        foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
+            $this->getOwner()::updateAll(
+                QueryConditionBuilder::createOffsetUpdates(
+                    $this->getDb(),
+                    [
+                        $attribute => $this->getRightValue() - $this->getLeftValue() + 1,
+                    ],
+                ),
+                QueryConditionBuilder::createCrossTreeMoveCondition(
+                    $attribute,
+                    $context->targetPositionValue,
+                    $treeAttribute,
+                    $targetTreeValue,
+                ),
+            );
+        }
+
+        $this->moveSubtreeToTargetTree(
+            $currentTreeValue,
+            $targetTreeValue,
+            $depthOffset,
+            $this->getLeftValue(),
+            $context->targetPositionValue - $this->getLeftValue(),
+            $this->getRightValue(),
+        );
+        $this->shiftLeftRightAttribute($this->getRightValue(), $this->getLeftValue() - $this->getRightValue() - 1);
+    }
+
+    private function executeSameTreeMove(NodeContext $context, mixed $currentTreeValue): void
+    {
+        $subtreeSize = $this->getRightValue() - $this->getLeftValue() + 1;
+        $targetDepthValue = $context->getTargetDepth($this->depthAttribute);
+        $depthOffset = $targetDepthValue - $this->getDepthValue() + $context->depthLevelDelta;
+
+        $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
+
+        $adjustedLeftValue = $this->getLeftValue() >= $context->targetPositionValue
+            ? $this->getLeftValue() + $subtreeSize
+            : $this->getLeftValue();
+
+        $adjustedRightValue = $this->getRightValue() >= $context->targetPositionValue
+            ? $this->getRightValue() + $subtreeSize
+            : $this->getRightValue();
+
+        $this->getOwner()::updateAll(
+            QueryConditionBuilder::createOffsetUpdates(
+                $this->getDb(),
+                [
+                    $this->depthAttribute => $depthOffset,
+                ],
+            ),
+            QueryConditionBuilder::createRangeCondition(
+                $this->leftAttribute,
+                $adjustedLeftValue,
+                $this->rightAttribute,
+                $adjustedRightValue,
+                $this->treeAttribute,
+                $currentTreeValue,
+            ),
+        );
+
+        foreach ([$this->leftAttribute, $this->rightAttribute] as $attribute) {
+            $this->getOwner()::updateAll(
+                QueryConditionBuilder::createOffsetUpdates(
+                    $this->getDb(),
+                    [
+                        $attribute => $context->targetPositionValue - $adjustedLeftValue,
+                    ],
+                ),
+                QueryConditionBuilder::createRangeCondition(
+                    $attribute,
+                    $adjustedLeftValue,
+                    $attribute,
+                    $adjustedRightValue,
+                    $this->treeAttribute,
+                    $currentTreeValue,
+                ),
+            );
+        }
+
+        $this->shiftLeftRightAttribute($adjustedRightValue, -$subtreeSize);
     }
 
     /**
@@ -1440,43 +1464,42 @@ class NestedSetsBehavior extends Behavior
      * This operation is essential for maintaining the integrity of the nested set structure when reorganizing nodes
      * between trees or promoting a node to root in a multi-tree configuration.
      *
-     * @param mixed $targetNodeTreeValue Value to assign to the tree attribute for all nodes in the moved subtree.
-     * @param mixed $currentOwnerTreeValue Current tree attribute value of the nodes being moved.
+     * @param mixed $currentTreeValue Current tree attribute value of the nodes being moved.
+     * @param mixed $targetTreeValue Value to assign to the tree attribute for all nodes in the moved subtree.
      * @param int $depth Depth offset to apply to all nodes in the subtree.
      * @param int $leftValue Left boundary value of the subtree to move.
      * @param int $positionOffset Amount to shift left and right attribute values for the subtree.
      * @param int $rightValue Right boundary value of the subtree to move.
      */
     private function moveSubtreeToTargetTree(
-        mixed $targetNodeTreeValue,
-        mixed $currentOwnerTreeValue,
+        mixed $currentTreeValue,
+        mixed $targetTreeValue,
         int $depth,
         int $leftValue,
         int $positionOffset,
         int $rightValue,
     ): void {
-        $condition = QueryConditionBuilder::createSubtreeMoveCondition(
-            $this->leftAttribute,
-            $leftValue,
-            $this->rightAttribute,
-            $rightValue,
-            $this->treeAttribute,
-            $currentOwnerTreeValue,
-        );
-        $this->getOwner()::updateAll(
+        $attributes = QueryConditionBuilder::createOffsetUpdates(
+            $this->getDb(),
             [
-                $this->leftAttribute => new Expression(
-                    $this->getDb()->quoteColumnName($this->leftAttribute) . sprintf('%+d', $positionOffset),
-                ),
-                $this->rightAttribute => new Expression(
-                    $this->getDb()->quoteColumnName($this->rightAttribute) . sprintf('%+d', $positionOffset),
-                ),
-                $this->depthAttribute => new Expression(
-                    $this->getDb()->quoteColumnName($this->depthAttribute) . sprintf('%+d', $depth),
-                ),
-                $this->treeAttribute => $targetNodeTreeValue,
+                $this->depthAttribute => $depth,
+                $this->leftAttribute => $positionOffset,
+                $this->rightAttribute => $positionOffset,
             ],
-            $condition,
+        );
+
+        $attributes += [$this->treeAttribute => $targetTreeValue];
+
+        $this->getOwner()::updateAll(
+            $attributes,
+            QueryConditionBuilder::createSubtreeMoveCondition(
+                $this->leftAttribute,
+                $leftValue,
+                $this->rightAttribute,
+                $rightValue,
+                $this->treeAttribute,
+                $currentTreeValue,
+            ),
         );
     }
 }

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets;
 
-use yii\db\Expression;
+use yii\db\{Connection, Expression};
+
+use function sprintf;
 
 /**
  * Utility class for building query conditions for nested sets operations.
@@ -209,6 +211,48 @@ final class QueryConditionBuilder
         }
 
         return $condition;
+    }
+
+    /**
+     * Creates multiple SQL expressions for incrementing or decrementing attributes by specific offsets.
+     *
+     * Generates an array of attribute => Expression pairs for bulk update operations in nested sets tree restructuring.
+     * This method simplifies creating multiple offset expressions in a single call.
+     *
+     * @param Connection $db Database connection for proper column quoting.
+     * @param array $attributeOffsets Array of attribute => offset pairs.
+     *
+     * @return array Array of attribute => Expression pairs for updateAll operations.
+     *
+     * Usage example:
+     * ```php
+     * $updates = QueryConditionBuilder::createOffsetUpdates($db, [
+     *     'depth' => -1,
+     *     'lft' => 5,
+     *     'rgt' => 5,
+     * ]);
+     * // Result: [
+     * //     'depth' => Expression('`depth` - 1'),
+     * //     'lft' => Expression('`lft` + 5'),
+     * //     'rgt' => Expression('`rgt` + 5'),
+     * // ]
+     *
+     * MyModel::updateAll($updates, $condition);
+     * ```
+     *
+     * @phpstan-param array<string, int> $attributeOffsets
+     *
+     * @phpstan-return array<string, Expression>
+     */
+    public static function createOffsetUpdates(Connection $db, array $attributeOffsets): array
+    {
+        $updates = [];
+
+        foreach ($attributeOffsets as $attribute => $offset) {
+            $updates[$attribute] = self::createOffsetExpression($db, $attribute, $offset);
+        }
+
+        return $updates;
     }
 
     /**
@@ -436,5 +480,36 @@ final class QueryConditionBuilder
         }
 
         return $condition;
+    }
+
+    /**
+     * Creates a SQL expression for incrementing or decrementing an attribute by a specific offset.
+     *
+     * Generates a properly quoted SQL expression that adds or subtracts a value to an attribute, suitable for bulk
+     * update operations in nested sets tree restructuring.
+     *
+     * This method ensures consistent expression formatting and proper column name quoting across different database
+     * systems.
+     *
+     * @param Connection $db Database connection for proper column quoting.
+     * @param string $attribute Name of the attribute to modify.
+     * @param int $offset Amount to add to the attribute (can be negative for subtraction).
+     *
+     * @return Expression SQL expression for the attribute update.
+     *
+     * Usage example:
+     * ```php
+     * $expression = QueryConditionBuilder::createOffsetExpression($db, 'lft', 5);
+     * // Result: `lft` + 5
+     *
+     * $expression = QueryConditionBuilder::createOffsetExpression($db, 'lft', -3);
+     * // Result: `lft` - 3
+     *
+     * MyModel::updateAll(['lft' => $expression], $condition);
+     * ```
+     */
+    private static function createOffsetExpression(Connection $db, string $attribute, int $offset): Expression
+    {
+        return new Expression($db->quoteColumnName($attribute) . sprintf('%+d', $offset));
     }
 }
