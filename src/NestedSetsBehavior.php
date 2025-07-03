@@ -193,9 +193,7 @@ class NestedSetsBehavior extends Behavior
         }
 
         $this->shiftLeftRightAttribute($this->getRightValue(), $deltaValue);
-
-        $this->operation = null;
-        $this->node = null;
+        $this->invalidateCache();
     }
 
     /**
@@ -235,8 +233,7 @@ class NestedSetsBehavior extends Behavior
             );
         }
 
-        $this->operation = null;
-        $this->node = null;
+        $this->invalidateCache();
     }
 
     /**
@@ -268,17 +265,44 @@ class NestedSetsBehavior extends Behavior
 
         if ($this->operation === self::OPERATION_MAKE_ROOT) {
             $this->moveNodeAsRoot($currentOwnerTreeValue);
+            $this->invalidateCache();
 
             return;
         }
 
         if ($this->node === null) {
+            $this->invalidateCache();
+
             return;
         }
 
         $context = $this->createMoveContext($this->node, $this->operation);
-
         $this->moveNode($context);
+        $this->invalidateCache();
+    }
+
+    /**
+     * Invalidates cached attribute values and resets internal state.
+     *
+     * Clears the cached depth, left, and right attribute values, forcing them to be re-fetched from the owner model
+     * on next access.
+     *
+     * This method should be called after operations that modify the owner model's attributes to ensure that cached
+     * values remain consistent with the actual model state.
+     *
+     * Usage example:
+     * ```php
+     * // After modifying the model's attributes externally
+     * $behavior->invalidateCache();
+     * ```
+     */
+    public function invalidateCache(): void
+    {
+        $this->depthValue = null;
+        $this->leftValue = null;
+        $this->node = null;
+        $this->operation = null;
+        $this->rightValue = null;
     }
 
     /**

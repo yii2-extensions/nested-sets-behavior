@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests;
 
 use LogicException;
+use PHPForge\Support\Assert;
 use Throwable;
 use yii\base\NotSupportedException;
 use yii\db\{ActiveRecord, Exception, StaleObjectException};
@@ -2281,5 +2282,188 @@ final class NestedSetsBehaviorTest extends TestCase
             $reloadedNode->getAttribute('depth'),
             "Reloaded node should have 'depth=0'.",
         );
+    }
+
+    public function testCacheInvalidationAfterMakeRoot(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Original Root']);
+
+        $root->makeRoot();
+
+        $child = new MultipleTree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $behavior = $child->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull($behavior, 'Behavior should be attached to the child node.');
+
+        $originalDepth = $child->getAttribute('depth');
+        $originalLeft = $child->getAttribute('lft');
+        $originalRight = $child->getAttribute('rgt');
+
+        $cachedDepth = Assert::invokeMethod($behavior, 'getDepthValue');
+        $cachedLeft = Assert::invokeMethod($behavior, 'getLeftValue');
+        $cachedRight = Assert::invokeMethod($behavior, 'getRightValue');
+
+        self::assertEquals($originalDepth, $cachedDepth, 'Initial cached depth value should match attribute.');
+        self::assertEquals($originalLeft, $cachedLeft, 'Initial cached left value should match attribute.');
+        self::assertEquals($originalRight, $cachedRight, 'Initial cached right value should match attribute.');
+
+        $child->makeRoot();
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $nodeValueProperty = Assert::inaccessibleProperty($behavior, 'node');
+        $operationProperty = Assert::inaccessibleProperty($behavior, 'operation');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNull($depthValueProperty, 'Depth value cache should be null after manual invalidation.');
+        self::assertNull($leftValueProperty, 'Left value cache should be null after manual invalidation.');
+        self::assertNull($nodeValueProperty, 'Node cache should be null after manual invalidation.');
+        self::assertNull($operationProperty, 'Operation cache should be null after manual invalidation.');
+        self::assertNull($rightValueProperty, 'Right value cache should be null after manual invalidation.');
+
+        $newDepth = Assert::invokeMethod($behavior, 'getDepthValue');
+        $newLeft = Assert::invokeMethod($behavior, 'getLeftValue');
+        $newRight = Assert::invokeMethod($behavior, 'getRightValue');
+
+        self::assertEquals(0, $newDepth, 'New cached depth value should be 0 for root.');
+        self::assertEquals(1, $newLeft, 'New cached left value should be 1 for root.');
+        self::assertEquals(2, $newRight, 'New cached right value should be 2 for root.');
+    }
+
+    public function testCacheInvalidationAfterAppendTo(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child1 = new MultipleTree(['name' => 'Child 1']);
+
+        $child1->appendTo($root);
+
+        $child2 = new MultipleTree(['name' => 'Child 2']);
+
+        $behavior = $child2->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull($behavior, 'Behavior should be attached to the child node.');
+
+        $child2->appendTo($root);
+
+        Assert::invokeMethod($behavior, 'getDepthValue');
+        Assert::invokeMethod($behavior, 'getLeftValue');
+        Assert::invokeMethod($behavior, 'getRightValue');
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNotNull($depthValueProperty, 'Depth value cache should be populated before movement.');
+        self::assertNotNull($leftValueProperty, 'Left value cache should be populated before movement.');
+        self::assertNotNull($rightValueProperty, 'Right value cache should be populated before movement.');
+
+        $child2->appendTo($child1);
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNull($depthValueProperty, 'Depth value cache should be invalidated after appendTo.');
+        self::assertNull($leftValueProperty, 'Left value cache should be invalidated after appendTo.');
+        self::assertNull($rightValueProperty, 'Right value cache should be invalidated after appendTo.');
+    }
+
+    public function testCacheInvalidationAfterDeleteWithChildren(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child = new MultipleTree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $grandchild = new MultipleTree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child);
+        $behavior = $child->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull($behavior, 'Behavior should be attached to the child node.');
+
+        Assert::invokeMethod($behavior, 'getDepthValue');
+        Assert::invokeMethod($behavior, 'getLeftValue');
+        Assert::invokeMethod($behavior, 'getRightValue');
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNotNull($depthValueProperty, 'Depth value cache should be populated before deletion.');
+        self::assertNotNull($leftValueProperty, 'Left value cache should be populated before deletion.');
+        self::assertNotNull($rightValueProperty, 'Right value cache should be populated before deletion.');
+
+        $child->deleteWithChildren();
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNull($depthValueProperty, 'Depth value cache should be invalidated after deleteWithChildren.');
+        self::assertNull($leftValueProperty, 'Left value cache should be invalidated after deleteWithChildren.');
+        self::assertNull($rightValueProperty, 'Right value cache should be invalidated after deleteWithChildren.');
+    }
+
+    public function testManualCacheInvalidation(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $behavior = $root->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull($behavior, 'Behavior should be attached to the root node.');
+
+        Assert::invokeMethod($behavior, 'getDepthValue');
+        Assert::invokeMethod($behavior, 'getLeftValue');
+        Assert::invokeMethod($behavior, 'getRightValue');
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNotNull($depthValueProperty, 'Depth value cache should be populated.');
+        self::assertNotNull($leftValueProperty, 'Left value cache should be populated.');
+        self::assertNotNull($rightValueProperty, 'Right value cache should be populated.');
+
+        $root->invalidateCache();
+
+        $depthValueProperty = Assert::inaccessibleProperty($behavior, 'depthValue');
+        $leftValueProperty = Assert::inaccessibleProperty($behavior, 'leftValue');
+        $nodeValueProperty = Assert::inaccessibleProperty($behavior, 'node');
+        $operationProperty = Assert::inaccessibleProperty($behavior, 'operation');
+        $rightValueProperty = Assert::inaccessibleProperty($behavior, 'rightValue');
+
+        self::assertNull($depthValueProperty, 'Depth value cache should be null after manual invalidation.');
+        self::assertNull($leftValueProperty, 'Left value cache should be null after manual invalidation.');
+        self::assertNull($nodeValueProperty, 'Node cache should be null after manual invalidation.');
+        self::assertNull($operationProperty, 'Operation cache should be null after manual invalidation.');
+        self::assertNull($rightValueProperty, 'Right value cache should be null after manual invalidation.');
+
+        $newDepth = Assert::invokeMethod($behavior, 'getDepthValue');
+        $newLeft = Assert::invokeMethod($behavior, 'getLeftValue');
+        $newRight = Assert::invokeMethod($behavior, 'getRightValue');
+
+        self::assertEquals(0, $newDepth, 'Depth value should be correctly retrieved after invalidation.');
+        self::assertEquals(1, $newLeft, 'Left value should be correctly retrieved after invalidation.');
+        self::assertEquals(2, $newRight, 'Right value should be correctly retrieved after invalidation.');
     }
 }
