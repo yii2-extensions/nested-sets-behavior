@@ -104,6 +104,11 @@ class NestedSetsBehavior extends Behavior
     public string $depthAttribute = 'depth';
 
     /**
+     * Stores the depth value for the current operation.
+     */
+    protected int|null $depthValue = null;
+
+    /**
      * Name of the attribute that stores the left boundary value of the node in the nested set tree.
      *
      * @phpstan-var 'lft' attribute name.
@@ -111,11 +116,21 @@ class NestedSetsBehavior extends Behavior
     public string $leftAttribute = 'lft';
 
     /**
+     * Stores the left value for the current operation.
+     */
+    protected int|null $leftValue = null;
+
+    /**
      * Name of the attribute that stores the right boundary value of the node in the nested set tree.
      *
      * @phpstan-var 'rgt' attribute name.
      */
     public string $rightAttribute = 'rgt';
+
+    /**
+     * Stores the right value for the current operation.
+     */
+    protected int|null $rightValue = null;
 
     /**
      * Name of the attribute that stores the tree identifier for supporting multiple trees.
@@ -129,21 +144,6 @@ class NestedSetsBehavior extends Behavior
      * allowing the behavior to perform database operations such as updates and queries.
      */
     private Connection|null $db = null;
-
-    /**
-     * Stores the depth value for the current operation.
-     */
-    private int|null $depthValue = null;
-
-    /**
-     * Stores the left value for the current operation.
-     */
-    private int|null $leftValue = null;
-
-    /**
-     * Stores the right value for the current operation.
-     */
-    private int|null $rightValue = null;
 
     /**
      * Handles post-deletion updates for the nested set structure.
@@ -193,9 +193,7 @@ class NestedSetsBehavior extends Behavior
         }
 
         $this->shiftLeftRightAttribute($this->getRightValue(), $deltaValue);
-
-        $this->operation = null;
-        $this->node = null;
+        $this->invalidateCache();
     }
 
     /**
@@ -235,8 +233,7 @@ class NestedSetsBehavior extends Behavior
             );
         }
 
-        $this->operation = null;
-        $this->node = null;
+        $this->invalidateCache();
     }
 
     /**
@@ -268,17 +265,44 @@ class NestedSetsBehavior extends Behavior
 
         if ($this->operation === self::OPERATION_MAKE_ROOT) {
             $this->moveNodeAsRoot($currentOwnerTreeValue);
+            $this->invalidateCache();
 
             return;
         }
 
         if ($this->node === null) {
+            $this->invalidateCache();
+
             return;
         }
 
         $context = $this->createMoveContext($this->node, $this->operation);
-
         $this->moveNode($context);
+        $this->invalidateCache();
+    }
+
+    /**
+     * Invalidates cached attribute values and resets internal state.
+     *
+     * Clears the cached depth, left, and right attribute values, forcing them to be re-fetched from the owner model
+     * on next access.
+     *
+     * This method should be called after operations that modify the owner model's attributes to ensure that cached
+     * values remain consistent with the actual model state.
+     *
+     * Usage example:
+     * ```php
+     * // After modifying the model's attributes externally
+     * $behavior->invalidateCache();
+     * ```
+     */
+    public function invalidateCache(): void
+    {
+        $this->depthValue = null;
+        $this->leftValue = null;
+        $this->node = null;
+        $this->operation = null;
+        $this->rightValue = null;
     }
 
     /**

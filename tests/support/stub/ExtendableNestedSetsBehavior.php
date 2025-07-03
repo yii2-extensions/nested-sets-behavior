@@ -14,6 +14,8 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
  */
 final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 {
+    public bool $invalidateCacheCalled = false;
+
     /**
      * @phpstan-var array<string, bool>
      */
@@ -44,7 +46,6 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     {
         $this->calledMethods['moveNode'] = true;
 
-        // Create a mock context for testing compatibility
         $context = new \yii2\extensions\nestedsets\NodeContext(
             $node,
             0,
@@ -83,5 +84,22 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     public function getCalledMethods(): array
     {
         return $this->calledMethods;
+    }
+
+    public function invalidateCache(): void
+    {
+        $this->invalidateCacheCalled = true;
+
+        parent::invalidateCache();
+    }
+
+    public function setNode(ActiveRecord|null $node): void
+    {
+        $this->node = $node;
+    }
+
+    public function setOperation(string|null $operation): void
+    {
+        $this->operation = $operation;
     }
 }
