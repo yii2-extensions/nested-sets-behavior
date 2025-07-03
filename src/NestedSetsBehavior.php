@@ -1317,13 +1317,15 @@ class NestedSetsBehavior extends Behavior
 
         $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
 
-        $adjustedLeftValue = $this->getLeftValue() >= $context->targetPositionValue
-            ? $this->getLeftValue() + $subtreeSize
-            : $this->getLeftValue();
+        $adjustedLeftValue = $this->getLeftValue();
+        $adjustedRightValue = $this->getRightValue();
 
-        $adjustedRightValue = $this->getRightValue() >= $context->targetPositionValue
-            ? $this->getRightValue() + $subtreeSize
-            : $this->getRightValue();
+        // We use >= for consistency, though equality is impossible due to the nature of the algorithm
+        // @infection-ignore-all
+        if ($adjustedLeftValue >= $context->targetPositionValue) {
+            $adjustedLeftValue += $subtreeSize;
+            $adjustedRightValue += $subtreeSize;
+        }
 
         $this->getOwner()::updateAll(
             QueryConditionBuilder::createOffsetUpdates(

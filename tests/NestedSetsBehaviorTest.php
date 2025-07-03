@@ -2411,6 +2411,9 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $this->populateAndVerifyCache($behavior);
 
+        $child2->setAttribute('lft', 3);
+        $child2->save();
+
         $child2->appendTo($child1);
 
         $this->verifyCacheInvalidation($behavior);
