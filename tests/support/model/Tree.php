@@ -46,6 +46,7 @@ class Tree extends ActiveRecord
             ['name', 'required'],
         ];
     }
+
     public static function tableName(): string
     {
         return '{{%tree}}';
