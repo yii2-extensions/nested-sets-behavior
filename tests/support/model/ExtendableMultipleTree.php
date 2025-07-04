@@ -41,6 +41,7 @@ class ExtendableMultipleTree extends ActiveRecord
             ['name', 'required'],
         ];
     }
+
     public static function tableName(): string
     {
         return '{{%multiple_tree}}';

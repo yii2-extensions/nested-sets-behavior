@@ -76,6 +76,7 @@ final class NestedSetsQueryBehaviorTest extends TestCase
             }
         }
     }
+
     public function testReturnLeavesForSingleAndMultipleTreeModels(): void
     {
         $this->generateFixtureTree();
