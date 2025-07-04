@@ -12,7 +12,7 @@
 Install the extension.
 
 ```bash
-composer require yii2-extensions/nested-sets
+composer require yii2-extensions/nested-sets-behavior
 ```
 
 ### Method 2: Manual installation
@@ -22,7 +22,7 @@ Add to your `composer.json`.
 ```json
 {
     "require": {
-        "yii2-extensions/nested-sets": "^0.1"
+        "yii2-extensions/nested-sets-behavior": "^0.1"
     }
 }
 ```

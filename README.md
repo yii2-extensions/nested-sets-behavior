@@ -46,7 +46,7 @@ with high-performance database operations.
 ### Installation
 
 ```bash
-composer require yii2-extensions/nested-sets
+composer require yii2-extensions/nested-sets-behavior
 ```
 
 ### How it works
