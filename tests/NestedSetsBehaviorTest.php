@@ -24,1560 +24,167 @@ use function sprintf;
 
 final class NestedSetsBehaviorTest extends TestCase
 {
-    public function testReturnTrueAndMatchXmlAfterMakeRootNewForTreeAndMultipleTree(): void
+    public function testAfterInsertCacheInvalidationIntegration(): void
     {
         $this->createDatabase();
 
-        $nodeTree = new Tree(['name' => 'Root']);
+        $root = new MultipleTree(['name' => 'Original Root']);
 
-        self::assertTrue(
-            $nodeTree->makeRoot(),
-            "'makeRoot()' should return 'true' when creating a new root node in 'Tree'.",
-        );
+        $root->makeRoot();
 
-        $nodeMultipleTree = new MultipleTree(['name' => 'Root 1']);
+        $child = new MultipleTree(['name' => 'Child Node']);
 
-        self::assertTrue(
-            $nodeMultipleTree->makeRoot(),
-            "'makeRoot()' should return 'true' when creating the first root node in 'MultipleTree'.",
-        );
+        $child->appendTo($root);
 
-        $nodeMultipleTree = new MultipleTree(['name' => 'Root 2']);
-
-        self::assertTrue(
-            $nodeMultipleTree->makeRoot(),
-            "'makeRoot()' should return 'true' when creating a second root node in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-make-root-new.xml');
-
-        self::assertSame(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'makeRoot()' must match the expected XML structure.",
-        );
-    }
-
-    public function testThrowExceptionWhenMakeRootWithTreeAttributeFalseAndRootExists(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'Root']);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create more than one root when "treeAttribute" is false.');
-
-        $node->makeRoot();
-    }
-
-    public function testReturnTrueAndMatchXmlAfterPrependToNewNodeForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $childOfNode = Tree::findOne(9);
+        $behavior = $child->getBehavior('nestedSetsBehavior');
 
         self::assertNotNull(
-            $childOfNode,
-            "Node with ID '9' must exist before calling 'prependTo()' on it in 'Tree'.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when prepending a new node to node '9' in 'Tree'.",
-        );
-
-        $node = new MultipleTree(['name' => 'New node']);
-
-        $childOfNode = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Node with ID '31' must exist before calling 'prependTo()' on it in 'MultipleTree'.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when prepending a new node to node '31' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-prepend-to-new.xml');
-
-        self::assertSame(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'prependTo()' must match the expected XML structure.",
-        );
-    }
-
-    public function testThrowExceptionWhenAppendToNewNodeTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
-
-        $node->appendTo(new Tree());
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertBeforeNewForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $childOfNode = Tree::findOne(9);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Node with ID '9' should exist before calling 'insertBefore()' on it in 'Tree'.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when inserting a new node before node '9' in 'Tree'.",
-        );
-
-        $node = new MultipleTree(['name' => 'New node']);
-
-        $childOfNode = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Node with ID '31' should exist before calling 'insertBefore()' on it in 'MultipleTree'.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when inserting a new node before node '31' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-before-new.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
-        );
-    }
-
-    public function testThrowExceptionWhenInsertBeforeNewNodeTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
-
-        $node->insertBefore(new Tree());
-    }
-
-    public function testThrowExceptionWhenInsertBeforeNewNodeTargetIsRoot(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-        $rootNode = Tree::findOne(1);
-
-        self::assertNotNull(
-            $rootNode,
-            "Root node with ID '1' should exist before calling 'insertBefore()' on it in 'Tree'.",
-        );
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is root.');
-
-        $node->insertBefore($rootNode);
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertAfterNewForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $childOfNode = Tree::findOne(9);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Node with ID '9' must exist before calling 'insertAfter()' on it in 'Tree'.",
-        );
-
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when inserting a new node after node '9' in 'Tree'.",
-        );
-
-        $node = new MultipleTree(['name' => 'New node']);
-
-        $childOfNode = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Node with ID '31' must exist before calling 'insertAfter()' on it in 'MultipleTree'.",
-        );
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when inserting a new node after node '31' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-after-new.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertAfter()' must match the expected XML structure.",
-        );
-    }
-
-    public function testThrowExceptionWhenInsertAfterNewNodeTargetIsRoot(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'New node']);
-
-        $rootNode = Tree::findOne(1);
-
-        self::assertNotNull(
-            $rootNode,
-            "Root node with ID '1' should exist before calling 'insertAfter()' on it in 'Tree'.",
-        );
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is root.');
-
-        $node->insertAfter($rootNode);
-    }
-
-    public function testReturnTrueAndMatchXmlAfterMakeRootOnExistingMultipleTreeNode(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' must exist before calling 'makeRoot()' on it in 'MultipleTree'.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        self::assertTrue(
-            $node->makeRoot(),
-            "'makeRoot()' should return 'true' when called on node '31' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-make-root-exists.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'makeRoot()' must match the expected XML structure for 'MultipleTree'.",
-        );
-    }
-
-    public function testThrowExceptionWhenMakeRootOnNonRootNodeWithTreeAttributeFalse(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'makeRoot()' on it in 'Tree'.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node as the root when "treeAttribute" is false.');
-
-        $node->makeRoot();
-    }
-
-    public function testThrowExceptionWhenMakeRootOnRootNodeInMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(23);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '23' should exist before calling 'makeRoot()' on it in 'MultipleTree'.",
-        );
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move the root node as the root.');
-
-        $node->makeRoot();
-    }
-
-    public function testReturnTrueAndMatchXmlAfterPrependToUpForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before calling 'prependTo()' on another node in 'Tree'.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(2);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '2' must exist before calling 'prependTo()' on it in 'Tree'.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when moving node '9' as child of node '2' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' must exist before calling 'prependTo()' on another node in 'MultipleTree'.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(24);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '24' must exist before calling 'prependTo()' on it in 'MultipleTree'.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when moving node '31' as child of node '24' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-up.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'prependTo()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterPrependToDownForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' should exist before calling 'prependTo()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(16);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '16' should exist before calling 'prependTo()' on it.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when moving node '9' as child of node '16' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' should exist before calling 'prependTo()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(38);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '38' should exist before calling 'prependTo()' on it.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when moving node '31' as child of node '38' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-down.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'prependTo()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterPrependToMultipleTreeWhenTargetIsInAnotherTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before attempting to prepend to a node in another tree.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(53);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '53' must exist before attempting to prepend to it.",
-        );
-        self::assertTrue(
-            $node->prependTo($childOfNode),
-            "'prependTo()' should return 'true' when moving node '9' as child of node '53' in another tree.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-another-tree.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'prependTo()' must match the expected XML structure for 'MultipleTree'.",
-        );
-    }
-
-    public function testThrowExceptionWhenPrependToTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' must exist before calling 'prependTo()' on another node.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
-
-        $node->prependTo(new Tree());
-    }
-
-    public function testThrowExceptionWhenPrependToTargetIsSame(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'prependTo()' on itself.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
-
-        $node->prependTo($node);
-    }
-
-    public function testThrowExceptionWhenPrependToTargetIsChild(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' must exist before calling 'prependTo()' on another node.");
-
-        $childOfNode = Tree::findOne(11);
-
-        self::assertNotNull($childOfNode, "Target node with ID '11' must exist before calling 'prependTo()' on it.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
-
-        $node->prependTo($childOfNode);
-    }
-
-    public function testReturnTrueAndMatchXmlAfterAppendToUpForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before calling 'appendTo()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(2);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '2' must exist before calling 'appendTo()' on it.",
-        );
-        self::assertTrue(
-            $node->appendTo($childOfNode),
-            "'appendTo()' should return 'true' when moving node '9' as child of node '2' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' must exist before calling 'appendTo()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(24);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '24' must exist before calling 'appendTo()' on it.",
-        );
-        self::assertTrue(
-            $node->appendTo($childOfNode),
-            "'appendTo()' should return 'true' when moving node '31' as child of node '24' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-append-to-exists-up.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'appendTo()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterAppendToDownForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' should exist before calling 'appendTo()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(16);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '16' should exist before calling 'appendTo()' on it.",
-        );
-        self::assertTrue(
-            $node->appendTo($childOfNode),
-            "'appendTo()' should return 'true' when moving node '9' as child of node '16' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' should exist before calling 'appendTo()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(38);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '38' should exist before calling 'appendTo()' on it.",
-        );
-        self::assertTrue(
-            $node->appendTo($childOfNode),
-            "'appendTo()' should return 'true' when moving node '31' as child of node '38' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-append-to-exists-down.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'appendTo()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterAppendToMultipleTreeWhenTargetIsInAnotherTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before attempting to 'appendTo()' a node in another tree.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(53);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '53' must exist before attempting to 'appendTo()' it.",
-        );
-        self::assertTrue(
-            $node->appendTo($childOfNode),
-            "'appendTo()' should return 'true' when moving node '9' as child of node '53' in another tree.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-append-to-exists-another-tree.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'appendTo()' must match the expected XML structure for 'MultipleTree'.",
-        );
-    }
-
-    public function testThrowExceptionWhenAppendToTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' must exist before calling 'appendTo()' on another node.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
-
-        $node->appendTo(new Tree());
-    }
-
-    public function testThrowExceptionWhenAppendToTargetIsSame(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'appendTo()' on another node.");
-
-        $childOfNode = Tree::findOne(9);
-
-        self::assertNotNull($childOfNode, "Target node with ID '9' should exist before calling 'appendTo()' on it.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
-
-        $node->appendTo($childOfNode);
-    }
-
-    public function testThrowExceptionWhenAppendToTargetIsChild(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Expected node with ID '9' to exist before calling 'appendTo()' on another node.",
-        );
-
-        $childOfNode = Tree::findOne(11);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Expected target child node with ID '11' to exist before calling 'appendTo()' on it.",
-        );
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
-
-        $node->appendTo($childOfNode);
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertBeforeUpForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before calling 'insertBefore()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(2);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '2' must exist before calling 'insertBefore()' on it.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when moving node '9' before node '2' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' must exist before calling 'insertBefore()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(24);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '24' must exist before calling 'insertBefore()' on it.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when moving node '31' before node '24' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-up.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertBeforeDownForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' should exist before calling 'insertBefore()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(16);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '16' should exist before calling 'insertBefore()' on it.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when moving node '9' before node '16' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' should exist before calling 'insertBefore()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(38);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '38' should exist before calling 'insertBefore()' on it.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when moving node '31' before node '38' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-down.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertBeforeMultipleTreeWhenTargetIsInAnotherTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before attempting to insert before a node in another tree.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(53);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '53' must exist before attempting to insert before it.",
-        );
-        self::assertTrue(
-            $node->insertBefore($childOfNode),
-            "'insertBefore()' should return 'true' when moving node '9' before node '53' in another tree.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-another-tree.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertBefore()' must match the expected XML structure for 'MultipleTree'.",
-        );
-    }
-
-    public function testThrowExceptionWhenInsertBeforeTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on a new record.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
-
-        $node->insertBefore(new Tree());
-    }
-
-    public function testThrowExceptionWhenInsertBeforeTargetIsSame(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on itself.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
-
-        $node->insertBefore($node);
-    }
-
-    public function testThrowExceptionWhenInsertBeforeTargetIsChild(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before calling 'insertBefore()' on another node.",
-        );
-
-        $childOfNode = Tree::findOne(11);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target child node with ID '11' must exist before calling 'insertBefore()' on it.",
-        );
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
-
-        $node->insertBefore($childOfNode);
-    }
-
-    public function testThrowExceptionWhenInsertBeforeTargetIsRoot(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on another node.");
-
-        $rootNode = Tree::findOne(1);
-
-        self::assertNotNull($rootNode, "Root node with ID '1' should exist before calling 'insertBefore()' on it.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is root.');
-
-        $node->insertBefore($rootNode);
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertAfterUpForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before calling 'insertAfter()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(2);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '2' must exist before calling 'insertAfter()' on it.",
-        );
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when moving node '9' after node '2' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' must exist before calling 'insertAfter()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(24);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '24' must exist before calling 'insertAfter()' on it.",
-        );
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when moving node '31' after node '24' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-up.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertAfter()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertAfterDownForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' should exist before calling 'insertAfter()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = Tree::findOne(16);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '16' should exist before calling 'insertAfter()' on it.",
-        );
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when moving node '9' after node '16' in 'Tree'.",
-        );
-
-        $node = MultipleTree::findOne(31);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '31' should exist before calling 'insertAfter()' on another node.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(38);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '38' should exist before calling 'insertAfter()' on it.",
-        );
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when moving node '31' after node '38' in 'MultipleTree'.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-down.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertAfter()' must match the expected XML structure.",
-        );
-    }
-
-    public function testReturnTrueAndMatchXmlAfterInsertAfterMultipleTreeWhenTargetIsInAnotherTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(9);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '9' must exist before attempting to insert after a node in another tree.",
-        );
-
-        $node->name = 'Updated node 2';
-
-        $childOfNode = MultipleTree::findOne(53);
-
-        self::assertNotNull(
-            $childOfNode,
-            "Target node with ID '53' must exist before attempting to insert after it.",
-        );
-        self::assertTrue(
-            $node->insertAfter($childOfNode),
-            "'insertAfter()' should return 'true' when moving node '9' after node '53' in another tree.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-another-tree.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
-            $simpleXML->asXML(),
-            "Resulting dataset after 'insertAfter()' must match the expected XML structure for 'MultipleTree'.",
-        );
-    }
-
-    public function testThrowExceptionWhenInsertAfterTargetIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' must exist before attempting to insert after a new record.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
-
-        $node->insertAfter(new Tree());
-    }
-
-    public function testThrowExceptionWhenInsertAfterTargetIsSame(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' must exist before attempting to insert after itself.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
-
-        $node->insertAfter($node);
-    }
-
-    public function testThrowExceptionWhenInsertAfterTargetIsChild(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' must exist before attempting to insert after its child node.");
-
-        $childOfNode = Tree::findOne(11);
-
-        self::assertNotNull($childOfNode, "Child node with ID '11' must exist before attempting to insert after it.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
-
-        $node->insertAfter($childOfNode);
-    }
-
-    public function testThrowExceptionWhenInsertAfterTargetIsRoot(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before attempting to insert after the root node.");
-
-        $rootNode = Tree::findOne(1);
-
-        self::assertNotNull($rootNode, "Root node with ID '1' should exist before attempting to insert after it.");
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is root.');
-
-        $node->insertAfter($rootNode);
-    }
-
-    public function testReturnAffectedRowsAndMatchXmlAfterDeleteWithChildrenForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            7,
-            Tree::findOne(9)?->deleteWithChildren(),
-            "Deleting node with ID '9' and its children from 'Tree' should affect exactly seven rows.",
-        );
-        self::assertEquals(
-            7,
-            MultipleTree::findOne(31)?->deleteWithChildren(),
-            "Deleting node with ID '31' and its children from 'MultipleTree' should affect exactly seven rows.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-delete-with-children.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            'XML dataset after deleting nodes with children should match the expected result.',
-        );
-    }
-
-    public function testThrowExceptionWhenDeleteWithChildrenIsCalledOnNewRecordNode(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree();
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not delete a node when it is new record.');
-
-        $node->deleteWithChildren();
-    }
-
-    /**
-     * @throws StaleObjectException
-     * @throws Throwable
-     */
-    public function testReturnOneWhenDeleteNodeForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            1,
-            Tree::findOne(9)?->delete(),
-            "Deleting node with ID '9' from 'Tree' should affect exactly one row.",
+            $behavior,
+            'Behavior should be attached to the child node.',
         );
         self::assertEquals(
             1,
-            MultipleTree::findOne(31)?->delete(),
-            "Deleting node with ID '31' from 'MultipleTree' should affect exactly one row.",
-        );
-
-        $simpleXML = $this->loadFixtureXML('test-delete.xml');
-
-        self::assertEquals(
-            $this->buildFlatXMLDataSet($this->getDataSet()),
-            $simpleXML->asXML(),
-            'XML dataset after deleting nodes should match the expected result.',
-        );
-    }
-
-    /**
-     * @throws Throwable
-     * @throws StaleObjectException
-     */
-    public function testThrowExceptionWhenDeleteNodeIsNewRecord(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree();
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not delete a node when it is new record.');
-
-        $node->delete();
-    }
-
-    /**
-     * @throws Throwable
-     * @throws StaleObjectException
-     */
-    public function testThrowNotSupportedExceptionWhenDeleteIsCalledOnRootNode(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(1);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '1' should exist before attempting deletion.",
-        );
-
-        $this->expectException(NotSupportedException::class);
-        $this->expectExceptionMessage(
-            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::delete" is not supported for deleting root nodes.',
-        );
-
-        $node->delete();
-    }
-
-    /**
-     * @throws Throwable
-     */
-    public function testThrowNotSupportedExceptionWhenInsertIsCalledOnTree(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = new Tree(['name' => 'Node']);
-
-        $this->expectException(NotSupportedException::class);
-        $this->expectExceptionMessage(
-            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::insert" is not supported for inserting new nodes.',
-        );
-
-        $node->insert();
-    }
-
-    /**
-     * @throws Throwable
-     * @throws StaleObjectException
-     */
-    public function testReturnOneWhenUpdateNodeName(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = Tree::findOne(9);
-
-        self::assertNotNull($node, "Node with ID '9' should exist before attempting update.");
-
-        $node->name = 'Updated node';
-
-        self::assertEquals(1, $node->update(), 'Updating the node name should affect exactly one row.');
-    }
-
-    public function testReturnParentsForTreeAndMultipleTreeWithAndWithoutDepth(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-parents.php",
-            ArrayHelper::toArray(Tree::findOne(11)?->parents()->all() ?? []),
-            "Parents for 'Tree' node with ID '11' do not match the expected result.",
+            $child->getAttribute('depth'),
+            "Child should start at depth '1'.",
         );
         self::assertEquals(
-            require "{$this->fixtureDirectory}/test-parents-multiple-tree.php",
-            ArrayHelper::toArray(MultipleTree::findOne(33)?->parents()->all() ?? []),
-            "Parents for 'MultipleTree' node with ID '33' do not match the expected result.",
+            2,
+            $child->getAttribute('lft'),
+            "Child should start with 'lft=2'.",
         );
         self::assertEquals(
-            require "{$this->fixtureDirectory}/test-parents-with-depth.php",
-            ArrayHelper::toArray(Tree::findOne(11)?->parents(1)->all() ?? []),
-            "Parents with 'depth=1' for 'Tree' node with ID '11' do not match the expected result.",
+            3,
+            $child->getAttribute('rgt'),
+            "Child should start with 'rgt=3'.",
+        );
+
+        $this->populateAndVerifyCache($behavior);
+
+        $child->makeRoot();
+
+        $this->verifyCacheInvalidation($behavior);
+
+        self::assertEquals(
+            0,
+            $child->getAttribute('depth'),
+            "Child should be at depth '0' after becoming root.",
         );
         self::assertEquals(
-            require "{$this->fixtureDirectory}/test-parents-multiple-tree-with-depth.php",
-            ArrayHelper::toArray(MultipleTree::findOne(33)?->parents(1)->all() ?? []),
-            "Parents with 'depth=1' for 'MultipleTree' node with ID '33' do not match the expected result.",
+            1,
+            $child->getAttribute('lft'),
+            "Child should have 'lft=1' after becoming root.",
+        );
+        self::assertEquals(
+            2,
+            $child->getAttribute('rgt'),
+            "Child should have 'rgt=2' after becoming root.",
+        );
+        self::assertEquals(
+            0,
+            Assert::invokeMethod($behavior, 'getDepthValue'),
+            "New cached depth should be '0'.",
+        );
+        self::assertEquals(
+            1,
+            Assert::invokeMethod($behavior, 'getLeftValue'),
+            "New cached left should be '1'.",
+        );
+        self::assertEquals(
+            2,
+            Assert::invokeMethod($behavior, 'getRightValue'),
+            "New cached right should be '2'.",
         );
     }
 
-    public function testReturnChildrenForTreeAndMultipleTreeWithAndWithoutDepth(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-children.php",
-            ArrayHelper::toArray(Tree::findOne(9)?->children()->all() ?? []),
-            "Children for 'Tree' node with ID '9' do not match the expected result.",
-        );
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-children-multiple-tree.php",
-            ArrayHelper::toArray(MultipleTree::findOne(31)?->children()->all() ?? []),
-            "Children for 'MultipleTree' node with ID '31' do not match the expected result.",
-        );
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-children-with-depth.php",
-            ArrayHelper::toArray(Tree::findOne(9)?->children(1)->all() ?? []),
-            "Children with 'depth=1' for 'Tree' node with ID '9' do not match the expected result.",
-        );
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-children-multiple-tree-with-depth.php",
-            ArrayHelper::toArray(MultipleTree::findOne(31)?->children(1)->all() ?? []),
-            "Children with 'depth=1' for 'MultipleTree' node with ID '31' do not match the expected result.",
-        );
-    }
-
-    public function testReturnLeavesForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-leaves.php",
-            ArrayHelper::toArray(Tree::findOne(9)?->leaves()->all() ?? []),
-            "Leaves for 'Tree' node with ID '9' do not match the expected result.",
-        );
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-leaves-multiple-tree.php",
-            ArrayHelper::toArray(MultipleTree::findOne(31)?->leaves()->all() ?? []),
-            "Leaves for 'MultipleTree' node with ID '31' do not match the expected result.",
-        );
-    }
-
-    public function testReturnPrevNodesForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-prev.php",
-            ArrayHelper::toArray(Tree::findOne(9)?->prev()->all() ?? []),
-            "Previous nodes for 'Tree' node with ID '9' do not match the expected result.",
-        );
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-prev-multiple-tree.php",
-            ArrayHelper::toArray(MultipleTree::findOne(31)?->prev()->all() ?? []),
-            "Previous nodes for 'MultipleTree' node with ID '31' do not match the expected result.",
-        );
-    }
-
-    public function testReturnNextNodesForTreeAndMultipleTree(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-next.php",
-            ArrayHelper::toArray(Tree::findOne(9)?->next()->all() ?? []),
-            "Next nodes for 'Tree' node with ID '9' do not match the expected result.",
-        );
-        self::assertEquals(
-            require "{$this->fixtureDirectory}/test-next-multiple-tree.php",
-            ArrayHelper::toArray(MultipleTree::findOne(31)?->next()->all() ?? []),
-            "Next nodes for 'MultipleTree' node with ID '31' do not match the expected result.",
-        );
-    }
-
-    public function testReturnIsRootForRootAndNonRootNode(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertTrue(Tree::findOne(1)?->isRoot(), "Node with ID '1' should be identified as root.");
-        self::assertFalse(Tree::findOne(2)?->isRoot(), "Node with ID '2' should not be identified as root.");
-    }
-
-    public function testReturnIsChildOfForMultipleTreeNodeUnderVariousAncestors(): void
-    {
-        $this->generateFixtureTree();
-
-        $node = MultipleTree::findOne(26);
-
-        self::assertNotNull(
-            $node,
-            "Node with ID '26' should exist in the database.",
-        );
-        self::assertNotNull(
-            $childOfNode = MultipleTree::findOne(25),
-            "Node with ID '25' should exist in the database.",
-        );
-        self::assertTrue(
-            $node->isChildOf($childOfNode),
-            "Node with ID '26' should be a child of node with ID '25'.",
-        );
-        self::assertNotNull(
-            $childOfNode = MultipleTree::findOne(23),
-            "Node with ID '23' should exist in the database.",
-        );
-        self::assertTrue(
-            $node->isChildOf($childOfNode),
-            "Node with ID '26' should be a child of node with ID '23'.",
-        );
-        self::assertNotNull(
-            $childOfNode = MultipleTree::findOne(3),
-            "Node with ID '3' should exist in the database.",
-        );
-        self::assertFalse(
-            $node->isChildOf($childOfNode),
-            "Node with ID '26' should not be a child of node with ID '3'.",
-        );
-        self::assertNotNull(
-            $childOfNode = MultipleTree::findOne(1),
-            "Node with ID '1' should exist in the database.",
-        );
-        self::assertFalse(
-            $node->isChildOf($childOfNode),
-            "Node with ID '26' should not be a child of node with ID '1'.",
-        );
-    }
-
-    public function testIsChildOfReturnsFalseWhenLeftValuesAreEqual(): void
-    {
-        $this->generateFixtureTree();
-
-        $parentNode = Tree::findOne(2);
-        $childNode = Tree::findOne(3);
-
-        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
-        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
-
-        $originalChildLeft = $childNode->getAttribute('lft');
-
-        $parentLeft = $parentNode->getAttribute('lft');
-        $childNode->setAttribute('lft', $parentLeft);
-
-        self::assertFalse(
-            $childNode->isChildOf($parentNode),
-            'Node should not be child when left values are equal (tests <= condition).',
-        );
-
-        $childNode->setAttribute('lft', $originalChildLeft);
-    }
-
-    public function testIsChildOfReturnsFalseWhenRightValuesAreEqual(): void
-    {
-        $this->generateFixtureTree();
-
-        $parentNode = Tree::findOne(2);
-        $childNode = Tree::findOne(3);
-
-        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
-        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
-
-        $originalChildRight = $childNode->getAttribute('rgt');
-
-        $parentRight = $parentNode->getAttribute('rgt');
-        $childNode->setAttribute('rgt', $parentRight);
-
-        self::assertFalse(
-            $childNode->isChildOf($parentNode),
-            'Node should not be child when right values are equal (tests >= condition).',
-        );
-
-        $childNode->setAttribute('rgt', $originalChildRight);
-    }
-
-    public function testIsLeafReturnsTrueForLeafAndFalseForRoot(): void
-    {
-        $this->generateFixtureTree();
-
-        self::assertTrue(
-            Tree::findOne(4)?->isLeaf(),
-            "Node with ID '4' should be a leaf node (no children).",
-        );
-        self::assertFalse(
-            Tree::findOne(1)?->isLeaf(),
-            "Node with ID '1' should not be a leaf node (has children or is root).",
-        );
-    }
-
-    public function testThrowLogicExceptionWhenBehaviorIsNotAttachedToOwner(): void
-    {
-        $behavior = new NestedSetsBehavior();
-
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
-
-        $behavior->parents();
-    }
-
-    public function testThrowLogicExceptionWhenBehaviorIsDetachedFromOwner(): void
+    public function testAfterInsertCallsInvalidateCache(): void
     {
         $this->createDatabase();
 
-        $node = new Tree(['name' => 'Root']);
+        $node = new ExtendableMultipleTree(['name' => 'Root Node']);
 
         $behavior = $node->getBehavior('nestedSetsBehavior');
 
-        self::assertInstanceOf(NestedSetsBehavior::class, $behavior);
-
-        $node->detachBehavior('nestedSetsBehavior');
-
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
-
-        $behavior->parents();
-    }
-
-    public function testReturnFalseWhenDeleteWithChildrenIsAbortedByBeforeDelete(): void
-    {
-        $this->createDatabase();
-
-        $node = $this->createPartialMock(
-            Tree::class,
-            [
-                'beforeDelete',
-            ],
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $behavior,
+            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
         );
-        $node->setAttributes(
-            [
-                'id' => 1,
-                'name' => 'Test Node',
-                'lft' => 1,
-                'rgt' => 2,
-                'depth' => 0,
-            ],
-        );
-        $node->setIsNewRecord(false);
-        $node->expects(self::once())->method('beforeDelete')->willReturn(false);
-
-        self::assertFalse(
-            $node->isTransactional(ActiveRecord::OP_DELETE),
-            "Node with ID '1' should not use transactional delete when 'beforeDelete()' returns 'false'.",
-        );
-
-        $result = $node->deleteWithChildren();
-
-        self::assertFalse(
-            $result,
-            "'deleteWithChildren()' should return 'false' when 'beforeDelete()' aborts the deletion process.",
-        );
-    }
-
-    public function testThrowExceptionWhenMakeRootIsCalledOnModelWithoutPrimaryKey(): void
-    {
-        $this->createDatabase();
-
-        $node = new class (['name' => 'Root without PK']) extends MultipleTree {
-            public static function primaryKey(): array
-            {
-                return [];
-            }
-
-            public function makeRoot(): bool
-            {
-                return parent::makeRoot();
-            }
-        };
-
-        $this->expectException(Exception::class);
-        $this->expectExceptionMessage(sprintf('"%s" must have a primary key.', get_class($node)));
 
         $node->makeRoot();
+
+        self::assertTrue(
+            $behavior->invalidateCacheCalled,
+            "'invalidateCache()' should be called during 'afterInsert()'.",
+        );
+        self::assertNotFalse(
+            $node->treeAttribute,
+            'Tree attribute should be set.',
+        );
+        self::assertNotNull(
+            $node->getAttribute($node->treeAttribute),
+            "Tree attribute should be set after 'afterInsert()'.",
+        );
+        self::assertEquals(
+            $node->getPrimaryKey(),
+            $node->getAttribute($node->treeAttribute),
+            'Tree attribute should equal primary key for root node.',
+        );
     }
 
-    public function testSetNodeToNullAndCallBeforeInsertNodeSetsLftRgtAndDepth(): void
+    public function testAfterUpdateCacheInvalidationWhenMakeRoot(): void
     {
         $this->createDatabase();
 
-        $behavior = new class extends NestedSetsBehavior {
-            public function callBeforeInsertNode(int $value, int $depth): void
-            {
-                $this->beforeInsertNode($value, $depth);
-            }
+        $root = new ExtendableMultipleTree(['name' => 'Root']);
 
-            public function setNodeToNull(): void
-            {
-                $this->node = null;
-            }
+        $root->makeRoot();
 
-            public function getNodeDepth(): int|null
-            {
-                return $this->node !== null ? $this->node->getAttribute($this->depthAttribute) : null;
-            }
-        };
+        $child = new ExtendableMultipleTree(['name' => 'Child']);
 
-        $newNode = new Tree(['name' => 'Test Node']);
+        $child->appendTo($root);
 
-        $newNode->attachBehavior('testBehavior', $behavior);
-        $behavior->setNodeToNull();
-        $behavior->callBeforeInsertNode(5, 1);
+        $behavior = $child->getBehavior('nestedSetsBehavior');
 
-        self::assertEquals(
-            5,
-            $newNode->lft,
-            "'beforeInsertNode' should set 'lft' attribute to '5' on the new node.",
-        );
-        self::assertEquals(
-            6,
-            $newNode->rgt,
-            "'beforeInsertNode' should set 'rgt' attribute to '6' on the new node.",
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $behavior,
+            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
         );
 
-        $actualDepth = $newNode->getAttribute('depth');
+        $this->populateAndVerifyCache($behavior);
 
-        self::assertEquals(
-            1,
-            $actualDepth,
-            "'beforeInsertNode' method should set 'depth' attribute to '1' on the new node.",
+        $behavior->setOperation(NestedSetsBehavior::OPERATION_MAKE_ROOT);
+        $behavior->afterUpdate();
+
+        $this->verifyCacheInvalidation($behavior);
+    }
+
+    public function testAfterUpdateCacheInvalidationWhenMakeRootAndNodeItsNull(): void
+    {
+        $this->createDatabase();
+
+        $root = new ExtendableMultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child = new ExtendableMultipleTree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $behavior = $child->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $behavior,
+            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
         );
+
+        $this->populateAndVerifyCache($behavior);
+
+        $behavior->setNode(null);
+        $behavior->afterUpdate();
+
+        $this->verifyCacheInvalidation($behavior);
     }
 
     public function testAppendChildNodeToRootCreatesValidTreeStructure(): void
@@ -1632,52 +239,6 @@ final class NestedSetsBehaviorTest extends TestCase
         }
     }
 
-    public function testReturnShiftedLeftRightAttributesWhenChildAppendedToRoot(): void
-    {
-        $this->createDatabase();
-
-        $root = new Tree(['name' => 'Root']);
-
-        $root->makeRoot();
-        $root->refresh();
-
-        $child = new Tree(['name' => 'Child']);
-
-        $child->appendTo($root);
-        $child->refresh();
-
-        self::assertEquals(
-            1,
-            $root->lft,
-            "Root node left value should be '1' after 'makeRoot()' and appending a child.",
-        );
-        self::assertEquals(
-            4,
-            $root->rgt,
-            "Root node right value should be '4' after 'makeRoot()' and appending a child.",
-        );
-        self::assertEquals(
-            2,
-            $child->lft,
-            "Child node left value should be '2' after being 'appendTo()' to the root node.",
-        );
-        self::assertEquals(
-            3,
-            $child->rgt,
-            "Child node right value should be '3' after being 'appendTo()' the root node.",
-        );
-        self::assertNotEquals(
-            0,
-            $child->lft,
-            "Child node left value should not be '0' after 'appendTo()' operation.",
-        );
-        self::assertNotEquals(
-            1,
-            $child->rgt,
-            "Child node right value should not be '1' after 'appendTo()' operation.",
-        );
-    }
-
     public function testAppendToWithRunValidationParameterUsingStrictValidation(): void
     {
         $this->generateFixtureTree();
@@ -1723,6 +284,405 @@ final class NestedSetsBehaviorTest extends TestCase
         self::assertNotNull(
             $persistedNode,
             'Node should exist in database after appending to target node with validation disabled.',
+        );
+    }
+
+    public function testCacheInvalidationAfterAppendTo(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child1 = new MultipleTree(['name' => 'Child 1']);
+
+        $child1->appendTo($root);
+
+        $child2 = new MultipleTree(['name' => 'Child 2']);
+
+        $behavior = $child2->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the child node.',
+        );
+
+        $child2->appendTo($root);
+
+        $this->populateAndVerifyCache($behavior);
+
+        $child2->setAttribute('lft', 3);
+        $child2->save();
+
+        $child2->appendTo($child1);
+
+        $this->verifyCacheInvalidation($behavior);
+    }
+
+    public function testCacheInvalidationAfterDeleteWithChildren(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child = new MultipleTree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $grandchild = new MultipleTree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child);
+        $behavior = $child->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the child node.',
+        );
+
+        $this->populateAndVerifyCache($behavior);
+
+        $child->deleteWithChildren();
+
+        $this->verifyCacheInvalidation($behavior);
+    }
+
+    public function testCacheInvalidationAfterInsertWithoutTreeAttribute(): void
+    {
+        $this->createDatabase();
+
+        $node = new Tree(['name' => 'Root Node']);
+
+        $behavior = $node->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the node.',
+        );
+
+        $node->makeRoot();
+
+        $this->populateAndVerifyCache($behavior);
+
+        $node->invalidateCache();
+
+        $this->verifyCacheInvalidation($behavior);
+
+        self::assertEquals(
+            0,
+            Assert::invokeMethod($behavior, 'getDepthValue'),
+            "New cached depth value should be '0' for root.",
+        );
+        self::assertEquals(
+            1,
+            Assert::invokeMethod($behavior, 'getLeftValue'),
+            "New cached left value should be '1' for root.",
+        );
+        self::assertEquals(
+            2,
+            Assert::invokeMethod($behavior, 'getRightValue'),
+            "New cached right value should be '2' for root.",
+        );
+    }
+
+    public function testCacheInvalidationAfterInsertWithTreeAttribute(): void
+    {
+        $this->createDatabase();
+
+        $node = new MultipleTree(['name' => 'Root Node']);
+
+        $behavior = $node->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the node.',
+        );
+
+        $node->makeRoot();
+
+        $this->populateAndVerifyCache($behavior);
+
+        $node->invalidateCache();
+
+        $this->verifyCacheInvalidation($behavior);
+
+        self::assertEquals(
+            0,
+            Assert::invokeMethod($behavior, 'getDepthValue'),
+            "New cached depth value should be '0' for root.",
+        );
+        self::assertEquals(
+            1,
+            Assert::invokeMethod($behavior, 'getLeftValue'),
+            "New cached left value should be '1' for root.",
+        );
+        self::assertEquals(
+            2,
+            Assert::invokeMethod($behavior, 'getRightValue'),
+            "New cached right value should be '2' for root.",
+        );
+        self::assertNotFalse(
+            $node->treeAttribute,
+            'Tree attribute should be set.',
+        );
+        self::assertNotNull(
+            $node->getAttribute($node->treeAttribute),
+            "Tree attribute should be set after 'afterInsert()'.",
+        );
+        self::assertNotNull(
+            $node->owner,
+            "Node owner should not be null after 'makeRoot()'.",
+        );
+        self::assertEquals(
+            $node->owner->getPrimaryKey(),
+            $node->getAttribute($node->treeAttribute),
+            'Tree attribute should equal primary key for root node.',
+        );
+    }
+
+    public function testCacheInvalidationAfterMakeRoot(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Original Root']);
+
+        $root->makeRoot();
+
+        $child = new MultipleTree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $behavior = $child->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the child node.',
+        );
+
+        self::assertEquals(
+            $child->getAttribute('depth'),
+            Assert::invokeMethod($behavior, 'getDepthValue'),
+            'Initial cached depth value should match attribute.',
+        );
+        self::assertEquals(
+            $child->getAttribute('lft'),
+            Assert::invokeMethod($behavior, 'getLeftValue'),
+            'Initial cached left value should match attribute.',
+        );
+        self::assertEquals(
+            $child->getAttribute('rgt'),
+            Assert::invokeMethod($behavior, 'getRightValue'),
+            'Initial cached right value should match attribute.',
+        );
+
+        $child->makeRoot();
+
+        $this->verifyCacheInvalidation($behavior);
+
+        self::assertEquals(
+            0,
+            Assert::invokeMethod($behavior, 'getDepthValue'),
+            "New cached depth value should be '0' for root.",
+        );
+        self::assertEquals(
+            1,
+            Assert::invokeMethod($behavior, 'getLeftValue'),
+            "New cached left value should be '1' for root.",
+        );
+        self::assertEquals(
+            2,
+            Assert::invokeMethod($behavior, 'getRightValue'),
+            "New cached right value should be '2' for root.",
+        );
+    }
+
+    public function testChildrenMethodRequiresOrderByForCorrectTreeTraversal(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $childB = new Tree(['name' => 'Child B']);
+        $childC = new Tree(['name' => 'Child C']);
+        $childA = new Tree(['name' => 'Child A']);
+
+        $childB->appendTo($root);
+        $childC->appendTo($root);
+        $childA->appendTo($root);
+
+        $command = $this->getDb()->createCommand();
+
+        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Child B'])->execute();
+        $command->update('tree', ['lft' => 6, 'rgt' => 7], ['name' => 'Child C'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Child A'])->execute();
+        $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
+
+        $root->refresh();
+        $childrenList = $root->children()->all();
+
+        $expectedOrder = ['Child A', 'Child B', 'Child C'];
+
+        self::assertCount(
+            3,
+            $childrenList,
+            "Children list should contain exactly '3' elements.",
+        );
+
+        foreach ($childrenList as $index => $child) {
+            self::assertInstanceOf(
+                Tree::class,
+                $child,
+                "Child at index {$index} should be an instance of 'Tree'.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $child->getAttribute('name'),
+                    "Child at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
+                );
+            }
+        }
+    }
+
+    public function testGetDepthValueMemoization(): void
+    {
+        $this->createDatabase();
+
+        $node = new Tree(['name' => 'Root']);
+
+        $node->makeRoot();
+
+        $mock = $this->getMockBuilder(Tree::class)
+            ->onlyMethods(['getAttribute'])
+            ->getMock();
+
+        $mock->expects(self::once())
+            ->method('getAttribute')
+            ->with('depth')
+            ->willReturn(42);
+
+        $behavior = $mock->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the node.',
+        );
+
+        $firstCall = Assert::invokeMethod($behavior, 'getDepthValue');
+
+        self::assertSame(
+            42,
+            $firstCall,
+            'First call should return the mocked value.',
+        );
+
+        $secondCall = Assert::invokeMethod($behavior, 'getDepthValue');
+
+        self::assertSame(
+            42,
+            $secondCall,
+            'Second call should return the same cached value.',
+        );
+        self::assertSame(
+            42,
+            Assert::inaccessibleProperty($behavior, 'depthValue'),
+            'Depth value should be cached after first access.',
+        );
+    }
+
+    public function testGetLeftValueMemoization(): void
+    {
+        $this->createDatabase();
+
+        $node = new Tree(['name' => 'Root']);
+
+        $node->makeRoot();
+
+        $mock = $this->getMockBuilder(Tree::class)
+            ->onlyMethods(['getAttribute'])
+            ->getMock();
+
+        $mock->expects(self::once())
+            ->method('getAttribute')
+            ->with('lft')
+            ->willReturn(123);
+
+        $behavior = $mock->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the node.',
+        );
+
+        $firstCall = Assert::invokeMethod($behavior, 'getLeftValue');
+
+        self::assertSame(
+            123,
+            $firstCall,
+            'First call should return the mocked value.',
+        );
+
+        $secondCall = Assert::invokeMethod($behavior, 'getLeftValue');
+
+        self::assertSame(
+            123,
+            $secondCall,
+            'Second call should return the same cached value.',
+        );
+        self::assertSame(
+            123,
+            Assert::inaccessibleProperty($behavior, 'leftValue'),
+            'Left value should be cached after first access.',
+        );
+    }
+
+    public function testGetRightValueMemoization(): void
+    {
+        $this->createDatabase();
+
+        $node = new Tree(['name' => 'Root']);
+        $node->makeRoot();
+
+        $mock = $this->getMockBuilder(Tree::class)
+            ->onlyMethods(['getAttribute'])
+            ->getMock();
+
+        $mock->expects(self::once())
+            ->method('getAttribute')
+            ->with('rgt')
+            ->willReturn(456);
+
+        $behavior = $mock->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the node.',
+        );
+
+        $firstCall = Assert::invokeMethod($behavior, 'getRightValue');
+
+        self::assertSame(
+            456,
+            $firstCall,
+            'First call should return the mocked value.',
+        );
+
+        $secondCall = Assert::invokeMethod($behavior, 'getRightValue');
+
+        self::assertSame(
+            456,
+            $secondCall,
+            'Second call should return the same cached value.',
+        );
+        self::assertSame(
+            456,
+            Assert::inaccessibleProperty($behavior, 'rightValue'),
+            'Right value should be cached after first access.',
         );
     }
 
@@ -1831,6 +791,265 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
+    public function testIsChildOfReturnsFalseWhenLeftValuesAreEqual(): void
+    {
+        $this->generateFixtureTree();
+
+        $parentNode = Tree::findOne(2);
+        $childNode = Tree::findOne(3);
+
+        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
+        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
+
+        $originalChildLeft = $childNode->getAttribute('lft');
+
+        $parentLeft = $parentNode->getAttribute('lft');
+        $childNode->setAttribute('lft', $parentLeft);
+
+        self::assertFalse(
+            $childNode->isChildOf($parentNode),
+            'Node should not be child when left values are equal (tests <= condition).',
+        );
+
+        $childNode->setAttribute('lft', $originalChildLeft);
+    }
+
+    public function testIsChildOfReturnsFalseWhenRightValuesAreEqual(): void
+    {
+        $this->generateFixtureTree();
+
+        $parentNode = Tree::findOne(2);
+        $childNode = Tree::findOne(3);
+
+        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
+        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
+
+        $originalChildRight = $childNode->getAttribute('rgt');
+
+        $parentRight = $parentNode->getAttribute('rgt');
+        $childNode->setAttribute('rgt', $parentRight);
+
+        self::assertFalse(
+            $childNode->isChildOf($parentNode),
+            'Node should not be child when right values are equal (tests >= condition).',
+        );
+
+        $childNode->setAttribute('rgt', $originalChildRight);
+    }
+
+    public function testIsLeafReturnsTrueForLeafAndFalseForRoot(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertTrue(
+            Tree::findOne(4)?->isLeaf(),
+            "Node with ID '4' should be a leaf node (no children).",
+        );
+        self::assertFalse(
+            Tree::findOne(1)?->isLeaf(),
+            "Node with ID '1' should not be a leaf node (has children or is root).",
+        );
+    }
+
+    public function testLeavesMethodRequiresOrderByForDeterministicResults(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $leafA = new Tree(['name' => 'Leaf A']);
+
+        $leafA->appendTo($root);
+
+        $leafB = new Tree(['name' => 'Leaf B']);
+
+        $leafB->appendTo($root);
+
+        $leafC = new Tree(['name' => 'Leaf C']);
+
+        $leafC->appendTo($root);
+
+        $command = $this->getDb()->createCommand();
+
+        $command->update('tree', ['lft' => 6, 'rgt' => 7], ['name' => 'Leaf C'])->execute();
+        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Leaf B'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Leaf A'])->execute();
+        $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
+
+        $leafQuery = $root->leaves();
+        $sql = $leafQuery->createCommand()->getRawSql();
+
+        self::assertStringContainsString(
+            'ORDER BY',
+            $sql,
+            "'leaves()' query should include 'ORDER BY' clause for deterministic results.",
+        );
+        self::assertStringContainsString(
+            '`lft`',
+            $sql,
+            "'leaves()' query should order by 'left' attribute for consistent ordering.",
+        );
+
+        $leaves = $leafQuery->all();
+
+        $expectedOrder = ['Leaf A', 'Leaf B', 'Leaf C'];
+
+        self::assertCount(
+            3,
+            $leaves,
+            "Leaves list should contain exactly '3' elements.",
+        );
+
+        foreach ($leaves as $index => $leaf) {
+            self::assertInstanceOf(
+                Tree::class,
+                $leaf,
+                "Leaf at index {$index} should be an instance of 'Tree'.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $leaf->getAttribute('name'),
+                    "Leaf at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
+                );
+            }
+        }
+    }
+
+    public function testMakeRootRefreshIsNecessaryForCorrectAttributeValues(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Original Root']);
+
+        $root->makeRoot();
+
+        $child1 = new MultipleTree(['name' => 'Child 1']);
+
+        $child1->appendTo($root);
+
+        $child2 = new MultipleTree(['name' => 'Child 2']);
+
+        $child2->appendTo($root);
+
+        $grandchild = new MultipleTree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child1);
+
+        $nodeToPromote = MultipleTree::findOne($child1->id);
+
+        self::assertNotNull(
+            $nodeToPromote,
+            'Child node should exist before promoting to root.',
+        );
+        self::assertFalse(
+            $nodeToPromote->isRoot(),
+            "Node should not be root before 'makeRoot()' operation.",
+        );
+
+        $originalLeft = $nodeToPromote->getAttribute('lft');
+        $originalRight = $nodeToPromote->getAttribute('rgt');
+        $originalDepth = $nodeToPromote->getAttribute('depth');
+        $originalTree = $nodeToPromote->getAttribute('tree');
+
+        $result = $nodeToPromote->makeRoot();
+
+        self::assertTrue(
+            $result,
+            "'makeRoot()' should return 'true' when converting node to root.",
+        );
+        self::assertTrue(
+            $nodeToPromote->isRoot(),
+            "Node should be identified as root after 'makeRoot()' - this requires 'refresh()' to work.",
+        );
+        self::assertEquals(
+            1,
+            $nodeToPromote->getAttribute('lft'),
+            "Root node left value should be '1' after 'makeRoot()' - requires 'refresh()' to see updated value.",
+        );
+        self::assertEquals(
+            4,
+            $nodeToPromote->getAttribute('rgt'),
+            "Root node right value should be '4' after 'makeRoot()' - requires 'refresh()' to see updated value.",
+        );
+        self::assertEquals(
+            0,
+            $nodeToPromote->getAttribute('depth'),
+            "Root node depth should be '0' after 'makeRoot()' - requires 'refresh()' to see updated value.",
+        );
+        self::assertEquals(
+            $nodeToPromote->getAttribute('id'),
+            $nodeToPromote->getAttribute('tree'),
+            "Tree attribute should equal node ID for new root - requires 'refresh()' to see updated value.",
+        );
+        self::assertNotEquals(
+            $originalLeft,
+            $nodeToPromote->getAttribute('lft'),
+            "Left value should have changed from original after 'makeRoot()'.",
+        );
+        self::assertNotEquals(
+            $originalRight,
+            $nodeToPromote->getAttribute('rgt'),
+            "Right value should have changed from original after 'makeRoot()'.",
+        );
+        self::assertNotEquals(
+            $originalDepth,
+            $nodeToPromote->getAttribute('depth'),
+            "Depth should have changed from original after 'makeRoot()'.",
+        );
+        self::assertNotEquals(
+            $originalTree,
+            $nodeToPromote->getAttribute('tree'),
+            "Tree should have changed from original after 'makeRoot()'.",
+        );
+
+        $grandchildAfter = MultipleTree::findOne($grandchild->id);
+
+        self::assertNotNull(
+            $grandchildAfter,
+            "'Grandchild' should still exist after parent became root.",
+        );
+        self::assertEquals(
+            $nodeToPromote->getAttribute('tree'),
+            $grandchildAfter->getAttribute('tree'),
+            "'Grandchild' should be in the same tree as the new root.",
+        );
+        self::assertEquals(
+            1,
+            $grandchildAfter->getAttribute('depth'),
+            "'Grandchild' depth should be recalculated relative to new root.",
+        );
+
+        $reloadedNode = MultipleTree::findOne($nodeToPromote->id);
+
+        self::assertNotNull(
+            $reloadedNode,
+            "Node should exist in database after 'makeRoot()'.",
+        );
+        self::assertTrue(
+            $reloadedNode->isRoot(),
+            'Reloaded node should be root.',
+        );
+        self::assertEquals(
+            1,
+            $reloadedNode->getAttribute('lft'),
+            "Reloaded node should have 'left=1'.",
+        );
+        self::assertEquals(
+            4,
+            $reloadedNode->getAttribute('rgt'),
+            "Reloaded node should have 'right=4'.",
+        );
+        self::assertEquals(
+            0,
+            $reloadedNode->getAttribute('depth'),
+            "Reloaded node should have 'depth=0'.",
+        );
+    }
+
     public function testMakeRootWithRunValidationParameterUsingStrictValidation(): void
     {
         $this->createDatabase();
@@ -1889,6 +1108,154 @@ final class NestedSetsBehaviorTest extends TestCase
             $persistedNode->depth,
             "Root node should have depth of '0'.",
         );
+    }
+
+    public function testManualCacheInvalidation(): void
+    {
+        $this->createDatabase();
+
+        $root = new MultipleTree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $behavior = $root->getBehavior('nestedSetsBehavior');
+
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the root node.',
+        );
+
+        $this->populateAndVerifyCache($behavior);
+
+        $root->invalidateCache();
+
+        $this->verifyCacheInvalidation($behavior);
+
+        self::assertEquals(
+            0,
+            Assert::invokeMethod($behavior, 'getDepthValue'),
+            'Depth value should be correctly retrieved after invalidation.',
+        );
+        self::assertEquals(
+            1,
+            Assert::invokeMethod($behavior, 'getLeftValue'),
+            'Left value should be correctly retrieved after invalidation.',
+        );
+        self::assertEquals(
+            2,
+            Assert::invokeMethod($behavior, 'getRightValue'),
+            'Right value should be correctly retrieved after invalidation.',
+        );
+    }
+
+    public function testNodeStateAfterDeleteWithChildren(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'Root']);
+
+        $root->makeRoot();
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($root);
+
+        $grandchild = new Tree(['name' => 'Grandchild']);
+
+        $grandchild->appendTo($child);
+
+        self::assertFalse(
+            $child->getIsNewRecord(),
+            'Child node should not be marked as new record before deletion.',
+        );
+        self::assertNotEmpty(
+            $child->getOldAttributes(),
+            'Child node should have old attributes before deletion.',
+        );
+
+        $result = $child->deleteWithChildren();
+
+        self::assertNotFalse(
+            $result,
+            'DeleteWithChildren should return the number of deleted rows.',
+        );
+        self::assertTrue(
+            $child->getIsNewRecord(),
+            "Child node should be marked as new record after deletion ('setOldAttributes(null)' effect).",
+        );
+        self::assertEmpty(
+            $child->getOldAttributes(),
+            'Child node should have empty old attributes after deletion.',
+        );
+    }
+
+    public function testParentsMethodRequiresOrderByForDeterministicResults(): void
+    {
+        $this->createDatabase();
+
+        $rootA = new Tree(['name' => 'Root A']);
+
+        $rootA->makeRoot();
+
+        $parentB = new Tree(['name' => 'Parent B']);
+
+        $parentB->appendTo($rootA);
+
+        $parentC = new Tree(['name' => 'Parent C']);
+
+        $parentC->appendTo($parentB);
+
+        $child = new Tree(['name' => 'Child']);
+
+        $child->appendTo($parentC);
+
+        $command = $this->getDb()->createCommand();
+
+        $command->update('tree', ['lft' => 4, 'rgt' => 7, 'depth' => 2], ['name' => 'Parent C'])->execute();
+        $command->update('tree', ['lft' => 2, 'rgt' => 8, 'depth' => 1], ['name' => 'Parent B'])->execute();
+        $command->update('tree', ['lft' => 1, 'rgt' => 9, 'depth' => 0], ['name' => 'Root A'])->execute();
+        $command->update('tree', ['lft' => 5, 'rgt' => 6, 'depth' => 3], ['name' => 'Child'])->execute();
+
+        $child->refresh();
+        $parentsQuery = $child->parents();
+        $sql = $parentsQuery->createCommand()->getRawSql();
+
+        self::assertStringContainsString(
+            'ORDER BY',
+            $sql,
+            "'parents()' query should include 'ORDER BY' clause for deterministic results.",
+        );
+        self::assertStringContainsString(
+            '`lft`',
+            $sql,
+            "'parents()' query should order by 'left' attribute for consistent ordering.",
+        );
+
+        $parents = $parentsQuery->all();
+
+        $expectedOrder = ['Root A', 'Parent B', 'Parent C'];
+
+        self::assertCount(
+            3,
+            $parents,
+            "Parents list should contain exactly '3' elements.",
+        );
+
+        foreach ($parents as $index => $parent) {
+            self::assertInstanceOf(
+                Tree::class,
+                $parent,
+                "Parent at index {$index} should be an instance of 'Tree'.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $parent->getAttribute('name'),
+                    "Parent at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
+                );
+            }
+        }
     }
 
     public function testPrependToWithRunValidationParameterUsingStrictValidation(): void
@@ -2046,40 +1413,31 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testProtectedShiftLeftRightAttributeRemainsAccessibleToSubclasses(): void
+    public function testProtectedMoveNodeAsRootRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
 
-        $parentNode = new ExtendableMultipleTree(
+        $sourceNode = new ExtendableMultipleTree(
             [
-                'name' => 'Parent Node',
-                'tree' => 3,
+                'name' => 'Source Node',
+                'tree' => 5,
             ],
         );
 
-        $parentNode->makeRoot();
-
-        $childNode = new ExtendableMultipleTree(
-            [
-                'name' => 'Child Node',
-                'tree' => 3,
-            ],
-        );
-
-        $childNode->appendTo($parentNode);
-        $childBehavior = $childNode->getBehavior('nestedSetsBehavior');
+        $sourceNode->makeRoot();
+        $sourceBehavior = $sourceNode->getBehavior('nestedSetsBehavior');
 
         self::assertInstanceOf(
             ExtendableNestedSetsBehavior::class,
-            $childBehavior,
+            $sourceBehavior,
             "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
         );
 
-        $childBehavior->exposedShiftLeftRightAttribute(1, 2);
+        $sourceBehavior->exposedMoveNodeAsRoot();
 
         self::assertTrue(
-            $childBehavior->wasMethodCalled('shiftLeftRightAttribute'),
-            "'shiftLeftRightAttribute()' should remain protected to allow subclass customization.",
+            $sourceBehavior->wasMethodCalled('moveNodeAsRoot'),
+            "'moveNodeAsRoot()' method should remain protected to allow subclass customization.",
         );
     }
 
@@ -2120,806 +1478,1583 @@ final class NestedSetsBehaviorTest extends TestCase
         );
     }
 
-    public function testProtectedMoveNodeAsRootRemainsAccessibleToSubclasses(): void
+    public function testProtectedShiftLeftRightAttributeRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
 
-        $sourceNode = new ExtendableMultipleTree(
+        $parentNode = new ExtendableMultipleTree(
             [
-                'name' => 'Source Node',
-                'tree' => 5,
+                'name' => 'Parent Node',
+                'tree' => 3,
             ],
         );
 
-        $sourceNode->makeRoot();
-        $sourceBehavior = $sourceNode->getBehavior('nestedSetsBehavior');
+        $parentNode->makeRoot();
+
+        $childNode = new ExtendableMultipleTree(
+            [
+                'name' => 'Child Node',
+                'tree' => 3,
+            ],
+        );
+
+        $childNode->appendTo($parentNode);
+        $childBehavior = $childNode->getBehavior('nestedSetsBehavior');
 
         self::assertInstanceOf(
             ExtendableNestedSetsBehavior::class,
-            $sourceBehavior,
+            $childBehavior,
             "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
         );
 
-        $sourceBehavior->exposedMoveNodeAsRoot();
+        $childBehavior->exposedShiftLeftRightAttribute(1, 2);
 
         self::assertTrue(
-            $sourceBehavior->wasMethodCalled('moveNodeAsRoot'),
-            "'moveNodeAsRoot()' method should remain protected to allow subclass customization.",
+            $childBehavior->wasMethodCalled('shiftLeftRightAttribute'),
+            "'shiftLeftRightAttribute()' should remain protected to allow subclass customization.",
         );
     }
 
-    public function testChildrenMethodRequiresOrderByForCorrectTreeTraversal(): void
+    public function testReturnAffectedRowsAndMatchXmlAfterDeleteWithChildrenForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            7,
+            Tree::findOne(9)?->deleteWithChildren(),
+            "Deleting node with ID '9' and its children from 'Tree' should affect exactly seven rows.",
+        );
+        self::assertEquals(
+            7,
+            MultipleTree::findOne(31)?->deleteWithChildren(),
+            "Deleting node with ID '31' and its children from 'MultipleTree' should affect exactly seven rows.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-delete-with-children.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            'XML dataset after deleting nodes with children should match the expected result.',
+        );
+    }
+
+    public function testReturnChildrenForTreeAndMultipleTreeWithAndWithoutDepth(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->children()->all() ?? []),
+            "Children for 'Tree' node with ID '9' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->children()->all() ?? []),
+            "Children for 'MultipleTree' node with ID '31' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children-with-depth.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->children(1)->all() ?? []),
+            "Children with 'depth=1' for 'Tree' node with ID '9' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-children-multiple-tree-with-depth.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->children(1)->all() ?? []),
+            "Children with 'depth=1' for 'MultipleTree' node with ID '31' do not match the expected result.",
+        );
+    }
+
+    public function testReturnFalseWhenDeleteWithChildrenIsAbortedByBeforeDelete(): void
+    {
+        $this->createDatabase();
+
+        $node = $this->createPartialMock(
+            Tree::class,
+            [
+                'beforeDelete',
+            ],
+        );
+        $node->setAttributes(
+            [
+                'id' => 1,
+                'name' => 'Test Node',
+                'lft' => 1,
+                'rgt' => 2,
+                'depth' => 0,
+            ],
+        );
+        $node->setIsNewRecord(false);
+        $node->expects(self::once())->method('beforeDelete')->willReturn(false);
+
+        self::assertFalse(
+            $node->isTransactional(ActiveRecord::OP_DELETE),
+            "Node with ID '1' should not use transactional delete when 'beforeDelete()' returns 'false'.",
+        );
+
+        $result = $node->deleteWithChildren();
+
+        self::assertFalse(
+            $result,
+            "'deleteWithChildren()' should return 'false' when 'beforeDelete()' aborts the deletion process.",
+        );
+    }
+
+    public function testReturnIsChildOfForMultipleTreeNodeUnderVariousAncestors(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(26);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '26' should exist in the database.",
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(25),
+            "Node with ID '25' should exist in the database.",
+        );
+        self::assertTrue(
+            $node->isChildOf($childOfNode),
+            "Node with ID '26' should be a child of node with ID '25'.",
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(23),
+            "Node with ID '23' should exist in the database.",
+        );
+        self::assertTrue(
+            $node->isChildOf($childOfNode),
+            "Node with ID '26' should be a child of node with ID '23'.",
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(3),
+            "Node with ID '3' should exist in the database.",
+        );
+        self::assertFalse(
+            $node->isChildOf($childOfNode),
+            "Node with ID '26' should not be a child of node with ID '3'.",
+        );
+        self::assertNotNull(
+            $childOfNode = MultipleTree::findOne(1),
+            "Node with ID '1' should exist in the database.",
+        );
+        self::assertFalse(
+            $node->isChildOf($childOfNode),
+            "Node with ID '26' should not be a child of node with ID '1'.",
+        );
+    }
+
+    public function testReturnIsRootForRootAndNonRootNode(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertTrue(Tree::findOne(1)?->isRoot(), "Node with ID '1' should be identified as root.");
+        self::assertFalse(Tree::findOne(2)?->isRoot(), "Node with ID '2' should not be identified as root.");
+    }
+
+    public function testReturnLeavesForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-leaves.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->leaves()->all() ?? []),
+            "Leaves for 'Tree' node with ID '9' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-leaves-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->leaves()->all() ?? []),
+            "Leaves for 'MultipleTree' node with ID '31' do not match the expected result.",
+        );
+    }
+
+    public function testReturnNextNodesForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-next.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->next()->all() ?? []),
+            "Next nodes for 'Tree' node with ID '9' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-next-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->next()->all() ?? []),
+            "Next nodes for 'MultipleTree' node with ID '31' do not match the expected result.",
+        );
+    }
+
+    /**
+     * @throws StaleObjectException
+     * @throws Throwable
+     */
+    public function testReturnOneWhenDeleteNodeForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            1,
+            Tree::findOne(9)?->delete(),
+            "Deleting node with ID '9' from 'Tree' should affect exactly one row.",
+        );
+        self::assertEquals(
+            1,
+            MultipleTree::findOne(31)?->delete(),
+            "Deleting node with ID '31' from 'MultipleTree' should affect exactly one row.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-delete.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            'XML dataset after deleting nodes should match the expected result.',
+        );
+    }
+
+    /**
+     * @throws Throwable
+     * @throws StaleObjectException
+     */
+    public function testReturnOneWhenUpdateNodeName(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before attempting update.");
+
+        $node->name = 'Updated node';
+
+        self::assertEquals(1, $node->update(), 'Updating the node name should affect exactly one row.');
+    }
+
+    public function testReturnParentsForTreeAndMultipleTreeWithAndWithoutDepth(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents.php",
+            ArrayHelper::toArray(Tree::findOne(11)?->parents()->all() ?? []),
+            "Parents for 'Tree' node with ID '11' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(33)?->parents()->all() ?? []),
+            "Parents for 'MultipleTree' node with ID '33' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents-with-depth.php",
+            ArrayHelper::toArray(Tree::findOne(11)?->parents(1)->all() ?? []),
+            "Parents with 'depth=1' for 'Tree' node with ID '11' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-parents-multiple-tree-with-depth.php",
+            ArrayHelper::toArray(MultipleTree::findOne(33)?->parents(1)->all() ?? []),
+            "Parents with 'depth=1' for 'MultipleTree' node with ID '33' do not match the expected result.",
+        );
+    }
+
+    public function testReturnPrevNodesForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-prev.php",
+            ArrayHelper::toArray(Tree::findOne(9)?->prev()->all() ?? []),
+            "Previous nodes for 'Tree' node with ID '9' do not match the expected result.",
+        );
+        self::assertEquals(
+            require "{$this->fixtureDirectory}/test-prev-multiple-tree.php",
+            ArrayHelper::toArray(MultipleTree::findOne(31)?->prev()->all() ?? []),
+            "Previous nodes for 'MultipleTree' node with ID '31' do not match the expected result.",
+        );
+    }
+
+    public function testReturnShiftedLeftRightAttributesWhenChildAppendedToRoot(): void
     {
         $this->createDatabase();
 
         $root = new Tree(['name' => 'Root']);
 
         $root->makeRoot();
-
-        $childB = new Tree(['name' => 'Child B']);
-        $childC = new Tree(['name' => 'Child C']);
-        $childA = new Tree(['name' => 'Child A']);
-
-        $childB->appendTo($root);
-        $childC->appendTo($root);
-        $childA->appendTo($root);
-
-        $command = $this->getDb()->createCommand();
-
-        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Child B'])->execute();
-        $command->update('tree', ['lft' => 6, 'rgt' => 7], ['name' => 'Child C'])->execute();
-        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Child A'])->execute();
-        $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
-
         $root->refresh();
-        $childrenList = $root->children()->all();
-
-        $expectedOrder = ['Child A', 'Child B', 'Child C'];
-
-        self::assertCount(
-            3,
-            $childrenList,
-            "Children list should contain exactly '3' elements.",
-        );
-
-        foreach ($childrenList as $index => $child) {
-            self::assertInstanceOf(
-                Tree::class,
-                $child,
-                "Child at index {$index} should be an instance of 'Tree'.",
-            );
-
-            if (isset($expectedOrder[$index])) {
-                self::assertEquals(
-                    $expectedOrder[$index],
-                    $child->getAttribute('name'),
-                    "Child at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
-                );
-            }
-        }
-    }
-
-    public function testMakeRootRefreshIsNecessaryForCorrectAttributeValues(): void
-    {
-        $this->createDatabase();
-
-        $root = new MultipleTree(['name' => 'Original Root']);
-
-        $root->makeRoot();
-
-        $child1 = new MultipleTree(['name' => 'Child 1']);
-
-        $child1->appendTo($root);
-
-        $child2 = new MultipleTree(['name' => 'Child 2']);
-
-        $child2->appendTo($root);
-
-        $grandchild = new MultipleTree(['name' => 'Grandchild']);
-
-        $grandchild->appendTo($child1);
-
-        $nodeToPromote = MultipleTree::findOne($child1->id);
-
-        self::assertNotNull(
-            $nodeToPromote,
-            'Child node should exist before promoting to root.',
-        );
-        self::assertFalse(
-            $nodeToPromote->isRoot(),
-            "Node should not be root before 'makeRoot()' operation.",
-        );
-
-        $originalLeft = $nodeToPromote->getAttribute('lft');
-        $originalRight = $nodeToPromote->getAttribute('rgt');
-        $originalDepth = $nodeToPromote->getAttribute('depth');
-        $originalTree = $nodeToPromote->getAttribute('tree');
-
-        $result = $nodeToPromote->makeRoot();
-
-        self::assertTrue(
-            $result,
-            "'makeRoot()' should return 'true' when converting node to root.",
-        );
-        self::assertTrue(
-            $nodeToPromote->isRoot(),
-            "Node should be identified as root after 'makeRoot()' - this requires 'refresh()' to work.",
-        );
-        self::assertEquals(
-            1,
-            $nodeToPromote->getAttribute('lft'),
-            "Root node left value should be '1' after 'makeRoot()' - requires 'refresh()' to see updated value.",
-        );
-        self::assertEquals(
-            4,
-            $nodeToPromote->getAttribute('rgt'),
-            "Root node right value should be '4' after 'makeRoot()' - requires 'refresh()' to see updated value.",
-        );
-        self::assertEquals(
-            0,
-            $nodeToPromote->getAttribute('depth'),
-            "Root node depth should be '0' after 'makeRoot()' - requires 'refresh()' to see updated value.",
-        );
-        self::assertEquals(
-            $nodeToPromote->getAttribute('id'),
-            $nodeToPromote->getAttribute('tree'),
-            "Tree attribute should equal node ID for new root - requires 'refresh()' to see updated value.",
-        );
-        self::assertNotEquals(
-            $originalLeft,
-            $nodeToPromote->getAttribute('lft'),
-            "Left value should have changed from original after 'makeRoot()'.",
-        );
-        self::assertNotEquals(
-            $originalRight,
-            $nodeToPromote->getAttribute('rgt'),
-            "Right value should have changed from original after 'makeRoot()'.",
-        );
-        self::assertNotEquals(
-            $originalDepth,
-            $nodeToPromote->getAttribute('depth'),
-            "Depth should have changed from original after 'makeRoot()'.",
-        );
-        self::assertNotEquals(
-            $originalTree,
-            $nodeToPromote->getAttribute('tree'),
-            "Tree should have changed from original after 'makeRoot()'.",
-        );
-
-        $grandchildAfter = MultipleTree::findOne($grandchild->id);
-
-        self::assertNotNull(
-            $grandchildAfter,
-            "'Grandchild' should still exist after parent became root.",
-        );
-        self::assertEquals(
-            $nodeToPromote->getAttribute('tree'),
-            $grandchildAfter->getAttribute('tree'),
-            "'Grandchild' should be in the same tree as the new root.",
-        );
-        self::assertEquals(
-            1,
-            $grandchildAfter->getAttribute('depth'),
-            "'Grandchild' depth should be recalculated relative to new root.",
-        );
-
-        $reloadedNode = MultipleTree::findOne($nodeToPromote->id);
-
-        self::assertNotNull(
-            $reloadedNode,
-            "Node should exist in database after 'makeRoot()'.",
-        );
-        self::assertTrue(
-            $reloadedNode->isRoot(),
-            'Reloaded node should be root.',
-        );
-        self::assertEquals(
-            1,
-            $reloadedNode->getAttribute('lft'),
-            "Reloaded node should have 'left=1'.",
-        );
-        self::assertEquals(
-            4,
-            $reloadedNode->getAttribute('rgt'),
-            "Reloaded node should have 'right=4'.",
-        );
-        self::assertEquals(
-            0,
-            $reloadedNode->getAttribute('depth'),
-            "Reloaded node should have 'depth=0'.",
-        );
-    }
-
-    public function testCacheInvalidationAfterMakeRoot(): void
-    {
-        $this->createDatabase();
-
-        $root = new MultipleTree(['name' => 'Original Root']);
-
-        $root->makeRoot();
-
-        $child = new MultipleTree(['name' => 'Child']);
-
-        $child->appendTo($root);
-
-        $behavior = $child->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the child node.',
-        );
-
-        self::assertEquals(
-            $child->getAttribute('depth'),
-            Assert::invokeMethod($behavior, 'getDepthValue'),
-            'Initial cached depth value should match attribute.',
-        );
-        self::assertEquals(
-            $child->getAttribute('lft'),
-            Assert::invokeMethod($behavior, 'getLeftValue'),
-            'Initial cached left value should match attribute.',
-        );
-        self::assertEquals(
-            $child->getAttribute('rgt'),
-            Assert::invokeMethod($behavior, 'getRightValue'),
-            'Initial cached right value should match attribute.',
-        );
-
-        $child->makeRoot();
-
-        $this->verifyCacheInvalidation($behavior);
-
-        self::assertEquals(
-            0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
-            "New cached depth value should be '0' for root.",
-        );
-        self::assertEquals(
-            1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
-            "New cached left value should be '1' for root.",
-        );
-        self::assertEquals(
-            2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
-            "New cached right value should be '2' for root.",
-        );
-    }
-
-    public function testCacheInvalidationAfterAppendTo(): void
-    {
-        $this->createDatabase();
-
-        $root = new MultipleTree(['name' => 'Root']);
-
-        $root->makeRoot();
-
-        $child1 = new MultipleTree(['name' => 'Child 1']);
-
-        $child1->appendTo($root);
-
-        $child2 = new MultipleTree(['name' => 'Child 2']);
-
-        $behavior = $child2->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the child node.',
-        );
-
-        $child2->appendTo($root);
-
-        $this->populateAndVerifyCache($behavior);
-
-        $child2->setAttribute('lft', 3);
-        $child2->save();
-
-        $child2->appendTo($child1);
-
-        $this->verifyCacheInvalidation($behavior);
-    }
-
-    public function testCacheInvalidationAfterDeleteWithChildren(): void
-    {
-        $this->createDatabase();
-
-        $root = new MultipleTree(['name' => 'Root']);
-
-        $root->makeRoot();
-
-        $child = new MultipleTree(['name' => 'Child']);
-
-        $child->appendTo($root);
-
-        $grandchild = new MultipleTree(['name' => 'Grandchild']);
-
-        $grandchild->appendTo($child);
-        $behavior = $child->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the child node.',
-        );
-
-        $this->populateAndVerifyCache($behavior);
-
-        $child->deleteWithChildren();
-
-        $this->verifyCacheInvalidation($behavior);
-    }
-
-    public function testNodeStateAfterDeleteWithChildren(): void
-    {
-        $this->createDatabase();
-
-        $root = new Tree(['name' => 'Root']);
-
-        $root->makeRoot();
 
         $child = new Tree(['name' => 'Child']);
 
         $child->appendTo($root);
-
-        $grandchild = new Tree(['name' => 'Grandchild']);
-
-        $grandchild->appendTo($child);
-
-        self::assertFalse(
-            $child->getIsNewRecord(),
-            'Child node should not be marked as new record before deletion.',
-        );
-        self::assertNotEmpty(
-            $child->getOldAttributes(),
-            'Child node should have old attributes before deletion.',
-        );
-
-        $result = $child->deleteWithChildren();
-
-        self::assertNotFalse(
-            $result,
-            'DeleteWithChildren should return the number of deleted rows.',
-        );
-        self::assertTrue(
-            $child->getIsNewRecord(),
-            "Child node should be marked as new record after deletion ('setOldAttributes(null)' effect).",
-        );
-        self::assertEmpty(
-            $child->getOldAttributes(),
-            'Child node should have empty old attributes after deletion.',
-        );
-    }
-
-    public function testManualCacheInvalidation(): void
-    {
-        $this->createDatabase();
-
-        $root = new MultipleTree(['name' => 'Root']);
-
-        $root->makeRoot();
-
-        $behavior = $root->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the root node.',
-        );
-
-        $this->populateAndVerifyCache($behavior);
-
-        $root->invalidateCache();
-
-        $this->verifyCacheInvalidation($behavior);
-
-        self::assertEquals(
-            0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
-            'Depth value should be correctly retrieved after invalidation.',
-        );
-        self::assertEquals(
-            1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
-            'Left value should be correctly retrieved after invalidation.',
-        );
-        self::assertEquals(
-            2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
-            'Right value should be correctly retrieved after invalidation.',
-        );
-    }
-
-    public function testCacheInvalidationAfterInsertWithTreeAttribute(): void
-    {
-        $this->createDatabase();
-
-        $node = new MultipleTree(['name' => 'Root Node']);
-
-        $behavior = $node->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the node.',
-        );
-
-        $node->makeRoot();
-
-        $this->populateAndVerifyCache($behavior);
-
-        $node->invalidateCache();
-
-        $this->verifyCacheInvalidation($behavior);
-
-        self::assertEquals(
-            0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
-            "New cached depth value should be '0' for root.",
-        );
-        self::assertEquals(
-            1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
-            "New cached left value should be '1' for root.",
-        );
-        self::assertEquals(
-            2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
-            "New cached right value should be '2' for root.",
-        );
-        self::assertNotFalse(
-            $node->treeAttribute,
-            'Tree attribute should be set.',
-        );
-        self::assertNotNull(
-            $node->getAttribute($node->treeAttribute),
-            "Tree attribute should be set after 'afterInsert()'.",
-        );
-        self::assertNotNull(
-            $node->owner,
-            "Node owner should not be null after 'makeRoot()'.",
-        );
-        self::assertEquals(
-            $node->owner->getPrimaryKey(),
-            $node->getAttribute($node->treeAttribute),
-            'Tree attribute should equal primary key for root node.',
-        );
-    }
-
-    public function testCacheInvalidationAfterInsertWithoutTreeAttribute(): void
-    {
-        $this->createDatabase();
-
-        $node = new Tree(['name' => 'Root Node']);
-
-        $behavior = $node->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the node.',
-        );
-
-        $node->makeRoot();
-
-        $this->populateAndVerifyCache($behavior);
-
-        $node->invalidateCache();
-
-        $this->verifyCacheInvalidation($behavior);
-
-        self::assertEquals(
-            0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
-            "New cached depth value should be '0' for root.",
-        );
-        self::assertEquals(
-            1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
-            "New cached left value should be '1' for root.",
-        );
-        self::assertEquals(
-            2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
-            "New cached right value should be '2' for root.",
-        );
-    }
-
-    public function testAfterInsertCallsInvalidateCache(): void
-    {
-        $this->createDatabase();
-
-        $node = new ExtendableMultipleTree(['name' => 'Root Node']);
-
-        $behavior = $node->getBehavior('nestedSetsBehavior');
-
-        self::assertInstanceOf(
-            ExtendableNestedSetsBehavior::class,
-            $behavior,
-            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
-        );
-
-        $node->makeRoot();
-
-        self::assertTrue(
-            $behavior->invalidateCacheCalled,
-            "'invalidateCache()' should be called during 'afterInsert()'.",
-        );
-        self::assertNotFalse(
-            $node->treeAttribute,
-            'Tree attribute should be set.',
-        );
-        self::assertNotNull(
-            $node->getAttribute($node->treeAttribute),
-            "Tree attribute should be set after 'afterInsert()'.",
-        );
-        self::assertEquals(
-            $node->getPrimaryKey(),
-            $node->getAttribute($node->treeAttribute),
-            'Tree attribute should equal primary key for root node.',
-        );
-    }
-
-    public function testAfterInsertCacheInvalidationIntegration(): void
-    {
-        $this->createDatabase();
-
-        $root = new MultipleTree(['name' => 'Original Root']);
-
-        $root->makeRoot();
-
-        $child = new MultipleTree(['name' => 'Child Node']);
-
-        $child->appendTo($root);
-
-        $behavior = $child->getBehavior('nestedSetsBehavior');
-
-        self::assertNotNull(
-            $behavior,
-            'Behavior should be attached to the child node.',
-        );
-        self::assertEquals(
-            1,
-            $child->getAttribute('depth'),
-            "Child should start at depth '1'.",
-        );
-        self::assertEquals(
-            2,
-            $child->getAttribute('lft'),
-            "Child should start with 'lft=2'.",
-        );
-        self::assertEquals(
-            3,
-            $child->getAttribute('rgt'),
-            "Child should start with 'rgt=3'.",
-        );
-
-        $this->populateAndVerifyCache($behavior);
-
-        $child->makeRoot();
-
-        $this->verifyCacheInvalidation($behavior);
-
-        self::assertEquals(
-            0,
-            $child->getAttribute('depth'),
-            "Child should be at depth '0' after becoming root.",
-        );
-        self::assertEquals(
-            1,
-            $child->getAttribute('lft'),
-            "Child should have 'lft=1' after becoming root.",
-        );
-        self::assertEquals(
-            2,
-            $child->getAttribute('rgt'),
-            "Child should have 'rgt=2' after becoming root.",
-        );
-        self::assertEquals(
-            0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
-            "New cached depth should be '0'.",
-        );
-        self::assertEquals(
-            1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
-            "New cached left should be '1'.",
-        );
-        self::assertEquals(
-            2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
-            "New cached right should be '2'.",
-        );
-    }
-
-    public function testAfterUpdateCacheInvalidationWhenMakeRoot(): void
-    {
-        $this->createDatabase();
-
-        $root = new ExtendableMultipleTree(['name' => 'Root']);
-
-        $root->makeRoot();
-
-        $child = new ExtendableMultipleTree(['name' => 'Child']);
-
-        $child->appendTo($root);
-
-        $behavior = $child->getBehavior('nestedSetsBehavior');
-
-        self::assertInstanceOf(
-            ExtendableNestedSetsBehavior::class,
-            $behavior,
-            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
-        );
-
-        $this->populateAndVerifyCache($behavior);
-
-        $behavior->setOperation(NestedSetsBehavior::OPERATION_MAKE_ROOT);
-        $behavior->afterUpdate();
-
-        $this->verifyCacheInvalidation($behavior);
-    }
-
-    public function testAfterUpdateCacheInvalidationWhenMakeRootAndNodeItsNull(): void
-    {
-        $this->createDatabase();
-
-        $root = new ExtendableMultipleTree(['name' => 'Root']);
-
-        $root->makeRoot();
-
-        $child = new ExtendableMultipleTree(['name' => 'Child']);
-
-        $child->appendTo($root);
-
-        $behavior = $child->getBehavior('nestedSetsBehavior');
-
-        self::assertInstanceOf(
-            ExtendableNestedSetsBehavior::class,
-            $behavior,
-            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
-        );
-
-        $this->populateAndVerifyCache($behavior);
-
-        $behavior->setNode(null);
-        $behavior->afterUpdate();
-
-        $this->verifyCacheInvalidation($behavior);
-    }
-
-    public function testLeavesMethodRequiresOrderByForDeterministicResults(): void
-    {
-        $this->createDatabase();
-
-        $root = new Tree(['name' => 'Root']);
-
-        $root->makeRoot();
-
-        $leafA = new Tree(['name' => 'Leaf A']);
-
-        $leafA->appendTo($root);
-
-        $leafB = new Tree(['name' => 'Leaf B']);
-
-        $leafB->appendTo($root);
-
-        $leafC = new Tree(['name' => 'Leaf C']);
-
-        $leafC->appendTo($root);
-
-        $command = $this->getDb()->createCommand();
-
-        $command->update('tree', ['lft' => 6, 'rgt' => 7], ['name' => 'Leaf C'])->execute();
-        $command->update('tree', ['lft' => 4, 'rgt' => 5], ['name' => 'Leaf B'])->execute();
-        $command->update('tree', ['lft' => 2, 'rgt' => 3], ['name' => 'Leaf A'])->execute();
-        $command->update('tree', ['rgt' => 8], ['name' => 'Root'])->execute();
-
-        $leafQuery = $root->leaves();
-        $sql = $leafQuery->createCommand()->getRawSql();
-
-        self::assertStringContainsString(
-            'ORDER BY',
-            $sql,
-            "'leaves()' query should include 'ORDER BY' clause for deterministic results.",
-        );
-        self::assertStringContainsString(
-            '`lft`',
-            $sql,
-            "'leaves()' query should order by 'left' attribute for consistent ordering.",
-        );
-
-        $leaves = $leafQuery->all();
-
-        $expectedOrder = ['Leaf A', 'Leaf B', 'Leaf C'];
-
-        self::assertCount(
-            3,
-            $leaves,
-            "Leaves list should contain exactly '3' elements.",
-        );
-
-        foreach ($leaves as $index => $leaf) {
-            self::assertInstanceOf(
-                Tree::class,
-                $leaf,
-                "Leaf at index {$index} should be an instance of 'Tree'.",
-            );
-
-            if (isset($expectedOrder[$index])) {
-                self::assertEquals(
-                    $expectedOrder[$index],
-                    $leaf->getAttribute('name'),
-                    "Leaf at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
-                );
-            }
-        }
-    }
-
-    public function testParentsMethodRequiresOrderByForDeterministicResults(): void
-    {
-        $this->createDatabase();
-
-        $rootA = new Tree(['name' => 'Root A']);
-
-        $rootA->makeRoot();
-
-        $parentB = new Tree(['name' => 'Parent B']);
-
-        $parentB->appendTo($rootA);
-
-        $parentC = new Tree(['name' => 'Parent C']);
-
-        $parentC->appendTo($parentB);
-
-        $child = new Tree(['name' => 'Child']);
-
-        $child->appendTo($parentC);
-
-        $command = $this->getDb()->createCommand();
-
-        $command->update('tree', ['lft' => 4, 'rgt' => 7, 'depth' => 2], ['name' => 'Parent C'])->execute();
-        $command->update('tree', ['lft' => 2, 'rgt' => 8, 'depth' => 1], ['name' => 'Parent B'])->execute();
-        $command->update('tree', ['lft' => 1, 'rgt' => 9, 'depth' => 0], ['name' => 'Root A'])->execute();
-        $command->update('tree', ['lft' => 5, 'rgt' => 6, 'depth' => 3], ['name' => 'Child'])->execute();
-
         $child->refresh();
-        $parentsQuery = $child->parents();
-        $sql = $parentsQuery->createCommand()->getRawSql();
 
-        self::assertStringContainsString(
-            'ORDER BY',
-            $sql,
-            "'parents()' query should include 'ORDER BY' clause for deterministic results.",
+        self::assertEquals(
+            1,
+            $root->lft,
+            "Root node left value should be '1' after 'makeRoot()' and appending a child.",
         );
-        self::assertStringContainsString(
-            '`lft`',
-            $sql,
-            "'parents()' query should order by 'left' attribute for consistent ordering.",
+        self::assertEquals(
+            4,
+            $root->rgt,
+            "Root node right value should be '4' after 'makeRoot()' and appending a child.",
         );
-
-        $parents = $parentsQuery->all();
-
-        $expectedOrder = ['Root A', 'Parent B', 'Parent C'];
-
-        self::assertCount(
+        self::assertEquals(
+            2,
+            $child->lft,
+            "Child node left value should be '2' after being 'appendTo()' to the root node.",
+        );
+        self::assertEquals(
             3,
-            $parents,
-            "Parents list should contain exactly '3' elements.",
+            $child->rgt,
+            "Child node right value should be '3' after being 'appendTo()' the root node.",
         );
-
-        foreach ($parents as $index => $parent) {
-            self::assertInstanceOf(
-                Tree::class,
-                $parent,
-                "Parent at index {$index} should be an instance of 'Tree'.",
-            );
-
-            if (isset($expectedOrder[$index])) {
-                self::assertEquals(
-                    $expectedOrder[$index],
-                    $parent->getAttribute('name'),
-                    "Parent at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
-                );
-            }
-        }
+        self::assertNotEquals(
+            0,
+            $child->lft,
+            "Child node left value should not be '0' after 'appendTo()' operation.",
+        );
+        self::assertNotEquals(
+            1,
+            $child->rgt,
+            "Child node right value should not be '1' after 'appendTo()' operation.",
+        );
     }
 
+    public function testReturnTrueAndMatchXmlAfterAppendToDownForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'appendTo()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '16' should exist before calling 'appendTo()' on it.",
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            "'appendTo()' should return 'true' when moving node '9' as child of node '16' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' should exist before calling 'appendTo()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '38' should exist before calling 'appendTo()' on it.",
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            "'appendTo()' should return 'true' when moving node '31' as child of node '38' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-append-to-exists-down.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'appendTo()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterAppendToMultipleTreeWhenTargetIsInAnotherTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before attempting to 'appendTo()' a node in another tree.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '53' must exist before attempting to 'appendTo()' it.",
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            "'appendTo()' should return 'true' when moving node '9' as child of node '53' in another tree.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-append-to-exists-another-tree.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'appendTo()' must match the expected XML structure for 'MultipleTree'.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterAppendToUpForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'appendTo()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '2' must exist before calling 'appendTo()' on it.",
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            "'appendTo()' should return 'true' when moving node '9' as child of node '2' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' must exist before calling 'appendTo()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '24' must exist before calling 'appendTo()' on it.",
+        );
+        self::assertTrue(
+            $node->appendTo($childOfNode),
+            "'appendTo()' should return 'true' when moving node '31' as child of node '24' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-append-to-exists-up.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'appendTo()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertAfterDownForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'insertAfter()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '16' should exist before calling 'insertAfter()' on it.",
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when moving node '9' after node '16' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' should exist before calling 'insertAfter()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '38' should exist before calling 'insertAfter()' on it.",
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when moving node '31' after node '38' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-down.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertAfter()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertAfterMultipleTreeWhenTargetIsInAnotherTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before attempting to insert after a node in another tree.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '53' must exist before attempting to insert after it.",
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when moving node '9' after node '53' in another tree.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-another-tree.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertAfter()' must match the expected XML structure for 'MultipleTree'.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertAfterNewForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Node with ID '9' must exist before calling 'insertAfter()' on it in 'Tree'.",
+        );
+
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when inserting a new node after node '9' in 'Tree'.",
+        );
+
+        $node = new MultipleTree(['name' => 'New node']);
+
+        $childOfNode = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Node with ID '31' must exist before calling 'insertAfter()' on it in 'MultipleTree'.",
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when inserting a new node after node '31' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-after-new.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertAfter()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertAfterUpForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'insertAfter()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '2' must exist before calling 'insertAfter()' on it.",
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when moving node '9' after node '2' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' must exist before calling 'insertAfter()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '24' must exist before calling 'insertAfter()' on it.",
+        );
+        self::assertTrue(
+            $node->insertAfter($childOfNode),
+            "'insertAfter()' should return 'true' when moving node '31' after node '24' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-after-exists-up.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertAfter()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeDownForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'insertBefore()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '16' should exist before calling 'insertBefore()' on it.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when moving node '9' before node '16' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' should exist before calling 'insertBefore()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '38' should exist before calling 'insertBefore()' on it.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when moving node '31' before node '38' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-down.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeMultipleTreeWhenTargetIsInAnotherTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before attempting to insert before a node in another tree.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '53' must exist before attempting to insert before it.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when moving node '9' before node '53' in another tree.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-another-tree.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertBefore()' must match the expected XML structure for 'MultipleTree'.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeNewForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Node with ID '9' should exist before calling 'insertBefore()' on it in 'Tree'.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when inserting a new node before node '9' in 'Tree'.",
+        );
+
+        $node = new MultipleTree(['name' => 'New node']);
+
+        $childOfNode = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Node with ID '31' should exist before calling 'insertBefore()' on it in 'MultipleTree'.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when inserting a new node before node '31' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-before-new.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterInsertBeforeUpForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'insertBefore()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '2' must exist before calling 'insertBefore()' on it.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when moving node '9' before node '2' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' must exist before calling 'insertBefore()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '24' must exist before calling 'insertBefore()' on it.",
+        );
+        self::assertTrue(
+            $node->insertBefore($childOfNode),
+            "'insertBefore()' should return 'true' when moving node '31' before node '24' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-insert-before-exists-up.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
+        );
+    }
+    public function testReturnTrueAndMatchXmlAfterMakeRootNewForTreeAndMultipleTree(): void
+    {
+        $this->createDatabase();
+
+        $nodeTree = new Tree(['name' => 'Root']);
+
+        self::assertTrue(
+            $nodeTree->makeRoot(),
+            "'makeRoot()' should return 'true' when creating a new root node in 'Tree'.",
+        );
+
+        $nodeMultipleTree = new MultipleTree(['name' => 'Root 1']);
+
+        self::assertTrue(
+            $nodeMultipleTree->makeRoot(),
+            "'makeRoot()' should return 'true' when creating the first root node in 'MultipleTree'.",
+        );
+
+        $nodeMultipleTree = new MultipleTree(['name' => 'Root 2']);
+
+        self::assertTrue(
+            $nodeMultipleTree->makeRoot(),
+            "'makeRoot()' should return 'true' when creating a second root node in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-make-root-new.xml');
+
+        self::assertSame(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'makeRoot()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterMakeRootOnExistingMultipleTreeNode(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' must exist before calling 'makeRoot()' on it in 'MultipleTree'.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        self::assertTrue(
+            $node->makeRoot(),
+            "'makeRoot()' should return 'true' when called on node '31' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-make-root-exists.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'makeRoot()' must match the expected XML structure for 'MultipleTree'.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterPrependToDownForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'prependTo()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(16);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '16' should exist before calling 'prependTo()' on it.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when moving node '9' as child of node '16' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' should exist before calling 'prependTo()' on another node.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(38);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '38' should exist before calling 'prependTo()' on it.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when moving node '31' as child of node '38' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-down.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'prependTo()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterPrependToMultipleTreeWhenTargetIsInAnotherTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before attempting to prepend to a node in another tree.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(53);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '53' must exist before attempting to prepend to it.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when moving node '9' as child of node '53' in another tree.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-another-tree.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSetMultipleTree()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'prependTo()' must match the expected XML structure for 'MultipleTree'.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterPrependToNewNodeForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Node with ID '9' must exist before calling 'prependTo()' on it in 'Tree'.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when prepending a new node to node '9' in 'Tree'.",
+        );
+
+        $node = new MultipleTree(['name' => 'New node']);
+
+        $childOfNode = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Node with ID '31' must exist before calling 'prependTo()' on it in 'MultipleTree'.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when prepending a new node to node '31' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-new.xml');
+
+        self::assertSame(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'prependTo()' must match the expected XML structure.",
+        );
+    }
+
+    public function testReturnTrueAndMatchXmlAfterPrependToUpForTreeAndMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'prependTo()' on another node in 'Tree'.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = Tree::findOne(2);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '2' must exist before calling 'prependTo()' on it in 'Tree'.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when moving node '9' as child of node '2' in 'Tree'.",
+        );
+
+        $node = MultipleTree::findOne(31);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '31' must exist before calling 'prependTo()' on another node in 'MultipleTree'.",
+        );
+
+        $node->name = 'Updated node 2';
+
+        $childOfNode = MultipleTree::findOne(24);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '24' must exist before calling 'prependTo()' on it in 'MultipleTree'.",
+        );
+        self::assertTrue(
+            $node->prependTo($childOfNode),
+            "'prependTo()' should return 'true' when moving node '31' as child of node '24' in 'MultipleTree'.",
+        );
+
+        $simpleXML = $this->loadFixtureXML('test-prepend-to-exists-up.xml');
+
+        self::assertEquals(
+            $this->buildFlatXMLDataSet($this->getDataSet()),
+            $simpleXML->asXML(),
+            "Resulting dataset after 'prependTo()' must match the expected XML structure.",
+        );
+    }
+
+    public function testSetNodeToNullAndCallBeforeInsertNodeSetsLftRgtAndDepth(): void
+    {
+        $this->createDatabase();
+
+        $behavior = new class extends NestedSetsBehavior {
+            public function callBeforeInsertNode(int $value, int $depth): void
+            {
+                $this->beforeInsertNode($value, $depth);
+            }
+
+            public function setNodeToNull(): void
+            {
+                $this->node = null;
+            }
+
+            public function getNodeDepth(): int|null
+            {
+                return $this->node !== null ? $this->node->getAttribute($this->depthAttribute) : null;
+            }
+        };
+
+        $newNode = new Tree(['name' => 'Test Node']);
+
+        $newNode->attachBehavior('testBehavior', $behavior);
+        $behavior->setNodeToNull();
+        $behavior->callBeforeInsertNode(5, 1);
+
+        self::assertEquals(
+            5,
+            $newNode->lft,
+            "'beforeInsertNode' should set 'lft' attribute to '5' on the new node.",
+        );
+        self::assertEquals(
+            6,
+            $newNode->rgt,
+            "'beforeInsertNode' should set 'rgt' attribute to '6' on the new node.",
+        );
+
+        $actualDepth = $newNode->getAttribute('depth');
+
+        self::assertEquals(
+            1,
+            $actualDepth,
+            "'beforeInsertNode' method should set 'depth' attribute to '1' on the new node.",
+        );
+    }
+
+    public function testThrowExceptionWhenAppendToNewNodeTargetIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
+
+        $node->appendTo(new Tree());
+    }
+
+    public function testThrowExceptionWhenAppendToTargetIsChild(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Expected node with ID '9' to exist before calling 'appendTo()' on another node.",
+        );
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Expected target child node with ID '11' to exist before calling 'appendTo()' on it.",
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+
+        $node->appendTo($childOfNode);
+    }
+
+    public function testThrowExceptionWhenAppendToTargetIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' must exist before calling 'appendTo()' on another node.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+
+        $node->appendTo(new Tree());
+    }
+
+    public function testThrowExceptionWhenAppendToTargetIsSame(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before calling 'appendTo()' on another node.");
+
+        $childOfNode = Tree::findOne(9);
+
+        self::assertNotNull($childOfNode, "Target node with ID '9' should exist before calling 'appendTo()' on it.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+
+        $node->appendTo($childOfNode);
+    }
+
+    /**
+     * @throws Throwable
+     * @throws StaleObjectException
+     */
+    public function testThrowExceptionWhenDeleteNodeIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree();
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not delete a node when it is new record.');
+
+        $node->delete();
+    }
+
+    public function testThrowExceptionWhenDeleteWithChildrenIsCalledOnNewRecordNode(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree();
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not delete a node when it is new record.');
+
+        $node->deleteWithChildren();
+    }
+
+    public function testThrowExceptionWhenInsertAfterNewNodeTargetIsRoot(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull(
+            $rootNode,
+            "Root node with ID '1' should exist before calling 'insertAfter()' on it in 'Tree'.",
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not create a node when the target node is root.');
+
+        $node->insertAfter($rootNode);
+    }
+
+    public function testThrowExceptionWhenInsertAfterTargetIsChild(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' must exist before attempting to insert after its child node.");
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull($childOfNode, "Child node with ID '11' must exist before attempting to insert after it.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+
+        $node->insertAfter($childOfNode);
+    }
+
+    public function testThrowExceptionWhenInsertAfterTargetIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' must exist before attempting to insert after a new record.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+
+        $node->insertAfter(new Tree());
+    }
+
+    public function testThrowExceptionWhenInsertAfterTargetIsRoot(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before attempting to insert after the root node.");
+
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull($rootNode, "Root node with ID '1' should exist before attempting to insert after it.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is root.');
+
+        $node->insertAfter($rootNode);
+    }
+
+    public function testThrowExceptionWhenInsertAfterTargetIsSame(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' must exist before attempting to insert after itself.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+
+        $node->insertAfter($node);
+    }
+
+    public function testThrowExceptionWhenInsertBeforeNewNodeTargetIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
+
+        $node->insertBefore(new Tree());
+    }
+
+    public function testThrowExceptionWhenInsertBeforeNewNodeTargetIsRoot(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'New node']);
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull(
+            $rootNode,
+            "Root node with ID '1' should exist before calling 'insertBefore()' on it in 'Tree'.",
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not create a node when the target node is root.');
+
+        $node->insertBefore($rootNode);
+    }
+
+    public function testThrowExceptionWhenInsertBeforeTargetIsChild(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'insertBefore()' on another node.",
+        );
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull(
+            $childOfNode,
+            "Target child node with ID '11' must exist before calling 'insertBefore()' on it.",
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+
+        $node->insertBefore($childOfNode);
+    }
+
+    public function testThrowExceptionWhenInsertBeforeTargetIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on a new record.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+
+        $node->insertBefore(new Tree());
+    }
+
+    public function testThrowExceptionWhenInsertBeforeTargetIsRoot(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on another node.");
+
+        $rootNode = Tree::findOne(1);
+
+        self::assertNotNull($rootNode, "Root node with ID '1' should exist before calling 'insertBefore()' on it.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is root.');
+
+        $node->insertBefore($rootNode);
+    }
+
+    public function testThrowExceptionWhenInsertBeforeTargetIsSame(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on itself.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+
+        $node->insertBefore($node);
+    }
+
+    public function testThrowExceptionWhenMakeRootIsCalledOnModelWithoutPrimaryKey(): void
+    {
+        $this->createDatabase();
+
+        $node = new class (['name' => 'Root without PK']) extends MultipleTree {
+            public static function primaryKey(): array
+            {
+                return [];
+            }
+
+            public function makeRoot(): bool
+            {
+                return parent::makeRoot();
+            }
+        };
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage(sprintf('"%s" must have a primary key.', get_class($node)));
+
+        $node->makeRoot();
+    }
+
+    public function testThrowExceptionWhenMakeRootOnNonRootNodeWithTreeAttributeFalse(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before calling 'makeRoot()' on it in 'Tree'.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node as the root when "treeAttribute" is false.');
+
+        $node->makeRoot();
+    }
+
+    public function testThrowExceptionWhenMakeRootOnRootNodeInMultipleTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = MultipleTree::findOne(23);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '23' should exist before calling 'makeRoot()' on it in 'MultipleTree'.",
+        );
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move the root node as the root.');
+
+        $node->makeRoot();
+    }
+
+    public function testThrowExceptionWhenMakeRootWithTreeAttributeFalseAndRootExists(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'Root']);
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not create more than one root when "treeAttribute" is false.');
+
+        $node->makeRoot();
+    }
+
+    public function testThrowExceptionWhenPrependToTargetIsChild(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' must exist before calling 'prependTo()' on another node.");
+
+        $childOfNode = Tree::findOne(11);
+
+        self::assertNotNull($childOfNode, "Target node with ID '11' must exist before calling 'prependTo()' on it.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+
+        $node->prependTo($childOfNode);
+    }
+
+    public function testThrowExceptionWhenPrependToTargetIsNewRecord(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' must exist before calling 'prependTo()' on another node.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+
+        $node->prependTo(new Tree());
+    }
+
+    public function testThrowExceptionWhenPrependToTargetIsSame(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(9);
+
+        self::assertNotNull($node, "Node with ID '9' should exist before calling 'prependTo()' on itself.");
+
+        $this->expectException(Exception::class);
+        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+
+        $node->prependTo($node);
+    }
+
+    public function testThrowLogicExceptionWhenBehaviorIsDetachedFromOwner(): void
+    {
+        $this->createDatabase();
+
+        $node = new Tree(['name' => 'Root']);
+
+        $behavior = $node->getBehavior('nestedSetsBehavior');
+
+        self::assertInstanceOf(NestedSetsBehavior::class, $behavior);
+
+        $node->detachBehavior('nestedSetsBehavior');
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
+
+        $behavior->parents();
+    }
+
+    public function testThrowLogicExceptionWhenBehaviorIsNotAttachedToOwner(): void
+    {
+        $behavior = new NestedSetsBehavior();
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
+
+        $behavior->parents();
+    }
+
+    /**
+     * @throws Throwable
+     * @throws StaleObjectException
+     */
+    public function testThrowNotSupportedExceptionWhenDeleteIsCalledOnRootNode(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = Tree::findOne(1);
+
+        self::assertNotNull(
+            $node,
+            "Node with ID '1' should exist before attempting deletion.",
+        );
+
+        $this->expectException(NotSupportedException::class);
+        $this->expectExceptionMessage(
+            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::delete" is not supported for deleting root nodes.',
+        );
+
+        $node->delete();
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function testThrowNotSupportedExceptionWhenInsertIsCalledOnTree(): void
+    {
+        $this->generateFixtureTree();
+
+        $node = new Tree(['name' => 'Node']);
+
+        $this->expectException(NotSupportedException::class);
+        $this->expectExceptionMessage(
+            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::insert" is not supported for inserting new nodes.',
+        );
+
+        $node->insert();
+    }
     /**
      * @phpstan-param Behavior<ActiveRecord> $behavior
      */
