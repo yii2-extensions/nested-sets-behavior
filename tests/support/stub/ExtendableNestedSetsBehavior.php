@@ -33,14 +33,6 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 
         $this->beforeInsertRootNode();
     }
-
-    public function exposedDeleteWithChildrenInternal(): bool|int
-    {
-        $this->calledMethods['deleteWithChildrenInternal'] = true;
-
-        return $this->deleteWithChildrenInternal();
-    }
-
     public function exposedMoveNode(ActiveRecord $node, int $value, int $depth): void
     {
         $this->calledMethods['moveNode'] = true;
