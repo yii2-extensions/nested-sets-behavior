@@ -33,6 +33,7 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 
         $this->beforeInsertRootNode();
     }
+
     public function exposedMoveNode(ActiveRecord $node, int $value, int $depth): void
     {
         $this->calledMethods['moveNode'] = true;
