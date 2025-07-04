@@ -35,7 +35,7 @@ composer update
 
 ## Next steps
 
-Once installation is complete.
+Once the installation is complete.
 
 - ⚙️ [Configuration Reference](configuration.md)
 - 💡 [Usage Examples](examples.md)

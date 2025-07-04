@@ -2,7 +2,7 @@
     <a href="https://github.com/yii2-extensions/nested-sets-behavior" target="_blank">
         <img src="https://www.yiiframework.com/image/yii_logo_light.svg" height="100px;">
     </a>
-    <h1 align="center">Nested sets behavior.</h1>
+    <h1 align="center">Nested sets behavior</h1>
     <br>
 </p>
 
@@ -103,7 +103,7 @@ class Category extends ActiveRecord
 }
 ```
 
-### Database Schema
+### Database schema
 
 Create the required database fields.
 
@@ -217,7 +217,7 @@ $phones->delete();
 $phones->deleteWithChildren();
 ```
 
-### Query Builder Integration
+### Query builder integration
 
 Add query behavior for advanced tree queries.
 

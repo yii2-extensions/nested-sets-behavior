@@ -236,7 +236,7 @@ echo "Direct parent of {$smartphone->name}: {$directParent->name}\n";
 
 declare(strict_types=1);
 
-// Get next sibling
+// Get the next sibling
 $phones = Category::findOne(['name' => 'Mobile Phones']);
 $nextSibling = $phones->next()->one();
 
@@ -344,7 +344,7 @@ class CategoryController extends Controller
         // Reorganize Electronics category structure
         $electronics = Category::findOne(['name' => 'Electronics']);
         
-        // Create new subcategory structure
+        // Create a new subcategory structure
         $mobile = new Category(['name' => 'Mobile Devices']);
         $mobile->appendTo($electronics);
         
@@ -671,161 +671,6 @@ class TreeValidator
         }
         
         return $errors;
-    }
-}
-```
-
-## Real-world applications
-
-### E-commerce category management
-
-```php
-<?php
-
-declare(strict_types=1);
-
-class ProductCategory extends ActiveRecord
-{
-    public function behaviors(): array
-    {
-        return [
-            'nestedSets' => [
-                'class' => NestedSetsBehavior::class,
-            ],
-            'timestamp' => TimestampBehavior::class,
-            'sluggable' => [
-                'class' => SluggableBehavior::class,
-                'attribute' => 'name',
-            ],
-        ];
-    }
-    
-    public function getProducts()
-    {
-        return $this->hasMany(Product::class, ['category_id' => 'id']);
-    }
-    
-    public function getAllCategoryProducts()
-    {
-        // Get products from this category and all descendant categories
-        $categoryIds = [$this->id];
-        $descendants = $this->children()->all();
-        
-        foreach ($descendants as $descendant) {
-            $categoryIds[] = $descendant->id;
-        }
-        
-        return Product::find()->where(['category_id' => $categoryIds]);
-    }
-}
-```
-
-### Content management system
-
-```php
-<?php
-
-declare(strict_types=1);
-
-class CmsPage extends ActiveRecord
-{
-    public function behaviors(): array
-    {
-        return [
-            'nestedSets' => [
-                'class' => NestedSetsBehavior::class,
-                'treeAttribute' => 'site_id', // Multi-site support
-            ],
-            'timestamp' => TimestampBehavior::class,
-        ];
-    }
-    
-    public function getUrl(): string
-    {
-        $parents = $this->parents()->all();
-        $segments = [];
-        
-        foreach ($parents as $parent) {
-            if ($parent->isRoot() === false) {
-                $segments[] = $parent->slug;
-            }
-        }
-        
-        $segments[] = $this->slug;
-        
-        return '/' . implode('/', $segments);
-    }
-    
-    public function getBreadcrumbs(): array
-    {
-        $breadcrumbs = [];
-        $parents = $this->parents()->all();
-        
-        foreach ($parents as $parent) {
-            if ($parent->isRoot() === false) {
-                $breadcrumbs[] = [
-                    'label' => $parent->title,
-                    'url' => $parent->getUrl(),
-                ];
-            }
-        }
-        
-        $breadcrumbs[] = ['label' => $this->title];
-        
-        return $breadcrumbs;
-    }
-}
-```
-
-### Organizational hierarchy
-
-```php
-<?php
-
-declare(strict_types=1);
-
-class Department extends ActiveRecord
-{
-    public function behaviors(): array
-    {
-        return [
-            'nestedSets' => [
-                'class' => NestedSetsBehavior::class,
-                'treeAttribute' => 'company_id',
-            ],
-        ];
-    }
-    
-    public function getEmployees()
-    {
-        return $this->hasMany(Employee::class, ['department_id' => 'id']);
-    }
-    
-    public function getAllEmployees()
-    {
-        // Get employees from this department and all sub-departments
-        $departmentIds = [$this->id];
-        $subDepartments = $this->children()->all();
-        
-        foreach ($subDepartments as $subDept) {
-            $departmentIds[] = $subDept->id;
-        }
-        
-        return Employee::find()->where(['department_id' => $departmentIds]);
-    }
-    
-    public function getManagerPath(): array
-    {
-        $managers = [];
-        $parents = $this->parents()->all();
-        
-        foreach ($parents as $parent) {
-            if ($parent->manager_id) {
-                $managers[] = Employee::findOne($parent->manager_id);
-            }
-        }
-        
-        return array_filter($managers);
     }
 }
 ```
