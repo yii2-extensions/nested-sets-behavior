@@ -29,7 +29,8 @@
 
 A powerful behavior for managing hierarchical data structures using the nested sets pattern in Yii ActiveRecord models.
 
-Efficiently store and query tree structures like categories, menus, organizational charts, and any hierarchical data with high-performance database operations.
+Efficiently store and query tree structures like categories, menus, organizational charts, and any hierarchical data
+with high-performance database operations.
 
 ## Features
 
@@ -57,7 +58,7 @@ composer require yii2-extensions/nested-sets
 
 ### Basic Configuration
 
-Add the behavior to your ActiveRecord model:
+Add the behavior to your ActiveRecord model.
 
 ```php
 <?php
@@ -104,7 +105,7 @@ class Category extends ActiveRecord
 
 ### Database Schema
 
-Create the required database fields:
+Create the required database fields.
 
 ```sql
 -- Single tree structure
@@ -218,7 +219,7 @@ $phones->deleteWithChildren();
 
 ### Query Builder Integration
 
-Add query behavior for advanced tree queries:
+Add query behavior for advanced tree queries.
 
 ```php
 <?php
@@ -229,7 +230,7 @@ use yii\db\ActiveQuery;
 use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
 
 /**
- * @template T of Tree
+ * @template T of Category
  *
  * @extends ActiveQuery<T>
  */
@@ -253,7 +254,7 @@ public static function find(): CategoryQuery
 }
 ```
 
-Now you can use enhanced queries:
+Now you can use enhanced queries.
 
 ```php
 <?php
