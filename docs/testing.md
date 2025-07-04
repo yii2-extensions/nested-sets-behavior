@@ -27,9 +27,15 @@ Mutation testing is checked with [Infection](https://infection.github.io/). To r
 composer run mutation
 ```
 
+With PHPStan analysis, it will also check for static analysis issues during mutation testing.
+
+```shell
+composer run mutation-static
+```
+
 ## Static analysis
 
-The code is statically analyzed with [Phpstan](https://phpstan.org/). To run static analysis.
+The code is statically analyzed with [PHPStan](https://phpstan.org/). To run static analysis.
 
 ```shell
 composer run static
