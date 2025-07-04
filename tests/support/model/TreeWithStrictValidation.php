@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests\support\model;
 
 /**
- * @property int $id
- * @property int $lft
- * @property int $rgt
- * @property int $depth
- * @property string $name
+ * @phpstan-property int $depth
+ * @phpstan-property int $id
+ * @phpstan-property int $lft
+ * @phpstan-property int $rgt
+ * @phpstan-property string $name
  */
 final class TreeWithStrictValidation extends Tree
 {

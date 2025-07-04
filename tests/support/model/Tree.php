@@ -8,11 +8,11 @@ use yii\db\ActiveRecord;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
 
 /**
- * @property int $id
- * @property int $lft
- * @property int $rgt
- * @property int $depth
- * @property string $name
+ * @phpstan-property int $depth
+ * @phpstan-property int $id
+ * @phpstan-property int $lft
+ * @phpstan-property int $rgt
+ * @phpstan-property string $name
  */
 class Tree extends ActiveRecord
 {

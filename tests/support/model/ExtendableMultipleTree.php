@@ -8,12 +8,12 @@ use yii\db\ActiveRecord;
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 
 /**
- * @property int $id
- * @property int $depth
- * @property int $lft
- * @property int $rgt
- * @property int $tree
- * @property string $name
+ * @phpstan-property int $depth
+ * @phpstan-property int $id
+ * @phpstan-property int $lft
+ * @phpstan-property int $rgt
+ * @phpstan-property int $tree
+ * @phpstan-property string $name
  */
 class ExtendableMultipleTree extends ActiveRecord
 {
