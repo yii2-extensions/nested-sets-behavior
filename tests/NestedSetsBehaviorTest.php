@@ -2312,6 +2312,7 @@ final class NestedSetsBehaviorTest extends TestCase
             "Resulting dataset after 'insertBefore()' must match the expected XML structure.",
         );
     }
+
     public function testReturnTrueAndMatchXmlAfterMakeRootNewForTreeAndMultipleTree(): void
     {
         $this->createDatabase();
@@ -3055,6 +3056,7 @@ final class NestedSetsBehaviorTest extends TestCase
 
         $node->insert();
     }
+
     /**
      * @phpstan-param Behavior<ActiveRecord> $behavior
      */

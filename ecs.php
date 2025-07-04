@@ -39,7 +39,7 @@ return ECSConfig::configure()
             ],
             'sort_algorithm' => 'alpha',
         ],
-        )
+    )
     ->withConfiguredRule(
         OrderedImportsFixer::class,
         [
