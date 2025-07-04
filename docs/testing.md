@@ -10,12 +10,29 @@ To run the checker, execute the following command:
 composer run check-dependencies
 ```
 
+## Easy coding standard
+
+The code is checked with [Easy Coding Standard](https://github.com/easy-coding-standard/easy-coding-standard) and
+[PHP CS Fixer](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer). To run it:
+
+```shell
+composer run ecs
+```
+
+## Mutation testing
+
+Mutation testing is checked with [Infection](https://infection.github.io/). To run it:
+
+```shell
+composer run mutation
+```
+
 ## Static analysis
 
 The code is statically analyzed with [Phpstan](https://phpstan.org/). To run static analysis:
 
 ```shell
-composer run phpstan
+composer run static
 ```
 
 ## Unit tests
