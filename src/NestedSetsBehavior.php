@@ -1080,46 +1080,6 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Deletes the current node and all its descendant nodes from the nested set tree.
-     *
-     * Executes a bulk deletion of the node to which this behavior is attached, along with all its children, by
-     * constructing a condition that matches all nodes within the left and right boundaries of the current node.
-     *
-     * This method is used internally to efficiently remove entire subtrees in a single operation, ensuring the
-     * integrity of the nested set structure.
-     *
-     * It also triggers the appropriate lifecycle events before and after deletion, and resets the old attributes of the
-     * owner model.
-     *
-     * The method applies the tree attribute condition if multi-tree support is enabled, restricting the deletion to
-     * nodes within the same tree.
-     *
-     * @return false|int Number of rows deleted, or `false` if the deletion is unsuccessful for any reason.
-     */
-    protected function deleteWithChildrenInternal(): bool|int
-    {
-        if ($this->getOwner()->beforeDelete() === false) {
-            return false;
-        }
-
-        $result = $this->getOwner()::deleteAll(
-            QueryConditionBuilder::createRangeCondition(
-                $this->leftAttribute,
-                $this->getLeftValue(),
-                $this->rightAttribute,
-                $this->getRightValue(),
-                $this->treeAttribute,
-                $this->getTreeValue($this->getOwner()),
-            ),
-        );
-
-        $this->getOwner()->setOldAttributes(null);
-        $this->getOwner()->afterDelete();
-
-        return $result;
-    }
-
-    /**
      * Executes node movement using the provided context.
      *
      * Handles both same-tree and cross-tree movements, determining the strategy based on tree attribute configuration
@@ -1244,6 +1204,46 @@ class NestedSetsBehavior extends Behavior
             self::OPERATION_PREPEND_TO => NodeContext::forPrependTo($targetNode, $this->leftAttribute),
             default => throw new RuntimeException("Unsupported operation: {$operation}"),
         };
+    }
+
+    /**
+     * Deletes the current node and all its descendant nodes from the nested set tree.
+     *
+     * Executes a bulk deletion of the node to which this behavior is attached, along with all its children, by
+     * constructing a condition that matches all nodes within the left and right boundaries of the current node.
+     *
+     * This method is used internally to efficiently remove entire subtrees in a single operation, ensuring the
+     * integrity of the nested set structure.
+     *
+     * It also triggers the appropriate lifecycle events before and after deletion, and resets the old attributes of the
+     * owner model.
+     *
+     * The method applies the tree attribute condition if multi-tree support is enabled, restricting the deletion to
+     * nodes within the same tree.
+     *
+     * @return false|int Number of rows deleted, or `false` if the deletion is unsuccessful for any reason.
+     */
+    private function deleteWithChildrenInternal(): bool|int
+    {
+        if ($this->getOwner()->beforeDelete() === false) {
+            return false;
+        }
+
+        $result = $this->getOwner()::deleteAll(
+            QueryConditionBuilder::createRangeCondition(
+                $this->leftAttribute,
+                $this->getLeftValue(),
+                $this->rightAttribute,
+                $this->getRightValue(),
+                $this->treeAttribute,
+                $this->getTreeValue($this->getOwner()),
+            ),
+        );
+
+        $this->getOwner()->setOldAttributes(null);
+        $this->getOwner()->afterDelete();
+
+        return $result;
     }
 
     private function executeCrossTreeMove(
