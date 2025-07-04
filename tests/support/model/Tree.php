@@ -16,16 +16,19 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
  */
 class Tree extends ActiveRecord
 {
-    public static function tableName(): string
-    {
-        return '{{%tree}}';
-    }
-
     public function behaviors(): array
     {
         return [
             'nestedSetsBehavior' => NestedSetsBehavior::class,
         ];
+    }
+
+    /**
+     * @phpstan-return TreeQuery<static>
+     */
+    public static function find(): TreeQuery
+    {
+        return new TreeQuery(static::class);
     }
 
     public function isTransactional($operation): bool
@@ -43,6 +46,10 @@ class Tree extends ActiveRecord
             ['name', 'required'],
         ];
     }
+    public static function tableName(): string
+    {
+        return '{{%tree}}';
+    }
 
     /**
      * @phpstan-return array<string, int>
@@ -52,13 +59,5 @@ class Tree extends ActiveRecord
         return [
             self::SCENARIO_DEFAULT => self::OP_ALL,
         ];
-    }
-
-    /**
-     * @phpstan-return TreeQuery<static>
-     */
-    public static function find(): TreeQuery
-    {
-        return new TreeQuery(static::class);
     }
 }

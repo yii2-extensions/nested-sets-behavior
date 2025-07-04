@@ -17,11 +17,6 @@ use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
  */
 class ExtendableMultipleTree extends ActiveRecord
 {
-    public static function tableName(): string
-    {
-        return '{{%multiple_tree}}';
-    }
-
     public function behaviors(): array
     {
         return [
@@ -32,11 +27,23 @@ class ExtendableMultipleTree extends ActiveRecord
         ];
     }
 
+    /**
+     * @phpstan-return ExtendableMultipleTreeQuery<static>
+     */
+    public static function find(): ExtendableMultipleTreeQuery
+    {
+        return new ExtendableMultipleTreeQuery(static::class);
+    }
+
     public function rules(): array
     {
         return [
             ['name', 'required'],
         ];
+    }
+    public static function tableName(): string
+    {
+        return '{{%multiple_tree}}';
     }
 
     /**
@@ -47,13 +54,5 @@ class ExtendableMultipleTree extends ActiveRecord
         return [
             self::SCENARIO_DEFAULT => self::OP_ALL,
         ];
-    }
-
-    /**
-     * @phpstan-return ExtendableMultipleTreeQuery<static>
-     */
-    public static function find(): ExtendableMultipleTreeQuery
-    {
-        return new ExtendableMultipleTreeQuery(static::class);
     }
 }

@@ -14,12 +14,11 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
  */
 final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 {
-    public bool $invalidateCacheCalled = false;
-
     /**
      * @phpstan-var array<string, bool>
      */
     public array $calledMethods = [];
+    public bool $invalidateCacheCalled = false;
 
     public function exposedBeforeInsertNode(int $value, int $depth): void
     {
@@ -68,16 +67,6 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         $this->shiftLeftRightAttribute($value, $delta);
     }
 
-    public function resetMethodCallTracking(): void
-    {
-        $this->calledMethods = [];
-    }
-
-    public function wasMethodCalled(string $methodName): bool
-    {
-        return $this->calledMethods[$methodName] ?? false;
-    }
-
     /**
      * @phpstan-return array<string, bool>
      */
@@ -93,6 +82,11 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         parent::invalidateCache();
     }
 
+    public function resetMethodCallTracking(): void
+    {
+        $this->calledMethods = [];
+    }
+
     public function setNode(ActiveRecord|null $node): void
     {
         $this->node = $node;
@@ -101,5 +95,10 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     public function setOperation(string|null $operation): void
     {
         $this->operation = $operation;
+    }
+
+    public function wasMethodCalled(string $methodName): bool
+    {
+        return $this->calledMethods[$methodName] ?? false;
     }
 }

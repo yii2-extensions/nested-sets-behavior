@@ -37,6 +37,13 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mockConsoleApplication();
+    }
+
     public function getDb(): Connection
     {
         return Yii::$app->getDb();
@@ -126,6 +133,42 @@ class TestCase extends \PHPUnit\Framework\TestCase
         )->execute();
     }
 
+    protected function generateFixtureTree(): void
+    {
+        $this->createDatabase();
+
+        $command = $this->getDb()->createCommand();
+
+        // Carga el XML en la tabla `tree`
+        $xml = new SimpleXMLElement("{$this->fixtureDirectory}/test.xml", 0, true);
+
+        $children = $xml->children() ?? [];
+
+        foreach ($children as $element => $treeElement) {
+            match ($element === 'tree') {
+                true => $command->insert(
+                    'tree',
+                    [
+                        'name' => $treeElement['name'],
+                        'lft' => $treeElement['lft'],
+                        'rgt' => $treeElement['rgt'],
+                        'depth' => $treeElement['depth'],
+                    ],
+                )->execute(),
+                default => $command->insert(
+                    'multiple_tree',
+                    [
+                        'tree' => $treeElement['tree'],
+                        'name' => $treeElement['name'],
+                        'lft' => $treeElement['lft'],
+                        'rgt' => $treeElement['rgt'],
+                        'depth' => $treeElement['depth'],
+                    ],
+                )->execute(),
+            };
+        }
+    }
+
     /**
      * @phpstan-import-type DataSetType from TestCase
      *
@@ -165,58 +208,6 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return array_values($dataSetMultipleTree);
     }
 
-    protected function generateFixtureTree(): void
-    {
-        $this->createDatabase();
-
-        $command = $this->getDb()->createCommand();
-
-        // Carga el XML en la tabla `tree`
-        $xml = new SimpleXMLElement("{$this->fixtureDirectory}/test.xml", 0, true);
-
-        $children = $xml->children() ?? [];
-
-        foreach ($children as $element => $treeElement) {
-            match ($element === 'tree') {
-                true => $command->insert(
-                    'tree',
-                    [
-                        'name' => $treeElement['name'],
-                        'lft' => $treeElement['lft'],
-                        'rgt' => $treeElement['rgt'],
-                        'depth' => $treeElement['depth'],
-                    ],
-                )->execute(),
-                default => $command->insert(
-                    'multiple_tree',
-                    [
-                        'tree' => $treeElement['tree'],
-                        'name' => $treeElement['name'],
-                        'lft' => $treeElement['lft'],
-                        'rgt' => $treeElement['rgt'],
-                        'depth' => $treeElement['depth'],
-                    ],
-                )->execute(),
-            };
-        }
-    }
-
-    protected function mockConsoleApplication(): void
-    {
-        new Application(
-            [
-                'id' => 'testapp',
-                'basePath' => dirname(__DIR__),
-                'components' => [
-                    'db' => [
-                        'class' => Connection::class,
-                        'dsn' => 'sqlite::memory:',
-                    ],
-                ],
-            ],
-        );
-    }
-
     protected function loadFixtureXML(string $fileName): SimpleXMLElement
     {
         $filePath = "{$this->fixtureDirectory}/{$fileName}";
@@ -236,10 +227,19 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return $simpleXML;
     }
 
-    protected function setUp(): void
+    protected function mockConsoleApplication(): void
     {
-        parent::setUp();
-
-        $this->mockConsoleApplication();
+        new Application(
+            [
+                'id' => 'testapp',
+                'basePath' => dirname(__DIR__),
+                'components' => [
+                    'db' => [
+                        'class' => Connection::class,
+                        'dsn' => 'sqlite::memory:',
+                    ],
+                ],
+            ],
+        );
     }
 }
