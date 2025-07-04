@@ -1,6 +1,6 @@
 <p align="center">
     <a href="https://github.com/yii2-extensions/nested-sets-behavior" target="_blank">
-        <img src="https://www.yiiframework.com/image/yii_logo_light.svg" height="100px;" alt="Yii Framework" style="max-width: 100%;">
+        <img src="https://www.yiiframework.com/image/yii_logo_light.svg" alt="Yii Framework">
     </a>
     <h1 align="center">Nested sets behavior</h1>
     <br>
