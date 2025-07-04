@@ -246,7 +246,7 @@ class CategoryQuery extends ActiveQuery
 
 // In your Category model
 /**
- * @phpstan-return Category<static>
+ * @phpstan-return CategoryQuery<static>
  */
 public static function find(): CategoryQuery
 {

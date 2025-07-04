@@ -153,7 +153,7 @@ class Category extends ActiveRecord
     // ... behavior configuration ...
 
     /**
-     * @phpstan-return Category<static>
+     * @phpstan-return CategoryQuery<static>
      */
     public static function find(): CategoryQuery
     {
