@@ -163,31 +163,23 @@ final class NestedSetsQueryBehaviorTest extends TestCase
     {
         $this->createDatabase();
 
-        $rootA = new MultipleTree(['name' => 'Root A']);
+        $treeIds = [1, 2, 3, 4];
+        $rootNames = ['Root A', 'Root C', 'Root B', 'Root D'];
+        $expectedOrder = ['Root A', 'Root B', 'Root C', 'Root D'];
 
-        $rootA->makeRoot();
+        foreach ($rootNames as $name) {
+            $root = new MultipleTree(['name' => $name]);
 
-        $rootC = new MultipleTree(['name' => 'Root C']);
+            $root->makeRoot();
+        }
 
-        $rootC->makeRoot();
-
-        $rootB = new MultipleTree(['name' => 'Root B']);
-
-        $rootB->makeRoot();
-
-        $rootD = new MultipleTree(['name' => 'Root D']);
-
-        $rootD->makeRoot();
         $command = $this->getDb()->createCommand();
 
-        $command->update('multiple_tree', ['tree' => 1], ['name' => 'Root A'])->execute();
-        $command->update('multiple_tree', ['tree' => 2], ['name' => 'Root B'])->execute();
-        $command->update('multiple_tree', ['tree' => 3], ['name' => 'Root C'])->execute();
-        $command->update('multiple_tree', ['tree' => 4], ['name' => 'Root D'])->execute();
+        foreach ($expectedOrder as $index => $name) {
+            $command->update('multiple_tree', ['tree' => $treeIds[$index]], ['name' => $name])->execute();
+        }
 
         $rootsList = MultipleTree::find()->roots()->all();
-
-        $expectedOrder = ['Root A', 'Root B', 'Root C', 'Root D'];
 
         self::assertCount(
             4,
