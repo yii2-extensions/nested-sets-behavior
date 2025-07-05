@@ -204,13 +204,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
      * @param array $structure Hierarchical tree structure definition
      * @param array $updates Database updates to apply after creation
      * @param string $modelClass The model class to use (Tree::class or MultipleTree::class)
-     * @return Tree|MultipleTree The root node
+     *
+     * @throws InvalidArgumentException if the structure array is empty.
+     *
+     * @return MultipleTree|Tree The root node
      *
      * @phpstan-param TreeStructure $structure
      * @phpstan-param UpdateData $updates
      * @phpstan-param class-string<Tree|MultipleTree> $modelClass
-     *
-     * @throws InvalidArgumentException if the structure array is empty.
      */
     protected function createTreeStructure(
         array $structure,
@@ -384,7 +385,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
     /**
      * Recursively creates children for a given parent node.
      *
-     * @param Tree|MultipleTree $parent The parent node
+     * @param MultipleTree|Tree $parent The parent node
      * @param array $nodes Children definition (can be strings or arrays)
      *
      * @phpstan-param NodeChildren $nodes

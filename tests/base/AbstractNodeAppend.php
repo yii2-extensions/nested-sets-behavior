@@ -61,6 +61,7 @@ abstract class AbstractNodeAppend extends TestCase
             self::fail('Real insertion failed: ' . $e->getMessage());
         }
     }
+
     public function testAppendToWithRunValidationParameterUsingStrictValidation(): void
     {
         $this->generateFixtureTree();
