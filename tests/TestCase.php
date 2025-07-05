@@ -7,8 +7,9 @@ namespace yii2\extensions\nestedsets\tests;
 use RuntimeException;
 use SimpleXMLElement;
 use Yii;
+use yii\base\InvalidArgumentException;
 use yii\console\Application;
-use yii\db\{Connection, SchemaBuilderTrait};
+use yii\db\{ActiveQuery, ActiveRecord, Connection, SchemaBuilderTrait};
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 
 use function array_merge;
@@ -30,11 +31,15 @@ use function str_replace;
  *     depth: int,
  *   }
  * >
+ * @phpstan-type NodeChildren array<string|array{name: string, children?: array<mixed>}>
+ * @phpstan-type TreeStructure array<array<mixed>>
+ * @phpstan-type UpdateData array<array{name: string, lft?: int, rgt?: int, depth?: int}>
  */
 class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
 
+    protected string|null $dsn = null;
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
 
     protected function setUp(): void
@@ -47,6 +52,66 @@ class TestCase extends \PHPUnit\Framework\TestCase
     public function getDb(): Connection
     {
         return Yii::$app->getDb();
+    }
+
+    /**
+     * Asserts that a list of tree nodes matches the expected order.
+     *
+     * @param array $nodesList List of tree nodes to validate
+     * @param array $expectedOrder Expected order of node names
+     * @param string $nodeType Type of nodes being tested (for error messages)
+     *
+     * @phpstan-param array<ActiveRecord> $nodesList
+     * @phpstan-param array<string> $expectedOrder
+     */
+    protected function assertNodesInCorrectOrder(array $nodesList, array $expectedOrder, string $nodeType): void
+    {
+        self::assertCount(
+            count($expectedOrder),
+            $nodesList,
+            "{$nodeType} list should contain exactly '" . count($expectedOrder) . "' elements.",
+        );
+
+        foreach ($nodesList as $index => $node) {
+            self::assertInstanceOf(
+                Tree::class,
+                $node,
+                "{$nodeType} at index {$index} should be an instance of 'Tree'.",
+            );
+
+            if (isset($expectedOrder[$index])) {
+                self::assertEquals(
+                    $expectedOrder[$index],
+                    $node->getAttribute('name'),
+                    "{$nodeType} at index {$index} should be {$expectedOrder[$index]} in correct 'lft' order.",
+                );
+            }
+        }
+    }
+
+    /**
+     * Asserts that a query contains ORDER BY clause with 'lft' column.
+     *
+     * @param ActiveQuery $query The query to check
+     * @param string $methodName Name of the method being tested
+     *
+     * @phpstan-param ActiveQuery<ActiveRecord> $query
+     */
+    protected function assertQueryHasOrderBy(ActiveQuery $query, string $methodName): void
+    {
+        $sql = $query->createCommand()->getRawSql();
+
+        self::assertStringContainsString(
+            'ORDER BY',
+            $sql,
+            "'{$methodName}' query should include 'ORDER BY' clause for deterministic results.",
+        );
+
+        self::assertStringContainsString(
+            '`lft`',
+            $sql,
+            "'{$methodName}' query should order by 'left' attribute for consistent ordering.",
+        );
     }
 
     /**
@@ -131,6 +196,55 @@ class TestCase extends \PHPUnit\Framework\TestCase
                 'depth' => $this->integer()->notNull(),
             ],
         )->execute();
+    }
+
+    /**
+     * Creates a tree structure based on a hierarchical definition.
+     *
+     * @param array $structure Hierarchical tree structure definition
+     * @param array $updates Database updates to apply after creation
+     * @param string $modelClass The model class to use (Tree::class or MultipleTree::class)
+     * @return Tree|MultipleTree The root node
+     *
+     * @phpstan-param TreeStructure $structure
+     * @phpstan-param UpdateData $updates
+     * @phpstan-param class-string<Tree|MultipleTree> $modelClass
+     *
+     * @throws InvalidArgumentException if the structure array is empty.
+     */
+    protected function createTreeStructure(
+        array $structure,
+        array $updates = [],
+        string $modelClass = Tree::class,
+    ): Tree|MultipleTree {
+        if ($structure === []) {
+            throw new InvalidArgumentException('Tree structure cannot be empty.');
+        }
+
+        $this->createDatabase();
+
+        $rootNode = null;
+
+        foreach ($structure as $rootDefinition) {
+            $root = new $modelClass(['name' => $rootDefinition['name'] ?? 'Root']);
+            $root->makeRoot();
+
+            if ($rootNode === null) {
+                $rootNode = $root;
+            }
+
+            if (isset($rootDefinition['children'])) {
+                /** @phpstan-var NodeChildren $children */
+                $children = $rootDefinition['children'];
+                $this->createChildrenRecursively($root, $children);
+            }
+        }
+
+        $this->applyUpdates($updates);
+
+        $rootNode->refresh();
+
+        return $rootNode;
     }
 
     protected function generateFixtureTree(): void
@@ -236,10 +350,61 @@ class TestCase extends \PHPUnit\Framework\TestCase
                 'components' => [
                     'db' => [
                         'class' => Connection::class,
-                        'dsn' => 'sqlite::memory:',
+                        'dsn' => $this->dsn !== null ? $this->dsn : 'sqlite::memory:',
                     ],
                 ],
             ],
         );
+    }
+
+    /**
+     * Applies database updates to tree nodes.
+     *
+     * @param array $updates Array of updates to apply
+     *
+     * @phpstan-param UpdateData $updates
+     */
+    private function applyUpdates(array $updates): void
+    {
+        if ($updates === []) {
+            return;
+        }
+
+        $command = $this->getDb()->createCommand();
+
+        foreach ($updates as $update) {
+            $name = $update['name'];
+
+            unset($update['name']);
+
+            $command->update('tree', $update, ['name' => $name])->execute();
+        }
+    }
+
+    /**
+     * Recursively creates children for a given parent node.
+     *
+     * @param Tree|MultipleTree $parent The parent node
+     * @param array $nodes Children definition (can be strings or arrays)
+     *
+     * @phpstan-param NodeChildren $nodes
+     */
+    private function createChildrenRecursively(Tree|MultipleTree $parent, array $nodes): void
+    {
+        foreach ($nodes as $nodeDefinition) {
+            if (is_string($nodeDefinition)) {
+                $node = new ($parent::class)(['name' => $nodeDefinition]);
+                $node->appendTo($parent);
+            } else {
+                $node = new ($parent::class)(['name' => $nodeDefinition['name']]);
+                $node->appendTo($parent);
+
+                if (isset($nodeDefinition['children'])) {
+                    /** @phpstan-var NodeChildren $children */
+                    $children = $nodeDefinition['children'];
+                    $this->createChildrenRecursively($node, $children);
+                }
+            }
+        }
     }
 }
