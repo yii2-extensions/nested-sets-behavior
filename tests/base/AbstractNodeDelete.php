@@ -137,6 +137,11 @@ abstract class AbstractNodeDelete extends TestCase
             $simpleXML->asXML(),
             'XML dataset after deleting nodes should match the expected result.',
         );
+        self::assertGreaterThan(
+            0,
+            Tree::find()->andWhere(['>', 'lft', 0])->count(),
+            "Child nodes should be preserved when using 'delete()' instead of 'deleteWithChildren()'",
+        );
     }
 
     /**
