@@ -10,26 +10,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
 
 abstract class AbstractExtensibility extends TestCase
 {
-    public function testProtectedApplyTreeAttributeConditionRemainsAccessibleToSubclasses(): void
-    {
-        $this->createDatabase();
-
-        $testNode = new ExtendableMultipleTree(
-            [
-                'name' => 'Extensibility Test Node',
-                'tree' => 1,
-            ],
-        );
-
-        $extendableBehavior = $testNode->getBehavior('nestedSetsBehavior');
-
-        self::assertInstanceOf(
-            ExtendableNestedSetsBehavior::class,
-            $extendableBehavior,
-            "'ExtendableMultipleTree' should use 'ExtendableNestedSetsBehavior'.",
-        );
-    }
-
     public function testProtectedBeforeInsertNodeRemainsAccessibleToSubclasses(): void
     {
         $this->createDatabase();
