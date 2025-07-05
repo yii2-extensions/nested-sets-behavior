@@ -241,7 +241,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
             }
         }
 
-        $this->applyUpdates($updates);
+        $this->applyUpdates($updates, $modelClass === MultipleTree::class ? 'multiple_tree' : 'tree');
 
         $rootNode->refresh();
 
@@ -361,11 +361,12 @@ class TestCase extends \PHPUnit\Framework\TestCase
     /**
      * Applies database updates to tree nodes.
      *
-     * @param array $updates Array of updates to apply
+     * @param array $updates Array of updates to apply.
+     * @param string $tableName Name of the table to apply updates to.
      *
      * @phpstan-param UpdateData $updates
      */
-    private function applyUpdates(array $updates): void
+    private function applyUpdates(array $updates, string $tableName): void
     {
         if ($updates === []) {
             return;
@@ -378,7 +379,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
             unset($update['name']);
 
-            $command->update('tree', $update, ['name' => $name])->execute();
+            $command->update($tableName, $update, ['name' => $name])->execute();
         }
     }
 
