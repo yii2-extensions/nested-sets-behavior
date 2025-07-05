@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace yii2\extensions\nestedsets\tests;
+namespace yii2\extensions\nestedsets\tests\base;
 
 use LogicException;
 use yii\helpers\ArrayHelper;
 use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeQuery};
+use yii2\extensions\nestedsets\tests\TestCase;
 
-final class NestedSetsQueryBehaviorTest extends TestCase
+abstract class AbstractQueryBehavior extends TestCase
 {
     public function testLeavesMethodRequiresLeftAttributeOrderingForConsistentResults(): void
     {
