@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace yii2\extensions\nestedsets\tests\pgsql;
+
+use PHPUnit\Framework\Attributes\Group;
+use yii2\extensions\nestedsets\tests\base\AbstractValidationAndStructure;
+
+#[Group('pgsql')]
+final class ValidationAndStructureTest extends AbstractValidationAndStructure
+{
+    protected string|null $dsn = 'pgsql:host=localhost;dbname=yiitest;port=5432;';
+    protected string $password = 'root';
+    protected string $username = 'root';
+}
