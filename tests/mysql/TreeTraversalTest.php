@@ -10,8 +10,8 @@ use yii2\extensions\nestedsets\tests\base\AbstractTreeTraversal;
 #[Group('mysql')]
 final class TreeTraversalTest extends AbstractTreeTraversal
 {
-    protected string|null $dsn = 'mysql:host=127.0.0.1;dbname=yiitest;charset=utf8mb4';
     protected string $driverName = 'mysql';
+    protected string|null $dsn = 'mysql:host=127.0.0.1;dbname=yiitest;charset=utf8mb4';
     protected string $password = 'root';
     protected string $username = 'root';
 }

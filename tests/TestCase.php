@@ -39,9 +39,9 @@ use function str_replace;
 class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
+    protected string $driverName = 'sqlite';
 
     protected string|null $dsn = null;
-    protected string $driverName = 'sqlite';
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
     protected string $password = '';
     protected string $username = '';

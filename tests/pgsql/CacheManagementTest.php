@@ -10,8 +10,8 @@ use yii2\extensions\nestedsets\tests\base\AbstractCacheManagement;
 #[Group('pgsql')]
 final class CacheManagementTest extends AbstractCacheManagement
 {
-    protected string|null $dsn = 'pgsql:host=localhost;dbname=yiitest;port=5432;';
     protected string $driverName = 'pgsql';
+    protected string|null $dsn = 'pgsql:host=localhost;dbname=yiitest;port=5432;';
     protected string $password = 'root';
     protected string $username = 'root';
 }

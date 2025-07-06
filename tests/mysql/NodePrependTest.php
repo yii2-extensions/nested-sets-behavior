@@ -10,8 +10,8 @@ use yii2\extensions\nestedsets\tests\base\AbstractNodePrepend;
 #[Group('mysql')]
 final class NodePrependTest extends AbstractNodePrepend
 {
-    protected string|null $dsn = 'mysql:host=127.0.0.1;dbname=yiitest;charset=utf8mb4';
     protected string $driverName = 'mysql';
+    protected string|null $dsn = 'mysql:host=127.0.0.1;dbname=yiitest;charset=utf8mb4';
     protected string $password = 'root';
     protected string $username = 'root';
 }
