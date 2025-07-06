@@ -1070,7 +1070,10 @@ class NestedSetsBehavior extends Behavior
      */
     protected function beforeInsertRootNode(): void
     {
-        if ($this->treeAttribute === false && $this->getOwner()::find()->roots()->exists()) {
+        if (
+            $this->treeAttribute === false &&
+            $this->getOwner()::find()->andWhere([$this->leftAttribute => 1])->exists()
+        ) {
             throw new Exception('Can not create more than one root when "treeAttribute" is false.');
         }
 
