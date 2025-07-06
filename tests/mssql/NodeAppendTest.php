@@ -12,6 +12,6 @@ final class NodeAppendTest extends AbstractNodeAppend
 {
     protected string $driverName = 'sqlsrv';
     protected string|null $dsn = 'sqlsrv:Server=127.0.0.1,1433;Database=yiitest;Encrypt=no';
-    protected string $password = 'SA';
-    protected string $username = 'YourStrong!Passw0rd';
+    protected string $password = 'YourStrong!Passw0rd';
+    protected string $username = 'SA';
 }
