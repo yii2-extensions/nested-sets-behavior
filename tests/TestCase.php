@@ -173,7 +173,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
      *
      * This method properly converts those resources to strings for use with {@see SimpleXMLElement::addAttribute()}.
      *
-     * @param int|string|resource|null $value The value to convert to string
+     * @param int|resource|string|null $value The value to convert to string
      *
      * @return string The converted string value
      */
