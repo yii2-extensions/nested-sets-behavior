@@ -42,7 +42,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
     protected string|null $dsn = null;
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
     protected string $password = '';
-    protected string $user = '';
+    protected string $username = '';
 
     protected function setUp(): void
     {
@@ -354,8 +354,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
                     'db' => [
                         'class' => Connection::class,
                         'dsn' => $this->dsn !== null ? $this->dsn : 'sqlite::memory:',
-                        'username' => $this->user,
                         'password' => $this->password,
+                        'username' => $this->username,
                     ],
                 ],
             ],
