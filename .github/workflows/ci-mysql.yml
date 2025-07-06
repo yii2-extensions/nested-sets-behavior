@@ -2,7 +2,7 @@ on:
   - pull_request
   - push
 
-name: build
+name: build-mysql
 
 jobs:
   mysql:
@@ -27,4 +27,4 @@ jobs:
       extensions: pdo, pdo_mysql
       group-phpunit: mysql
       os: '["ubuntu-latest"]'
-      php-versions: '["8.4"]'
+      php-version: '["8.4"]'
