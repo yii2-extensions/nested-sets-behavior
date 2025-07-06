@@ -24,6 +24,7 @@ jobs:
       database-type: mysql
       database-versions: '["8.0", "8.4", "latest"]'
       enable-concurrency: true
-      group-phpunit: mysql
       extensions: pdo, pdo_mysql
+      group-phpunit: mysql
       os: '["ubuntu-latest"]'
+      php-versions: '["8.4"]'
