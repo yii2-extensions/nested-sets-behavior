@@ -169,11 +169,11 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $command = $this->getDb()->createCommand();
 
         if ($this->getDb()->getTableSchema('tree', true) !== null) {
-            $command->dropTable('tree');
+            $command->dropTable('tree')->execute();
         }
 
         if ($this->getDb()->getTableSchema('multiple_tree', true) !== null) {
-            $command->dropTable('multiple_tree');
+            $command->dropTable('multiple_tree')->execute();
         }
 
         $command->createTable(
