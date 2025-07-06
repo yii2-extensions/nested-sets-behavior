@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace yii2\extensions\nestedsets\tests\sqlite;
+namespace yii2\extensions\nestedsets\tests\mysql;
 
 use PHPUnit\Framework\Attributes\Group;
 use yii2\extensions\nestedsets\tests\base\AbstractExtensibility;
 
-#[Group('sqlite')]
+#[Group('mysql')]
 final class ExtensibilityTest extends AbstractExtensibility
 {
     protected string|null $dsn = 'sqlite::memory:';

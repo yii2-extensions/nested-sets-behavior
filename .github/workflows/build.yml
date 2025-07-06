@@ -26,6 +26,7 @@ jobs:
       composer-command: |
         composer require yiisoft/yii2:22.0.x-dev --prefer-dist --no-progress --no-interaction --no-scripts --ansi
       concurrency-group: phpunit-${{ github.workflow }}-${{ github.ref }}
+      exclude-group-phpunit: mysql
       extensions: pdo, pdo_sqlite
   phpunit-compatibility:
     uses: php-forge/actions/.github/workflows/phpunit.yml@main
@@ -33,4 +34,5 @@ jobs:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
       concurrency-group: compatibility-${{ github.workflow }}-${{ github.ref }}
+      exclude-group-phpunit: mysql
       extensions: pdo, pdo_sqlite

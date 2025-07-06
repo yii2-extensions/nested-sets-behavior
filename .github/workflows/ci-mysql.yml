@@ -1,0 +1,29 @@
+on:
+  - pull_request
+  - push
+
+name: ci-mysql
+
+jobs:
+  mysql:
+    name: MySQL database tests.
+    uses: ./.github/workflows/phpunit-database.yml
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      concurrency-group: mysql-${{ github.ref }}
+      database-env: |
+        {
+          "MYSQL_DATABASE": "yiitest",
+          "MYSQL_ROOT_PASSWORD": "root",
+        }
+      database-health-cmd: "mysqladmin ping"
+      database-health-retries: 3
+      database-image: mysql
+      database-port: 3306
+      database-type: mysql
+      database-versions: '["8.0", "8.4", "latest"]'
+      enable-concurrency: true
+      group-phpunit: mysql
+      extensions: pdo, pdo_mysql
+      os: '["ubuntu-latest"]'
