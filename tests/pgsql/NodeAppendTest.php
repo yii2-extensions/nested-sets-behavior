@@ -11,6 +11,7 @@ use yii2\extensions\nestedsets\tests\base\AbstractNodeAppend;
 final class NodeAppendTest extends AbstractNodeAppend
 {
     protected string|null $dsn = 'pgsql:host=localhost;dbname=yiitest;port=5432;';
+    protected string $driverName = 'pgsql';
     protected string $password = 'root';
     protected string $username = 'root';
 }

@@ -16,6 +16,7 @@ use function array_merge;
 use function array_values;
 use function dom_import_simplexml;
 use function file_get_contents;
+use function preg_replace;
 use function simplexml_load_string;
 use function str_replace;
 
@@ -40,6 +41,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
     use SchemaBuilderTrait;
 
     protected string|null $dsn = null;
+    protected string $driverName = 'sqlite';
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
     protected string $password = '';
     protected string $username = '';
@@ -105,12 +107,12 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         self::assertStringContainsString(
             'ORDER BY',
-            $sql,
+            $this->replaceQuotes($sql),
             "'{$methodName}' query should include 'ORDER BY' clause for deterministic results.",
         );
 
         self::assertStringContainsString(
-            '`lft`',
+            $this->replaceQuotes('[[lft]]'),
             $sql,
             "'{$methodName}' query should order by 'left' attribute for consistent ordering.",
         );
@@ -360,6 +362,40 @@ class TestCase extends \PHPUnit\Framework\TestCase
                 ],
             ],
         );
+    }
+
+    /**
+     * Adjust dbms specific escaping.
+     *
+     * @param string $sql SQL to adjust.
+     *
+     * @return string Adjusted SQL.
+     */
+    protected function replaceQuotes(string $sql): string
+    {
+        return match ($this->driverName) {
+            'mysql', 'sqlite' => str_replace(
+                ['[[', ']]'],
+                '`',
+                $sql,
+            ),
+            'oci' => str_replace(
+                ['[[', ']]'],
+                '"',
+                $sql,
+            ),
+            'pgsql' => str_replace(
+                ['\\[', '\\]'],
+                ['[', ']'],
+                preg_replace('/(\[\[)|((?<!(\[))\]\])/', '"', $sql) ?? $sql,
+            ),
+            'sqlsrv' => str_replace(
+                ['[[', ']]'],
+                ['[', ']'],
+                $sql,
+            ),
+            default => $sql,
+        };
     }
 
     /**
