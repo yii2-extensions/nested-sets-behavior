@@ -11,7 +11,7 @@ use yii2\extensions\nestedsets\tests\base\AbstractExtensibility;
 final class ExtensibilityTest extends AbstractExtensibility
 {
     protected string $driverName = 'oci';
-    protected string|null $dsn = 'oci:dbname=localhost/XE;charset=AL32UTF8;';
+    protected string|null $dsn = 'oci:dbname=localhost/FREEPDB1;charset=AL32UTF8;';
     protected string $password = 'root';
     protected string $username = 'system';
 }
