@@ -32,7 +32,7 @@ jobs:
         }
       database-health-cmd: "healthcheck.sh"
       database-health-retries: 10
-      database-image: gvenzl/oracle-xe
+      database-image: gvenzl/oracle-free
       database-port: 1521
       database-type: oracle
       database-versions: '["23"]'
