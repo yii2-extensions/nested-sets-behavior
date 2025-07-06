@@ -1,0 +1,58 @@
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
+      - '.gitattributes'
+
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
+      - '.gitattributes'
+
+name: build-mssql
+
+jobs:
+  mssql:
+    name: SQL Server tests.
+    uses: php-forge/actions/.github/workflows/phpunit-database.yml@main
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      concurrency-group: mssql-${{ github.ref }}
+      database-env: |
+        {
+          "ACCEPT_EULA": "Y",
+          "SA_PASSWORD": "YourStrong!Passw0rd",
+          "MSSQL_PID": "Developer"
+        }
+      database-health-cmd: "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P 'YourStrong!Passw0rd' -Q 'SELECT 1'"
+      database-health-retries: 5
+      database-image: mcr.microsoft.com/mssql/server
+      database-port: 1433
+      database-type: mssql
+      database-versions: '["2022-latest"]'
+      enable-concurrency: true
+      extensions: pdo, pdo_sqlsrv, sqlsrv
+      os: '["ubuntu-latest"]'
+      php-version: '["8.4"]'
+      phpunit-group: mssql
+      setup-commands: |
+        # Install Microsoft ODBC Driver for SQL Server
+        sudo ACCEPT_EULA=Y apt-get install -y msodbcsql18
+
+        # Wait for SQL Server to be fully ready
+        sleep 15
+
+        # Create test database
+        docker exec -i database /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P 'YourStrong!Passw0rd' -Q "
+        IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'yiitest')
+        BEGIN
+            CREATE DATABASE yiitest;
+        END
+        "

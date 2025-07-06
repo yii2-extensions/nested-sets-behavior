@@ -27,6 +27,7 @@ jobs:
         composer require yiisoft/yii2:22.0.x-dev --prefer-dist --no-progress --no-interaction --no-scripts --ansi
       concurrency-group: phpunit-${{ github.workflow }}-${{ github.ref }}
       extensions: pdo, pdo_sqlite
+      phpunit-group: sqlite
   phpunit-compatibility:
     uses: php-forge/actions/.github/workflows/phpunit.yml@main
     secrets:
@@ -34,3 +35,4 @@ jobs:
     with:
       concurrency-group: compatibility-${{ github.workflow }}-${{ github.ref }}
       extensions: pdo, pdo_sqlite
+      phpunit-group: sqlite

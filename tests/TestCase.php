@@ -16,6 +16,7 @@ use function array_merge;
 use function array_values;
 use function dom_import_simplexml;
 use function file_get_contents;
+use function preg_replace;
 use function simplexml_load_string;
 use function str_replace;
 
@@ -38,9 +39,12 @@ use function str_replace;
 class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
+    protected string $driverName = 'sqlite';
 
     protected string|null $dsn = null;
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
+    protected string $password = '';
+    protected string $username = '';
 
     protected function setUp(): void
     {
@@ -103,12 +107,12 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         self::assertStringContainsString(
             'ORDER BY',
-            $sql,
+            $this->replaceQuotes($sql),
             "'{$methodName}' query should include 'ORDER BY' clause for deterministic results.",
         );
 
         self::assertStringContainsString(
-            '`lft`',
+            $this->replaceQuotes('[[lft]]'),
             $sql,
             "'{$methodName}' query should order by 'left' attribute for consistent ordering.",
         );
@@ -167,11 +171,11 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $command = $this->getDb()->createCommand();
 
         if ($this->getDb()->getTableSchema('tree', true) !== null) {
-            $command->dropTable('tree');
+            $command->dropTable('tree')->execute();
         }
 
         if ($this->getDb()->getTableSchema('multiple_tree', true) !== null) {
-            $command->dropTable('multiple_tree');
+            $command->dropTable('multiple_tree')->execute();
         }
 
         $command->createTable(
@@ -291,14 +295,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function getDataSet(): array
     {
-        $dataSetTree = Tree::find()->asArray()->all();
+        $dataSetTree = Tree::find()->orderBy(['id' => SORT_ASC])->asArray()->all();
 
         foreach ($dataSetTree as $key => $value) {
             $dataSetTree[$key]['type'] = 'tree';
             $dataSetTree[$key]['tree'] = 0;
         }
 
-        $dataSetMultipleTree = MultipleTree::find()->asArray()->all();
+        $dataSetMultipleTree = MultipleTree::find()->orderBy(['id' => SORT_ASC])->asArray()->all();
 
         foreach ($dataSetMultipleTree as $key => $value) {
             $dataSetMultipleTree[$key]['type'] = 'multiple_tree';
@@ -314,7 +318,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function getDataSetMultipleTree(): array
     {
-        $dataSetMultipleTree = MultipleTree::find()->asArray()->all();
+        $dataSetMultipleTree = MultipleTree::find()->orderBy(['id' => SORT_ASC])->asArray()->all();
 
         foreach ($dataSetMultipleTree as $key => $value) {
             $dataSetMultipleTree[$key]['type'] = 'multiple_tree';
@@ -352,10 +356,46 @@ class TestCase extends \PHPUnit\Framework\TestCase
                     'db' => [
                         'class' => Connection::class,
                         'dsn' => $this->dsn !== null ? $this->dsn : 'sqlite::memory:',
+                        'password' => $this->password,
+                        'username' => $this->username,
                     ],
                 ],
             ],
         );
+    }
+
+    /**
+     * Adjust dbms specific escaping.
+     *
+     * @param string $sql SQL to adjust.
+     *
+     * @return string Adjusted SQL.
+     */
+    protected function replaceQuotes(string $sql): string
+    {
+        return match ($this->driverName) {
+            'mysql', 'sqlite' => str_replace(
+                ['[[', ']]'],
+                '`',
+                $sql,
+            ),
+            'oci' => str_replace(
+                ['[[', ']]'],
+                '"',
+                $sql,
+            ),
+            'pgsql' => str_replace(
+                ['\\[', '\\]'],
+                ['[', ']'],
+                preg_replace('/(\[\[)|((?<!(\[))\]\])/', '"', $sql) ?? $sql,
+            ),
+            'sqlsrv' => str_replace(
+                ['[[', ']]'],
+                ['[', ']'],
+                $sql,
+            ),
+            default => $sql,
+        };
     }
 
     /**

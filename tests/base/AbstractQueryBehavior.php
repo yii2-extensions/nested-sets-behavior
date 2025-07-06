@@ -128,7 +128,7 @@ abstract class AbstractQueryBehavior extends TestCase
             "'roots()' query should include 'ORDER BY' clause for consistent results.",
         );
         self::assertStringContainsString(
-            '`lft`',
+            $this->replaceQuotes('[[lft]]'),
             $sql,
             "'roots()' query should order by 'left' attribute for deterministic ordering.",
         );

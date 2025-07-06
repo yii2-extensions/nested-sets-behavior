@@ -1,0 +1,43 @@
+on:
+  pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
+      - '.gitattributes'
+
+  push:
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+      - '.gitignore'
+      - '.gitattributes'
+
+name: build-mysql
+
+jobs:
+  mysql:
+    name: MySQL tests.
+    uses: php-forge/actions/.github/workflows/phpunit-database.yml@main
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+    with:
+      concurrency-group: mysql-${{ github.ref }}
+      database-env: |
+        {
+          "MYSQL_DATABASE": "yiitest",
+          "MYSQL_ROOT_PASSWORD": "root",
+        }
+      database-health-cmd: "mysqladmin ping"
+      database-health-retries: 3
+      database-image: mysql
+      database-port: 3306
+      database-type: mysql
+      database-versions: '["8.0", "8.4", "latest"]'
+      enable-concurrency: true
+      extensions: pdo, pdo_mysql
+      os: '["ubuntu-latest"]'
+      php-version: '["8.4"]'
+      phpunit-group: mysql
