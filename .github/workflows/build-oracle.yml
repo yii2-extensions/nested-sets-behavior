@@ -34,7 +34,7 @@ jobs:
       database-health-retries: 10
       database-image: gvenzl/oracle-free
       database-port: 1521
-      database-type: oracle
+      database-type: oci
       database-versions: '["23"]'
       enable-concurrency: true
       extensions: pdo, pdo_oci
