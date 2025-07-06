@@ -40,4 +40,4 @@ jobs:
       extensions: pdo, pdo_oci
       os: '["ubuntu-latest"]'
       php-version: '["8.4"]'
-      phpunit-group: oracle
+      phpunit-group: oci
