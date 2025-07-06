@@ -41,6 +41,14 @@ with high-performance database operations.
 - ✅ **Transaction Safety** - All operations are wrapped in database transactions.
 - ✅ **Validation & Error Handling** - Comprehensive validation with clear error messages.
 
+## Database support
+
+[![Microsoft SQL Server](https://img.shields.io/badge/Microsoft%20SQL%20Server-CC2927?style=for-the-badge&logo=microsoft%20sql%20server&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-mssql.yml)
+[![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-mysql.yml)
+[![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-oracle.yml)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-pgsql.yml)
+[![SQLite](https://img.shields.io/badge/sqlite-003B57.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml)
+
 ## Quick start
 
 ### Installation
@@ -267,14 +275,6 @@ $roots = Category::find()->roots()->all();
 // Find all leaf nodes  
 $leaves = Category::find()->leaves()->all();
 ```
-
-## Database support
-
-[![Microsoft SQL Server](https://img.shields.io/badge/Microsoft%20SQL%20Server-CC2927?style=for-the-badge&logo=microsoft%20sql%20server&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-mssql.yml)
-[![MySQL](https://img.shields.io/badge/mysql-4479A1.svg?style=for-the-badge&logo=mysql&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-mysql.yml)
-[![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-oracle.yml)
-[![PostgreSQL](https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-pgsql.yml)
-[![SQLite](https://img.shields.io/badge/sqlite-003B57.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml)
 
 ## Documentation
 
