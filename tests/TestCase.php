@@ -293,14 +293,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function getDataSet(): array
     {
-        $dataSetTree = Tree::find()->asArray()->all();
+        $dataSetTree = Tree::find()->orderBy(['id' => SORT_ASC])->asArray()->all();
 
         foreach ($dataSetTree as $key => $value) {
             $dataSetTree[$key]['type'] = 'tree';
             $dataSetTree[$key]['tree'] = 0;
         }
 
-        $dataSetMultipleTree = MultipleTree::find()->asArray()->all();
+        $dataSetMultipleTree = MultipleTree::find()->orderBy(['id' => SORT_ASC])->asArray()->all();
 
         foreach ($dataSetMultipleTree as $key => $value) {
             $dataSetMultipleTree[$key]['type'] = 'multiple_tree';
@@ -316,7 +316,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function getDataSetMultipleTree(): array
     {
-        $dataSetMultipleTree = MultipleTree::find()->asArray()->all();
+        $dataSetMultipleTree = MultipleTree::find()->orderBy(['id' => SORT_ASC])->asArray()->all();
 
         foreach ($dataSetMultipleTree as $key => $value) {
             $dataSetMultipleTree[$key]['type'] = 'multiple_tree';
