@@ -129,16 +129,16 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         foreach ($dataSet as $item) {
             $treeElement = $xml->addChild($item['type']);
-            $treeElement?->addAttribute('id', (string) $item['id']);
+            $treeElement?->addAttribute('id', $this->convertToString($item['id']));
 
             if ($item['type'] === 'multiple_tree') {
-                $treeElement?->addAttribute('tree', (string) $item['tree']);
+                $treeElement?->addAttribute('tree', $this->convertToString($item['tree']));
             }
 
-            $treeElement?->addAttribute('lft', (string) $item['lft']);
-            $treeElement?->addAttribute('rgt', (string) $item['rgt']);
-            $treeElement?->addAttribute('depth', (string) $item['depth']);
-            $treeElement?->addAttribute('name', $item['name']);
+            $treeElement?->addAttribute('lft', $this->convertToString($item['lft']));
+            $treeElement?->addAttribute('rgt', $this->convertToString($item['rgt']));
+            $treeElement?->addAttribute('depth', $this->convertToString($item['depth']));
+            $treeElement?->addAttribute('name', $this->convertToString($item['name']));
         }
 
         $dom = dom_import_simplexml($xml)->ownerDocument;
@@ -164,6 +164,36 @@ class TestCase extends \PHPUnit\Framework\TestCase
             ],
             $formattedXml,
         );
+    }
+
+    /**
+     * Converts a value to string, handling Oracle resource types correctly.
+     *
+     * Oracle database may return numeric values as resource types when using `asArray()` with {@see ActiveRecord}.
+     *
+     * This method properly converts those resources to strings for use with {@see SimpleXMLElement::addAttribute()}.
+     *
+     * @param int|string|resource|null $value The value to convert to string
+     *
+     * @return string The converted string value
+     */
+    protected function convertToString($value): string
+    {
+        if (is_resource($value)) {
+            $content = stream_get_contents($value);
+
+            if (is_string($content)) {
+                return trim($content);
+            }
+
+            return '';
+        }
+
+        if ($value === null) {
+            return '';
+        }
+
+        return (string) $value;
     }
 
     protected function createDatabase(): void
