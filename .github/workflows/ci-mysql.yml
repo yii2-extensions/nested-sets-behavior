@@ -2,11 +2,11 @@ on:
   - pull_request
   - push
 
-name: ci-mysql
+name: build
 
 jobs:
   mysql:
-    name: MySQL database tests.
+    name: MySQL tests.
     uses: php-forge/actions/.github/workflows/phpunit-database.yml@main
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

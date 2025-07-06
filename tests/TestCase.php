@@ -354,7 +354,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
                     'db' => [
                         'class' => Connection::class,
                         'dsn' => $this->dsn !== null ? $this->dsn : 'sqlite::memory:',
-                        'user' => $this->user,
+                        'username' => $this->user,
                         'password' => $this->password,
                     ],
                 ],
