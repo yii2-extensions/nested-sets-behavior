@@ -175,7 +175,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
             $command->dropTable('migration')->execute();
         }
 
-        $this->runMigrate('down', ['all' => true]);
+        $this->runMigrate('down', ['all']);
         $this->runMigrate('up');
     }
 
@@ -376,7 +376,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @phpstan-param array<string, mixed> $params
+     * @phpstan-param array<array-key, mixed> $params
      */
     protected function runMigrate(string $action, array $params = []): mixed
     {
