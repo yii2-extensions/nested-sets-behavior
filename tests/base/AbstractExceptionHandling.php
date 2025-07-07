@@ -9,10 +9,36 @@ use Throwable;
 use yii\base\NotSupportedException;
 use yii\db\{Exception, StaleObjectException};
 use yii2\extensions\nestedsets\NestedSetsBehavior;
-use yii2\extensions\nestedsets\tests\support\model\MultipleTree;
-use yii2\extensions\nestedsets\tests\support\model\Tree;
+use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for exception handling tests in nested sets tree behaviors.
+ *
+ * Provides a comprehensive suite of unit tests for exception scenarios in nested sets tree structures, ensuring correct
+ * exception throwing and error messages for invalid node operations and edge cases.
+ *
+ * This class validates the robustness of the nested sets behavior by simulating invalid operations such as appending,
+ * inserting, deleting, and making root nodes under unsupported conditions, covering both single and multiple tree
+ * models.
+ *
+ * The tests ensure that exceptions are thrown with the expected messages for cases like new records, root nodes, child
+ * nodes, same node operations, and missing primary keys, as well as logic errors when the behavior is not attached.
+ *
+ * Key features.
+ * - Coverage for invalid append, insert, delete, and makeRoot operations.
+ * - Ensures error handling consistency for unsupported operations.
+ * - Support for both single-tree and multi-tree models.
+ * - Tests for exception messages and types in various edge cases.
+ * - Validation of logic exceptions when the behavior is detached or not attached to the owner.
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see NestedSetsBehavior for behavior implementation.
+ * @see Tree for single-tree model.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractExceptionHandling extends TestCase
 {
     public function testThrowExceptionWhenAppendToNewNodeTargetIsNewRecord(): void
@@ -84,8 +110,9 @@ abstract class AbstractExceptionHandling extends TestCase
     }
 
     /**
-     * @throws StaleObjectException
-     * @throws Throwable
+     * @throws StaleObjectException if optimistic, locking is enabled and the data to be deleted has been modified by
+     * another process.
+     * @throws Throwable if an unexpected error occurs during execution.
      */
     public function testThrowExceptionWhenDeleteNodeIsNewRecord(): void
     {
@@ -442,8 +469,9 @@ abstract class AbstractExceptionHandling extends TestCase
     }
 
     /**
-     * @throws StaleObjectException
-     * @throws Throwable
+     * @throws StaleObjectException if optimistic, locking is enabled and the data to be deleted has been modified by
+     * another process.
+     * @throws Throwable if an unexpected error occurs during execution.
      */
     public function testThrowNotSupportedExceptionWhenDeleteIsCalledOnRootNode(): void
     {
@@ -465,7 +493,7 @@ abstract class AbstractExceptionHandling extends TestCase
     }
 
     /**
-     * @throws Throwable
+     * @throws Throwable if an unexpected error occurs during execution.
      */
     public function testThrowNotSupportedExceptionWhenInsertIsCalledOnTree(): void
     {

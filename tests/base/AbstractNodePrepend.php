@@ -7,6 +7,32 @@ namespace yii2\extensions\nestedsets\tests\base;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeWithStrictValidation};
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for node prepend tests in nested sets tree behaviors.
+ *
+ * Provides a comprehensive suite of unit and integration tests for prepending nodes in nested sets tree structures,
+ * ensuring correct tree structure, attribute updates, and validation logic for both single-tree and multi-tree models.
+ *
+ * This class validates the correctness of node prepend operations, strict validation scenarios, and XML dataset
+ * matching after structural changes.
+ *
+ * It covers edge cases such as validation bypass and attribute refresh requirements, ensuring robust behavior for all
+ * supported node manipulations.
+ *
+ * Key features.
+ * - Covers both {@see Tree} and {@see MultipleTree} model scenarios.
+ * - Ensures correct left, right, depth, and tree attribute updates after prepend operations.
+ * - Tests for prepending new and existing nodes, including cross-tree operations.
+ * - Validation of strict and non-strict prepend operations.
+ * - XML dataset matching after structural changes.
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see Tree for single-tree model.
+ * @see TreeWithStrictValidation for strict validation scenarios.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractNodePrepend extends TestCase
 {
     public function testPrependToWithRunValidationParameterUsingStrictValidation(): void

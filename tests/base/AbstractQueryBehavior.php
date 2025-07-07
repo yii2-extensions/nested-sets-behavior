@@ -5,13 +5,39 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests\base;
 
 use LogicException;
+use yii\db\Exception;
 use yii\helpers\ArrayHelper;
 use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeQuery};
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for query behavior tests in nested sets tree behaviors.
+ *
+ * Provides a suite of unit tests for verifying query methods related to leaf and root node retrieval, ordering, and
+ * behavior attachment in both single-tree and multi-tree nested sets models.
+ *
+ * This class ensures the correctness of query methods such as `leaves()` and `roots()`, including their ordering
+ * guarantees, SQL generation, and error handling when the behavior is detached or not attached to the owner.
+ *
+ * Key features.
+ * - Ensures deterministic ordering of results by left attribute and tree attribute.
+ * - Tests for correct leaf and root node retrieval in {@see Tree} and {@see MultipleTree} models.
+ * - Validates SQL query structure for ordering requirements.
+ * - Verifies exception handling when the behavior is detached or not attached to the query owner.
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see NestedSetsQueryBehavior for query behavior implementation.
+ * @see Tree for single-tree model.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractQueryBehavior extends TestCase
 {
+    /**
+     * @throws Exception if an unexpected error occurs during execution.
+     */
     public function testLeavesMethodRequiresLeftAttributeOrderingForConsistentResults(): void
     {
         $this->createDatabase();
@@ -44,7 +70,7 @@ abstract class AbstractQueryBehavior extends TestCase
 
         $leaves = MultipleTree::find()->leaves()->all();
 
-        /** @phpstan-var array<array{name: string, lft: int}> */
+        /** @phpstan-var array<array{name: string, lft: int}> $expectedLeaves */
         $expectedLeaves = [
             ['name' => 'Leaf B', 'lft' => 3],
             ['name' => 'Leaf A', 'lft' => 5],
@@ -160,6 +186,9 @@ abstract class AbstractQueryBehavior extends TestCase
         }
     }
 
+    /**
+     * @throws Exception if an unexpected error occurs during execution.
+     */
     public function testRootsMethodRequiresOrderByForCorrectTreeTraversal(): void
     {
         $this->createDatabase();

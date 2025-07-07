@@ -12,6 +12,34 @@ use yii2\extensions\nestedsets\tests\support\model\{ExtendableMultipleTree, Mult
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for cache invalidation tests in nested sets tree behaviors.
+ *
+ * Provides a comprehensive suite of integration and unit tests for cache management in nested sets tree structures,
+ * ensuring correct cache population, invalidation, and memoization across various node operations and scenarios.
+ *
+ * This class validates the cache lifecycle for the nested sets behavior by simulating node insertions, updates,
+ * deletions, and structural changes, covering both single and multiple tree models.
+ *
+ * The tests ensure that cache values for depth, left, and right attributes are correctly populated, invalidated, and
+ * memoized, and that cache invalidation is triggered by all relevant operations, including manual and automatic cases.
+ *
+ * Key features.
+ * - Coverage for tree attribute handling and owner assignment.
+ * - Integration tests for cache invalidation after node insert, update, append, delete, and makeRoot operations.
+ * - Memoization tests for depth, left, and right value accessors.
+ * - Support for both single-tree and multi-tree models.
+ * - Tests for manual and automatic cache invalidation.
+ * - Use of mock objects to verify memoization and cache state.
+ * - Verification of cache state before and after invalidation events.
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see NestedSetsBehavior for behavior implementation.
+ * @see Tree for single-tree model.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractCacheManagement extends TestCase
 {
     public function testAfterInsertCacheInvalidationIntegration(): void

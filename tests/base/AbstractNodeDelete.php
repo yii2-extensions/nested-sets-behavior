@@ -4,11 +4,37 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests\base;
 
+use PHPUnit\Framework\MockObject\Exception;
 use Throwable;
 use yii\db\{ActiveRecord, StaleObjectException};
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for node deletion tests in nested sets tree behaviors.
+ *
+ * Provides a comprehensive suite of unit tests for node deletion operations in nested sets tree structures, ensuring
+ * correct state transitions, affected row counts, and data integrity after node and subtree deletions.
+ *
+ * This class validates the behavior of the nested sets implementation by simulating node deletions, subtree removals,
+ * and update operations, covering both single and multiple tree models.
+ *
+ * The tests also cover abort scenarios for deletions, transactional behavior, and update operations on node attributes.
+ *
+ * Key features.
+ * - Covers update operations and affected row count for node attribute changes.
+ * - Ensures correct affected row counts for node and subtree deletions in both {@see Tree} and {@see MultipleTree}
+ *   models.
+ * - Tests aborting deletions via `beforeDelete()` and transactional behavior.
+ * - Validates XML dataset consistency after deletions.
+ * - Verifies node state transitions after `deleteWithChildren()` (new record status, old attributes).
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see Tree for single-tree model.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractNodeDelete extends TestCase
 {
     public function testNodeStateAfterDeleteWithChildren(): void
@@ -76,6 +102,9 @@ abstract class AbstractNodeDelete extends TestCase
         );
     }
 
+    /**
+     * @throws Exception if an unexpected error occurs during execution.
+     */
     public function testReturnFalseWhenDeleteWithChildrenIsAbortedByBeforeDelete(): void
     {
         $this->createDatabase();
@@ -112,8 +141,9 @@ abstract class AbstractNodeDelete extends TestCase
     }
 
     /**
-     * @throws StaleObjectException
-     * @throws Throwable
+     * @throws StaleObjectException if optimistic, locking is enabled and the data to be deleted has been modified by
+     * another process.
+     * @throws Throwable if an unexpected error occurs during execution.
      */
     public function testReturnOneWhenDeleteNodeForTreeAndMultipleTree(): void
     {
@@ -145,8 +175,9 @@ abstract class AbstractNodeDelete extends TestCase
     }
 
     /**
-     * @throws Throwable
-     * @throws StaleObjectException
+     * @throws StaleObjectException if optimistic, locking is enabled and the data to be deleted has been modified by
+     * another process.
+     * @throws Throwable if an unexpected error occurs during execution.
      */
     public function testReturnOneWhenUpdateNodeName(): void
     {

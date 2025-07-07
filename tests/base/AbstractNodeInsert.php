@@ -7,6 +7,33 @@ namespace yii2\extensions\nestedsets\tests\base;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeWithStrictValidation};
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for node insertion tests in nested sets tree behaviors.
+ *
+ * Provides a comprehensive suite of unit tests for node insertion operations in nested sets tree structures, ensuring
+ * correct behavior for inserting nodes before and after targets, with and without validation, and across both single
+ * and multiple tree models.
+ *
+ * This class validates the insertion logic by simulating scenarios such as inserting new and existing nodes, handling
+ * validation rules, and verifying the resulting tree structure against expected XML datasets.
+ *
+ * It covers edge cases for strict validation, cross-tree insertions, and ensures that the tree state matches the
+ * expected outcome after each operation.
+ *
+ * Key features.
+ * - Coverage for `insertAfter()` and `insertBefore()` operations with and without validation.
+ * - Edge case handling for inserting new nodes, moving existing nodes, and cross-tree insertions.
+ * - Support for both single-tree and multi-tree models.
+ * - Tests for strict validation and bypassing validation logic.
+ * - XML dataset comparison to verify tree structure after insertions.
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see Tree for single-tree model.
+ * @see TreeWithStrictValidation for strict validation scenarios.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractNodeInsert extends TestCase
 {
     public function testInsertAfterWithRunValidationParameterUsingStrictValidation(): void
