@@ -10,5 +10,6 @@
         "directories": [
             "src"
         ]
-    }
+    },
+    "timeout": 10
 }
