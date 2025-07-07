@@ -21,8 +21,8 @@ jobs:
   mutation:
     uses: php-forge/actions/.github/workflows/infection.yml@main
     with:
-      extensions: pdo, pdo_pgsql
-      framework-options: --test-framework-options="--group=pgsql"
+      extensions: pdo, pdo_pgsql, pdo_sqlite
+      framework-options: --test-framework-options="--group=pgsql,sqlite"
       hook: |
         # Configurar PostgreSQL con Docker
         docker run -d \
