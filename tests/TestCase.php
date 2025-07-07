@@ -238,7 +238,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
     protected function generateFixtureTree(): void
     {
-        $this->runMigrate('up');
+        $this->createDatabase();
 
         $command = $this->getDb()->createCommand();
 
