@@ -171,16 +171,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
     {
         $command = $this->getDb()->createCommand();
 
+        $this->runMigrate('down', ['all']);
+
         if ($this->getDb()->getTableSchema('migration', true) !== null) {
             $command->dropTable('migration')->execute();
-        }
-
-        if ($this->getDb()->getTableSchema('tree', true) !== null) {
-            $command->dropTable('tree')->execute();
-        }
-
-        if ($this->getDb()->getTableSchema('multiple_tree', true) !== null) {
-            $command->dropTable('multiple_tree')->execute();
         }
 
         $this->runMigrate('up');
