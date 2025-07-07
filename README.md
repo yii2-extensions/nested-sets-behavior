@@ -59,28 +59,40 @@ composer require yii2-extensions/nested-sets-behavior
 
 ### How it works
 
+The nested sets model is a technique for storing hierarchical data in a relational database. Unlike adjacency lists
+(parent_id approach), nested sets enable efficient tree operations with minimal database queries.
+
 1. **Creates root nodes** using the nested sets pattern with `lft`, `rgt`, and `depth` fields.
 2. **Manages hierarchy** automatically when inserting, moving, or deleting nodes.
 3. **Optimizes queries** using boundary values for efficient tree traversal.
 4. **Supports transactions** to ensure data integrity during complex operations.
 
-## Database setup
+#### Why nested sets?
 
-The package includes migrations to create the necessary database tables for nested sets functionality.
+- **Fast queries**: Get all descendants with a single query (`lft BETWEEN parent.lft AND parent.rgt`).
+- **Efficient tree operations**: No recursive queries needed for tree traversal.
+- **Automatic maintenance**: Left/right boundaries are calculated automatically.
+- **Depth tracking**: Easy to limit query depth or build breadcrumbs.
 
-### Available migrations
+```text
+Example tree structure:
+Electronics (1,12,0)
+├── Mobile Phones (2,7,1)
+│   └── Smartphones (3,6,1)
+│       └── iPhone (4,5,2)
+└── Computers (8,11,1)
+    └── Laptops (9,10,2)
 
-The package provides two migration files.
+Numbers represent: (left, right, depth)
+```
 
-1. **Single tree migration** (`m250707_103609_tree.php`) - for single tree per table.
-2. **Multiple trees migration** (`m250707_104009_multiple_tree.php`) - for multiple independent trees.
+### Database setup
 
-### Using package migrations
+The package includes ready-to-use migrations for creating the necessary database structure.
 
-#### Method 1: Run migrations directly from extension (Recommended)
+#### Quick setup (Recommended)
 
-Configure your console application to include the extension migrations path.
-
+1. **Configure console application**:
 ```php
 <?php
 
@@ -94,45 +106,33 @@ return [
         'migrate' => [
             'class' => MigrateController::class,
             'migrationPath' => [
-                '@console/migrations', // Your app migrations
-                '@vendor/yii2-extensions/nested-sets-behavior/migrations', // Extension migrations
+                '@console/migrations',
+                '@vendor/yii2-extensions/nested-sets-behavior/migrations',
             ],
         ],
     ],
 ];
 ```
 
-Then run migrations normally.
-
+2. **Run migrations**:
 ```bash
-# View available migrations (including extension migrations)
-./yii migrate/history
-
-# Run all pending migrations
-./yii migrate
-
-# Or run specific migrations
+# For single tree structure
 ./yii migrate/up m250707_103609_tree
+
+# For multiple trees structure  
 ./yii migrate/up m250707_104009_multiple_tree
 ```
 
-#### Method 2: Using migration path parameter
-
-Run migrations directly without configuration changes.
+#### Alternative: Direct migration execution
 
 ```bash
-# Run single tree migration
+# Run without configuration changes
 ./yii migrate/up --migrationPath=@vendor/yii2-extensions/nested-sets-behavior/migrations
-
-# Run specific migration from extension
-./yii migrate/up m250707_103609_tree --migrationPath=@vendor/yii2-extensions/nested-sets-behavior/migrations
 ```
 
-### Migration details
+#### Table structures created
 
-#### Single tree migration (`m250707_103609_tree.php`)
-
-Creates a `tree` table with the following structure:
+**Single tree** (`m250707_103609_tree.php`). Creates a `tree` table for single hierarchical structure.
 
 ```sql
 CREATE TABLE `tree` (
@@ -149,14 +149,12 @@ CREATE TABLE `tree` (
 );
 ```
 
-#### Multiple tree migration (`m250707_104009_multiple_tree.php`)
-
-Creates a `multiple_tree` table with the following structure:
+**Multiple trees** (`m250707_104009_multiple_tree.php`). Creates a `multiple_tree` table for multiple independent trees.
 
 ```sql
 CREATE TABLE `multiple_tree` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `tree` int(11) DEFAULT NULL,
+  `tree` int(11) DEFAULT NULL,        -- Tree identifier
   `name` varchar(255) NOT NULL,
   `lft` int(11) NOT NULL,
   `rgt` int(11) NOT NULL,
