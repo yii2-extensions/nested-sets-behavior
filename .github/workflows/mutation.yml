@@ -21,7 +21,59 @@ jobs:
   mutation:
     uses: php-forge/actions/.github/workflows/infection.yml@main
     with:
+      extensions: pdo, pdo_pgsql, pdo_sqlite
+      framework-options: --test-framework-options="--group=sqlite,mutation"
+      hook: |
+        # Config MySQL with Docker
+        docker run -d \
+          --name mysql-test \
+          -e MYSQL_ROOT_PASSWORD=root \
+          -e MYSQL_DATABASE=yiitest \
+          -e MYSQL_USER=test \
+          -e MYSQL_PASSWORD=test \
+          -p 3306:3306 \
+          --health-cmd="mysqladmin ping -h localhost" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=5 \
+          mysql:8.0
+
+        # Config PostgreSQL with Docker
+        docker run -d \
+          --name postgres-test \
+          -e POSTGRES_DB=yiitest \
+          -e POSTGRES_USER=root \
+          -e POSTGRES_PASSWORD=root \
+          -p 5432:5432 \
+          --health-cmd="pg_isready -U postgres" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          postgres:16
+
+        # Wait for MySQL to be ready
+        echo "Waiting for MySQL to be ready..."
+        timeout 120s bash -c 'until docker exec mysql-test mysqladmin ping -h localhost --silent; do sleep 3; done'
+
+        # Wait for PostgreSQL to be ready
+        echo "Waiting for PostgreSQL to be ready..."
+        timeout 60s bash -c 'until docker exec postgres-test pg_isready -U postgres; do sleep 2; done'
+
+        # Check if MySQL is running
+        echo "Testing MySQL connection..."
+        docker exec mysql-test mysql -u root -proot -e "SELECT VERSION();"
+
+        # Check if PostgreSQL is running
+        echo "Testing PostgreSQL connection..."
+        docker exec postgres-test psql -U root -d yiitest -c "SELECT version();"
+
+        # Set environment variables for MySQL and PostgreSQL
+        echo "MYSQL_DSN=mysql:host=localhost;port=3306;dbname=yiitest" >> $GITHUB_ENV
+        echo "MYSQL_USERNAME=root" >> $GITHUB_ENV
+        echo "MYSQL_PASSWORD=root" >> $GITHUB_ENV
+        echo "PGSQL_DSN=pgsql:host=localhost;port=5432;dbname=yiitest" >> $GITHUB_ENV
+        echo "PGSQL_USERNAME=root" >> $GITHUB_ENV
+        echo "PGSQL_PASSWORD=root" >> $GITHUB_ENV
       phpstan: true
-      framework-options: --test-framework-options="--group=sqlite"
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
