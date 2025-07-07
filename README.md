@@ -137,7 +137,7 @@ Creates a `tree` table with the following structure:
 ```sql
 CREATE TABLE `tree` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` text NOT NULL,
+  `name` varchar(255) NOT NULL,
   `lft` int(11) NOT NULL,
   `rgt` int(11) NOT NULL,
   `depth` int(11) NOT NULL,
@@ -157,7 +157,7 @@ Creates a `multiple_tree` table with the following structure:
 CREATE TABLE `multiple_tree` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `tree` int(11) DEFAULT NULL,
-  `name` text NOT NULL,
+  `name` varchar(255) NOT NULL,
   `lft` int(11) NOT NULL,
   `rgt` int(11) NOT NULL,
   `depth` int(11) NOT NULL,
