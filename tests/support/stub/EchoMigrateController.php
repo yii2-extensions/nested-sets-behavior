@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace yii2\extensions\nestedsets\tests\support\stub;
 
 use yii\console\controllers\MigrateController;

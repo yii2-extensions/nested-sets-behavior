@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use yii\db\Migration;
 
 class m250707_103609_tree extends Migration
@@ -41,5 +43,4 @@ class m250707_103609_tree extends Migration
     {
         $this->dropTable('{{%tree}}');
     }
-
 }
