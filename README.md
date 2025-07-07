@@ -64,6 +64,112 @@ composer require yii2-extensions/nested-sets-behavior
 3. **Optimizes queries** using boundary values for efficient tree traversal.
 4. **Supports transactions** to ensure data integrity during complex operations.
 
+## Database setup
+
+The package includes migrations to create the necessary database tables for nested sets functionality.
+
+### Available migrations
+
+The package provides two migration files.
+
+1. **Single tree migration** (`m250707_103609_tree.php`) - for single tree per table.
+2. **Multiple trees migration** (`m250707_104009_multiple_tree.php`) - for multiple independent trees.
+
+### Using package migrations
+
+#### Method 1: Run migrations directly from extension (Recommended)
+
+Configure your console application to include the extension migrations path.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+use yii\console\controllers\MigrateController;
+
+// console/config/main.php
+return [
+    'controllerMap' => [
+        'migrate' => [
+            'class' => MigrateController::class,
+            'migrationPath' => [
+                '@console/migrations', // Your app migrations
+                '@vendor/yii2-extensions/nested-sets-behavior/migrations', // Extension migrations
+            ],
+        ],
+    ],
+];
+```
+
+Then run migrations normally.
+
+```bash
+# View available migrations (including extension migrations)
+./yii migrate/history
+
+# Run all pending migrations
+./yii migrate
+
+# Or run specific migrations
+./yii migrate/up m250707_103609_tree
+./yii migrate/up m250707_104009_multiple_tree
+```
+
+#### Method 2: Using migration path parameter
+
+Run migrations directly without configuration changes.
+
+```bash
+# Run single tree migration
+./yii migrate/up --migrationPath=@vendor/yii2-extensions/nested-sets-behavior/migrations
+
+# Run specific migration from extension
+./yii migrate/up m250707_103609_tree --migrationPath=@vendor/yii2-extensions/nested-sets-behavior/migrations
+```
+
+### Migration details
+
+#### Single tree migration (`m250707_103609_tree.php`)
+
+Creates a `tree` table with the following structure:
+
+```sql
+CREATE TABLE `tree` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` text NOT NULL,
+  `lft` int(11) NOT NULL,
+  `rgt` int(11) NOT NULL,
+  `depth` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_tree_lft` (`lft`),
+  KEY `idx_tree_rgt` (`rgt`),
+  KEY `idx_tree_depth` (`depth`),
+  KEY `idx_tree_lft_rgt` (`lft`,`rgt`)
+);
+```
+
+#### Multiple tree migration (`m250707_104009_multiple_tree.php`)
+
+Creates a `multiple_tree` table with the following structure:
+
+```sql
+CREATE TABLE `multiple_tree` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tree` int(11) DEFAULT NULL,
+  `name` text NOT NULL,
+  `lft` int(11) NOT NULL,
+  `rgt` int(11) NOT NULL,
+  `depth` int(11) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_multiple_tree_tree` (`tree`),
+  KEY `idx_multiple_tree_lft` (`lft`),
+  KEY `idx_multiple_tree_rgt` (`rgt`),
+  KEY `idx_multiple_tree_depth` (`depth`),
+  KEY `idx_multiple_tree_tree_lft_rgt` (`tree`,`lft`,`rgt`)
+);
+```
+
 ### Basic Configuration
 
 Add the behavior to your ActiveRecord model.
@@ -109,31 +215,6 @@ class Category extends ActiveRecord
         ];
     }
 }
-```
-
-### Database schema
-
-Create the required database fields.
-
-```sql
--- Single tree structure
-CREATE TABLE category (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    lft INT NOT NULL,
-    rgt INT NOT NULL,
-    depth INT NOT NULL
-);
-
--- Multiple trees structure
-CREATE TABLE category (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tree INT,
-    name VARCHAR(255) NOT NULL,
-    lft INT NOT NULL,
-    rgt INT NOT NULL,
-    depth INT NOT NULL
-);
 ```
 
 ### Basic Usage
