@@ -170,11 +170,21 @@ class TestCase extends \PHPUnit\Framework\TestCase
     protected function createDatabase(): void
     {
         $command = $this->getDb()->createCommand();
+        $dropTables = [
+            'migration',
+            'multiple_tree',
+            'tree',
+        ];
 
-        $this->runMigrate('down', ['all']);
+        try {
+            $this->runMigrate('down', ['all']);
+        } catch (RuntimeException) {
+        }
 
-        if ($this->getDb()->getTableSchema('migration', true) !== null) {
-            $command->dropTable('migration')->execute();
+        foreach ($dropTables as $table) {
+            if ($this->getDb()->getTableSchema($table, true) !== null) {
+                $command->dropTable($table)->execute();
+            }
         }
 
         $this->runMigrate('up');
@@ -395,7 +405,11 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
         $result = $migrate->run($action, $params);
 
-        ob_get_clean();
+        $capture = ob_get_clean();
+
+        if (is_int($result) && $result !== 0) {
+            throw new RuntimeException("Migration '{$action}' failed with code {$result}.\nOutput: {$capture}");
+        }
 
         return $result;
     }
