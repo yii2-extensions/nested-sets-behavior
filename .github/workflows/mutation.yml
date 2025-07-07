@@ -21,7 +21,33 @@ jobs:
   mutation:
     uses: php-forge/actions/.github/workflows/infection.yml@main
     with:
+      extensions: pdo, pdo_pgsql
+      framework-options: --test-framework-options="--group=pgsql"
+      hook: |
+        # Configurar PostgreSQL con Docker
+        docker run -d \
+          --name postgres-test \
+          -e POSTGRES_DB=yiitest \
+          -e POSTGRES_USER=root \
+          -e POSTGRES_PASSWORD=root \
+          -p 5432:5432 \
+          --health-cmd="pg_isready -U postgres" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=3 \
+          postgres:16
+
+        # Esperar a que PostgreSQL esté listo
+        echo "Waiting for PostgreSQL to be ready..."
+        timeout 60s bash -c 'until docker exec postgres-test pg_isready -U postgres; do sleep 2; done'
+
+        # Verificar que está funcionando
+        docker exec postgres-test psql -U root -d yiitest -c "SELECT version();"
+
+        # Configurar variables de entorno para los tests
+        echo "DB_DSN=pgsql:host=localhost;port=5432;dbname=yiitest" >> $GITHUB_ENV
+        echo "DB_USERNAME=root" >> $GITHUB_ENV
+        echo "DB_PASSWORD=root" >> $GITHUB_ENV
       phpstan: true
-      framework-options: --test-framework-options="--group=sqlite"
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
