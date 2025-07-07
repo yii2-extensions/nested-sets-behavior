@@ -495,10 +495,6 @@ class NestedSetsBehavior extends Behavior
                     $depth !== null ? $this->getDepthValue() : null,
                     $depth,
                 ),
-            )->addOrderBy(
-                [
-                    $this->leftAttribute => SORT_ASC,
-                ],
             );
     }
 
