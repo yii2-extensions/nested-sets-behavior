@@ -59,10 +59,114 @@ composer require yii2-extensions/nested-sets-behavior
 
 ### How it works
 
+The nested sets model is a technique for storing hierarchical data in a relational database. Unlike adjacency lists
+(parent_id approach), nested sets enable efficient tree operations with minimal database queries.
+
 1. **Creates root nodes** using the nested sets pattern with `lft`, `rgt`, and `depth` fields.
 2. **Manages hierarchy** automatically when inserting, moving, or deleting nodes.
 3. **Optimizes queries** using boundary values for efficient tree traversal.
 4. **Supports transactions** to ensure data integrity during complex operations.
+
+#### Why nested sets?
+
+- **Fast queries**: Get all descendants with a single query (`lft BETWEEN parent.lft AND parent.rgt`).
+- **Efficient tree operations**: No recursive queries needed for tree traversal.
+- **Automatic maintenance**: Left/right boundaries are calculated automatically.
+- **Depth tracking**: Easy to limit query depth or build breadcrumbs.
+
+```text
+Example tree structure:
+Electronics (1,12,0)
+├── Mobile Phones (2,7,1)
+│   └── Smartphones (3,6,2)
+│       └── iPhone (4,5,3)
+└── Computers (8,11,1)
+    └── Laptops (9,10,2)
+
+Numbers represent: (left, right, depth)
+```
+
+### Database setup
+
+The package includes ready-to-use migrations for creating the necessary database structure.
+
+#### Quick setup (Recommended)
+
+1. **Configure console application**:
+```php
+<?php
+
+declare(strict_types=1);
+
+use yii\console\controllers\MigrateController;
+
+// console/config/main.php
+return [
+    'controllerMap' => [
+        'migrate' => [
+            'class' => MigrateController::class,
+            'migrationPath' => [
+                '@console/migrations',
+                '@vendor/yii2-extensions/nested-sets-behavior/migrations',
+            ],
+        ],
+    ],
+];
+```
+
+2. **Run migrations**:
+```bash
+# For single tree structure
+./yii migrate/up m250707_103609_tree
+
+# For multiple trees structure  
+./yii migrate/up m250707_104009_multiple_tree
+```
+
+#### Alternative: Direct migration execution
+
+```bash
+# Run without configuration changes
+./yii migrate/up --migrationPath=@vendor/yii2-extensions/nested-sets-behavior/migrations
+```
+
+#### Table structures created
+
+**Single tree** (`m250707_103609_tree.php`). Creates a `tree` table for single hierarchical structure.
+
+```sql
+CREATE TABLE tree (
+  id INTEGER NOT NULL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  lft INTEGER NOT NULL,
+  rgt INTEGER NOT NULL,
+  depth INTEGER NOT NULL
+);
+
+CREATE INDEX idx_tree_lft ON tree (lft);
+CREATE INDEX idx_tree_rgt ON tree (rgt);
+CREATE INDEX idx_tree_depth ON tree (depth);
+CREATE INDEX idx_tree_lft_rgt ON tree (lft, rgt);
+```
+
+**Multiple trees** (`m250707_104009_multiple_tree.php`). Creates a `multiple_tree` table for multiple independent trees.
+
+```sql
+CREATE TABLE multiple_tree (
+  id INTEGER NOT NULL PRIMARY KEY,
+  tree INTEGER DEFAULT NULL,
+  name VARCHAR(255) NOT NULL,
+  lft INTEGER NOT NULL,
+  rgt INTEGER NOT NULL,
+  depth INTEGER NOT NULL
+);
+
+CREATE INDEX idx_multiple_tree_tree ON multiple_tree (tree);
+CREATE INDEX idx_multiple_tree_lft ON multiple_tree (lft);
+CREATE INDEX idx_multiple_tree_rgt ON multiple_tree (rgt);
+CREATE INDEX idx_multiple_tree_depth ON multiple_tree (depth);
+CREATE INDEX idx_multiple_tree_tree_lft_rgt ON multiple_tree (tree, lft, rgt);
+```
 
 ### Basic Configuration
 
@@ -109,31 +213,6 @@ class Category extends ActiveRecord
         ];
     }
 }
-```
-
-### Database schema
-
-Create the required database fields.
-
-```sql
--- Single tree structure
-CREATE TABLE category (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
-    lft INT NOT NULL,
-    rgt INT NOT NULL,
-    depth INT NOT NULL
-);
-
--- Multiple trees structure
-CREATE TABLE category (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    tree INT,
-    name VARCHAR(255) NOT NULL,
-    lft INT NOT NULL,
-    rgt INT NOT NULL,
-    depth INT NOT NULL
-);
 ```
 
 ### Basic Usage
