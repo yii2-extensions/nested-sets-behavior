@@ -24,7 +24,7 @@ class m250707_104009_multiple_tree extends Migration
                 'rgt' => $this->integer()->notNull(),
                 'depth' => $this->integer()->notNull(),
             ],
-            $tableOptions,
+            $tableOptions ?? null,
         );
 
         $this->createIndex('idx_multiple_tree_tree', '{{%multiple_tree}}', 'tree');
