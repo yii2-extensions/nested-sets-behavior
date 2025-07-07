@@ -169,7 +169,13 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
     protected function createDatabase(): void
     {
-        $this->runMigrate('down', ['all']);
+        $command = $this->getDb()->createCommand();
+
+        if ($this->getDb()->getTableSchema('migration', true) !== null) {
+            $command->dropTable('migration')->execute();
+        }
+
+        $this->runMigrate('down', ['all' => true]);
         $this->runMigrate('up');
     }
 
@@ -298,30 +304,6 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return array_values($dataSetMultipleTree);
     }
 
-    /**
-     * @phpstan-param array<string, mixed> $params
-     */
-    protected function runMigrate(string $action, array $params = []): mixed
-    {
-        $migrate = new EchoMigrateController(
-            'migrate',
-            Yii::$app,
-            [
-                'migrationPath' => dirname(__DIR__) . '/migrations',
-                'interactive' => false,
-            ],
-        );
-
-        ob_start();
-        ob_implicit_flush(false);
-
-        $result = $migrate->run($action, $params);
-
-        ob_get_clean();
-
-        return $result;
-    }
-
     protected function loadFixtureXML(string $fileName): SimpleXMLElement
     {
         $filePath = "{$this->fixtureDirectory}/{$fileName}";
@@ -391,6 +373,30 @@ class TestCase extends \PHPUnit\Framework\TestCase
             ),
             default => $sql,
         };
+    }
+
+    /**
+     * @phpstan-param array<string, mixed> $params
+     */
+    protected function runMigrate(string $action, array $params = []): mixed
+    {
+        $migrate = new EchoMigrateController(
+            'migrate',
+            Yii::$app,
+            [
+                'migrationPath' => dirname(__DIR__) . '/migrations',
+                'interactive' => false,
+            ],
+        );
+
+        ob_start();
+        ob_implicit_flush(false);
+
+        $result = $migrate->run($action, $params);
+
+        ob_get_clean();
+
+        return $result;
     }
 
     /**
