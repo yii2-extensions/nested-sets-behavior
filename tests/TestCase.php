@@ -169,7 +169,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 
     protected function createDatabase(): void
     {
-        $this->runMigrate('down');
+        $this->runMigrate('down', ['all']);
         $this->runMigrate('up');
     }
 
