@@ -78,8 +78,8 @@ The nested sets model is a technique for storing hierarchical data in a relation
 Example tree structure:
 Electronics (1,12,0)
 ├── Mobile Phones (2,7,1)
-│   └── Smartphones (3,6,1)
-│       └── iPhone (4,5,2)
+│   └── Smartphones (3,6,2)
+│       └── iPhone (4,5,3)
 └── Computers (8,11,1)
     └── Laptops (9,10,2)
 
@@ -135,37 +135,37 @@ return [
 **Single tree** (`m250707_103609_tree.php`). Creates a `tree` table for single hierarchical structure.
 
 ```sql
-CREATE TABLE `tree` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `name` varchar(255) NOT NULL,
-  `lft` int(11) NOT NULL,
-  `rgt` int(11) NOT NULL,
-  `depth` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_tree_lft` (`lft`),
-  KEY `idx_tree_rgt` (`rgt`),
-  KEY `idx_tree_depth` (`depth`),
-  KEY `idx_tree_lft_rgt` (`lft`,`rgt`)
+CREATE TABLE tree (
+  id INTEGER NOT NULL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  lft INTEGER NOT NULL,
+  rgt INTEGER NOT NULL,
+  depth INTEGER NOT NULL
 );
+
+CREATE INDEX idx_tree_lft ON tree (lft);
+CREATE INDEX idx_tree_rgt ON tree (rgt);
+CREATE INDEX idx_tree_depth ON tree (depth);
+CREATE INDEX idx_tree_lft_rgt ON tree (lft, rgt);
 ```
 
 **Multiple trees** (`m250707_104009_multiple_tree.php`). Creates a `multiple_tree` table for multiple independent trees.
 
 ```sql
-CREATE TABLE `multiple_tree` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `tree` int(11) DEFAULT NULL,        -- Tree identifier
-  `name` varchar(255) NOT NULL,
-  `lft` int(11) NOT NULL,
-  `rgt` int(11) NOT NULL,
-  `depth` int(11) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `idx_multiple_tree_tree` (`tree`),
-  KEY `idx_multiple_tree_lft` (`lft`),
-  KEY `idx_multiple_tree_rgt` (`rgt`),
-  KEY `idx_multiple_tree_depth` (`depth`),
-  KEY `idx_multiple_tree_tree_lft_rgt` (`tree`,`lft`,`rgt`)
+CREATE TABLE multiple_tree (
+  id INTEGER NOT NULL PRIMARY KEY,
+  tree INTEGER DEFAULT NULL,
+  name VARCHAR(255) NOT NULL,
+  lft INTEGER NOT NULL,
+  rgt INTEGER NOT NULL,
+  depth INTEGER NOT NULL
 );
+
+CREATE INDEX idx_multiple_tree_tree ON multiple_tree (tree);
+CREATE INDEX idx_multiple_tree_lft ON multiple_tree (lft);
+CREATE INDEX idx_multiple_tree_rgt ON multiple_tree (rgt);
+CREATE INDEX idx_multiple_tree_depth ON multiple_tree (depth);
+CREATE INDEX idx_multiple_tree_tree_lft_rgt ON multiple_tree (tree, lft, rgt);
 ```
 
 ### Basic Configuration
