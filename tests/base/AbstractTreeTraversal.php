@@ -9,9 +9,31 @@ use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
+ * Base class for tree traversal and relationship tests in nested sets tree behaviors.
+ *
+ * Provides a suite of unit tests for verifying traversal methods, node ordering, and parent/child/leaf relationships in
+ * both single-tree and multi-tree nested sets models.
+ *
+ * This class ensures the correctness and determinism of methods that retrieve children, leaves, parents, next, and
+ * previous nodes, including order-by requirements and depth constraints, by testing various tree structures and update
+ * scenarios.
+ *
+ * Key features.
+ * - Comparison of actual results with expected fixtures for all traversal methods.
+ * - Coverage for both {@see Tree} and {@see MultipleTree} model implementations.
+ * - Ensures correct node ordering and deterministic traversal for children, leaves, and parents.
+ * - Tests for order-by enforcement in traversal queries.
+ * - Validation of depth constraints and structure updates.
+ *
+ * @see MultipleTree for multi-tree model.
+ * @see Tree for single-tree model.
+ *
  * @phpstan-type NodeChildren array<string|array{name: string, children?: array<mixed>}>
  * @phpstan-type TreeStructure array<array<mixed>>
  * @phpstan-type UpdateData array<array{name: string, lft?: int, rgt?: int, depth?: int}>
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractTreeTraversal extends TestCase
 {

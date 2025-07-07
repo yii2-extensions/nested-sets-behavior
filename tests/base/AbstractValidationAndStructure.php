@@ -8,6 +8,32 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{Tree, TreeWithStrictValidation};
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Base class for validation and structural integrity tests in nested sets tree behaviors.
+ *
+ * Provides a focused suite of unit tests for validating node creation, root assignment, and structural attribute
+ * correctness in nested sets tree models, including strict validation scenarios and direct manipulation of node
+ * attributes during insertion.
+ *
+ * This class ensures that node validation logic, left/right attribute shifting, and depth assignment are correctly
+ * handled when creating root nodes, appending children, and invoking internal behavior methods.
+ *
+ * It covers both validation-enabled and validation-bypassed operations, as well as direct calls to behavior hooks for
+ * attribute initialization.
+ *
+ * Key features.
+ * - Ensures correct attribute assignment when appending children to root nodes.
+ * - Tests strict validation logic for root node creation with and without validation enforcement.
+ * - Validates direct invocation of behavior hooks for node attribute initialization.
+ * - Verifies left, right, and depth attribute values after root and child node operations.
+ *
+ * @see NestedSetsBehavior for behavior implementation and hooks.
+ * @see Tree for standard nested sets model.
+ * @see TreeWithStrictValidation for strict validation scenarios.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 abstract class AbstractValidationAndStructure extends TestCase
 {
     public function testMakeRootWithRunValidationParameterUsingStrictValidation(): void
@@ -133,7 +159,7 @@ abstract class AbstractValidationAndStructure extends TestCase
 
             public function getNodeDepth(): int|null
             {
-                return $this->node !== null ? $this->node->getAttribute($this->depthAttribute) : null;
+                return $this->node?->getAttribute($this->depthAttribute);
             }
         };
 
