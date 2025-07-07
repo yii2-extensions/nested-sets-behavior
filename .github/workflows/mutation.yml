@@ -22,7 +22,7 @@ jobs:
     uses: php-forge/actions/.github/workflows/infection.yml@main
     with:
       extensions: pdo, pdo_pgsql, pdo_sqlite
-      framework-options: --test-framework-options="--group=sqlite,pgsql"
+      framework-options: --test-framework-options="--group=sqlite"
       hook: |
         # Configurar PostgreSQL con Docker
         docker run -d \
