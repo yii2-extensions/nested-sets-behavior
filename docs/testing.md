@@ -53,11 +53,11 @@ composer run test
 
 This package supports testing with multiple database systems to ensure compatibility across different environments.
 
-- **MySQL** (8.0, 8.4, latest).
-- **Oracle** (23).
-- **PostgreSQL** (15, 16, 17) .
-- **SQL Server** (2022-latest).
-- **SQLite** (default, in-memory) - No setup required.
+- **MySQL** (8.0, 8.4, latest)
+- **Oracle** (23)
+- **PostgreSQL** (15, 16, 17)
+- **SQL Server** (2022-latest)
+- **SQLite** (default, in-memory) - No setup required
 
 #### Database-Specific Testing
 
@@ -125,7 +125,7 @@ docker run -d --name pgsql-test \
 ```shell
 docker run -d --name mssql-test \
   -e ACCEPT_EULA=Y \
-  -e SA_PASSWORD=YourStrong!Passw0rd \
+  -e 'SA_PASSWORD=YourStrong!Passw0rd' \
   -e MSSQL_PID=Developer \
   -p 1433:1433 \
   mcr.microsoft.com/mssql/server:2022-latest
