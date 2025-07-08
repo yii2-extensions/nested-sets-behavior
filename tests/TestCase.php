@@ -7,21 +7,47 @@ namespace yii2\extensions\nestedsets\tests;
 use RuntimeException;
 use SimpleXMLElement;
 use Yii;
-use yii\base\InvalidArgumentException;
+use yii\base\{InvalidArgumentException, InvalidConfigException};
 use yii\console\Application;
-use yii\db\{ActiveQuery, ActiveRecord, Connection, Query, SchemaBuilderTrait};
+use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception, SchemaBuilderTrait};
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\support\stub\EchoMigrateController;
 
 use function array_merge;
 use function array_values;
+use function dirname;
 use function dom_import_simplexml;
 use function file_get_contents;
+use function is_int;
+use function is_string;
+use function ob_get_clean;
+use function ob_implicit_flush;
+use function ob_start;
 use function preg_replace;
 use function simplexml_load_string;
 use function str_replace;
 
 /**
+ * Base test case for nested sets behavior test suites.
+ *
+ * Provides common setup, database management, fixture loading, and assertion utilities for all nested sets tests.
+ *
+ * This class centralizes logic for initializing the test environment, managing database state, and verifying tree
+ * structures, ensuring consistency and reducing duplication across test cases for different database drivers and
+ * scenarios.
+ *
+ * Key features.
+ * - Assertion helpers for validating node order and query structure.
+ * - Integration with custom migration and schema management.
+ * - Shared database connection and fixture directory configuration.
+ * - Support for both single-tree and multi-tree models.
+ * - Utilities for creating, resetting, and populating test databases.
+ * - XML fixture generation and loading for reproducible test data.
+ *
+ * @see EchoMigrateController for migration handling.
+ * @see MultipleTree for multi-tree model.
+ * @see Tree for single-tree model.
+ *
  * @phpstan-type DataSetType = list<
  *   array{
  *     id: int,
@@ -36,17 +62,29 @@ use function str_replace;
  * @phpstan-type NodeChildren array<string|array{name: string, children?: array<mixed>}>
  * @phpstan-type TreeStructure array<array<mixed>>
  * @phpstan-type UpdateData array<array{name: string, lft?: int, rgt?: int, depth?: int}>
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
-class TestCase extends \PHPUnit\Framework\TestCase
+abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
 
     /**
+     * Database connection configuration.
+     *
      * @phpstan-var string[]
      */
     protected array $connection = [];
+
+    /**
+     * Directory where fixture XML files are stored.
+     */
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
 
+    /**
+     * @throws InvalidConfigException if the configuration is invalid or incomplete.
+     */
     protected function setUp(): void
     {
         parent::setUp();
@@ -54,17 +92,12 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $this->mockConsoleApplication();
     }
 
-    public function getDb(): Connection
-    {
-        return Yii::$app->getDb();
-    }
-
     /**
      * Asserts that a list of tree nodes matches the expected order.
      *
-     * @param array $nodesList List of tree nodes to validate
-     * @param array $expectedOrder Expected order of node names
-     * @param string $nodeType Type of nodes being tested (for error messages)
+     * @param array $nodesList List of tree nodes to validate.
+     * @param array $expectedOrder Expected order of node names.
+     * @param string $nodeType Type of nodes being tested (for error messages).
      *
      * @phpstan-param array<ActiveRecord> $nodesList
      * @phpstan-param array<string> $expectedOrder
@@ -97,8 +130,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
     /**
      * Asserts that a query contains ORDER BY clause with 'lft' column.
      *
-     * @param ActiveQuery $query The query to check
-     * @param string $methodName Name of the method being tested
+     * @param ActiveQuery $query Query to check.
+     * @param string $methodName Name of the method being tested.
      *
      * @phpstan-param ActiveQuery<ActiveRecord> $query
      */
@@ -120,6 +153,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Builds a flat XML dataset from a given data set array.
+     *
+     * @return string Formatted XML string.
+     *
      * @phpstan-import-type DataSetType from TestCase
      *
      * @phpstan-param DataSetType $dataSet
@@ -155,7 +192,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
             throw new RuntimeException('Failed to save XML from DOM.');
         }
 
-        // Replace the tags with 4 spaces
+        // Manually indent child elements with 4 spaces for consistent fixture formatting.
+        // DOM's formatOutput doesn't provide control over indentation depth.
         return str_replace(
             [
                 '<tree', '<multiple_tree'],
@@ -167,6 +205,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
         );
     }
 
+    /**
+     * Creates the database schema and resets the tables for testing.
+     *
+     * This method drops existing tables and runs migrations to ensure a clean state.
+     *
+     * @throws Exception if an unexpected error occurs during execution.
+     * @throws RuntimeException if a runtime error prevents the operation from completing successfully.
+     */
     protected function createDatabase(): void
     {
         $command = $this->getDb()->createCommand();
@@ -179,6 +225,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
         try {
             $this->runMigrate('down', ['all']);
         } catch (RuntimeException) {
+            // Ignore errors when rolling back migrations on a potentially fresh database
         }
 
         foreach ($dropTables as $table) {
@@ -193,13 +240,14 @@ class TestCase extends \PHPUnit\Framework\TestCase
     /**
      * Creates a tree structure based on a hierarchical definition.
      *
-     * @param array $structure Hierarchical tree structure definition
-     * @param array $updates Database updates to apply after creation
-     * @param string $modelClass The model class to use (Tree::class or MultipleTree::class)
+     * @param array $structure Hierarchical tree structure definition.
+     * @param array $updates Database updates to apply after creation.
+     * @param string $modelClass Model class to use ({@see Tree::class} or {@see MultipleTree::class}.
      *
-     * @throws InvalidArgumentException if the structure array is empty.
+     * @throws Exception if an unexpected error occurs during execution.
+     * @throws InvalidArgumentException if one or more arguments are invalid, of incorrect type or format.
      *
-     * @return MultipleTree|Tree The root node
+     * @return MultipleTree|Tree Root node.
      *
      * @phpstan-param TreeStructure $structure
      * @phpstan-param UpdateData $updates
@@ -240,6 +288,16 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return $rootNode;
     }
 
+    /**
+     * Generates fixture data for testing tree structures.
+     *
+     * This method creates a database schema and populates it with predefined XML fixture data.
+     *
+     * It is used to set up the initial state of the database for tests that require specific tree structures.
+     *
+     * @throws Exception if an unexpected error occurs during execution.
+     * @throws RuntimeException if a runtime error prevents the operation from completing successfully.
+     */
     protected function generateFixtureTree(): void
     {
         $this->createDatabase();
@@ -247,7 +305,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
         $command = $this->getDb()->createCommand();
 
         // Load XML fixture data into database tables
-        $xml = new SimpleXMLElement("{$this->fixtureDirectory}/test.xml", 0, true);
+        $xml = $this->loadFixtureXML('test.xml');
 
         $children = $xml->children() ?? [];
 
@@ -277,6 +335,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Returns a dataset containing all tree nodes from both {@see Tree} and {@see MultipleTree} models.
+     *
+     * @return array Dataset containing all tree nodes.
+     *
      * @phpstan-import-type DataSetType from TestCase
      *
      * @phpstan-return DataSetType
@@ -300,6 +362,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Returns a dataset containing only {@see MultipleTree} nodes.
+     *
+     * @return array Dataset containing only {@see MultipleTree} nodes.
+     *
      * @phpstan-import-type DataSetType from TestCase
      *
      * @phpstan-return DataSetType
@@ -315,6 +381,21 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return array_values($dataSetMultipleTree);
     }
 
+    /**
+     * Returns the database connection used for tests.
+     */
+    protected function getDb(): Connection
+    {
+        return Yii::$app->getDb();
+    }
+
+    /**
+     * Returns a dataset containing only {@see Tree} nodes.
+     *
+     * @throws RuntimeException if a runtime error prevents the operation from completing successfully.
+     *
+     * @return SimpleXMLElement Dataset containing only {@see Tree} nodes.
+     */
     protected function loadFixtureXML(string $fileName): SimpleXMLElement
     {
         $filePath = "{$this->fixtureDirectory}/{$fileName}";
@@ -334,6 +415,15 @@ class TestCase extends \PHPUnit\Framework\TestCase
         return $simpleXML;
     }
 
+    /**
+     * Mocks the console application for testing purposes.
+     *
+     * This method initializes a new console application instance with a database connection.
+     *
+     * It is used to set up the environment for running console commands in tests.
+     *
+     * @throws InvalidConfigException if the configuration is invalid or incomplete.
+     */
     protected function mockConsoleApplication(): void
     {
         new Application(
@@ -382,6 +472,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Runs a migration action with the specified parameters.
+     *
+     * @return mixed Result of the migration action.
+     *
      * @phpstan-param array<array-key, mixed> $params
      */
     protected function runMigrate(string $action, array $params = []): mixed
@@ -415,6 +509,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
      * @param array $updates Array of updates to apply.
      * @param string $tableName Name of the table to apply updates to.
      *
+     * @throws Exception if an unexpected error occurs during execution.
+     *
      * @phpstan-param UpdateData $updates
      */
     private function applyUpdates(array $updates, string $tableName): void
@@ -437,8 +533,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
     /**
      * Recursively creates children for a given parent node.
      *
-     * @param MultipleTree|Tree $parent The parent node
-     * @param array $nodes Children definition (can be strings or arrays)
+     * @param MultipleTree|Tree $parent Parent node.
+     * @param array $nodes Children definition (can be strings or arrays).
      *
      * @phpstan-param NodeChildren $nodes
      */

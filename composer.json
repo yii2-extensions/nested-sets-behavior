@@ -14,6 +14,7 @@
         "yiisoft/yii2": "^2.0.53|^22"
     },
     "require-dev": {
+        "ext-dom": "*",
         "ext-simplexml": "*",
         "infection/infection": "^0.27|^0.30",
         "maglnet/composer-require-checker": "^4.1",
