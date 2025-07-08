@@ -28,7 +28,7 @@ jobs:
       database-env: |
         {
           "ORACLE_DATABASE": "yiitest",
-          "ORACLE_PASSWORD": "root"
+          "ORACLE_PASSWORD": "root",
         }
       database-health-cmd: "healthcheck.sh"
       database-health-retries: 10

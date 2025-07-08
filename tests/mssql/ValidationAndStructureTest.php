@@ -6,7 +6,7 @@ namespace yii2\extensions\nestedsets\tests\mssql;
 
 use PHPUnit\Framework\Attributes\Group;
 use yii2\extensions\nestedsets\tests\base\AbstractValidationAndStructure;
-use yii2\extensions\nestedsets\tests\support\MSSQLConnection;
+use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
 
 /**
  * Test suite for validation and structural integrity in nested sets tree behaviors using SQL Server.
@@ -35,10 +35,7 @@ final class ValidationAndStructureTest extends AbstractValidationAndStructure
 {
     protected function setUp(): void
     {
-        $this->driverName = MSSQLConnection::DRIVER_NAME->value;
-        $this->dsn = MSSQLConnection::DSN->value;
-        $this->password = MSSQLConnection::PASSWORD->value;
-        $this->username = MSSQLConnection::USERNAME->value;
+        $this->connection = DatabaseConnection::MSSQL->connection();
 
         parent::setUp();
     }

@@ -40,12 +40,12 @@ use function str_replace;
 class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
-    protected string $driverName = 'sqlite';
 
-    protected string|null $dsn = null;
+    /**
+     * @phpstan-var string[]
+     */
+    protected array $connection = [];
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
-    protected string $password = '';
-    protected string $username = '';
 
     protected function setUp(): void
     {
@@ -341,12 +341,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
                 'id' => 'testapp',
                 'basePath' => dirname(__DIR__),
                 'components' => [
-                    'db' => [
-                        'class' => Connection::class,
-                        'dsn' => $this->dsn !== null ? $this->dsn : 'sqlite::memory:',
-                        'password' => $this->password,
-                        'username' => $this->username,
-                    ],
+                    'db' => $this->connection,
                 ],
             ],
         );
@@ -361,7 +356,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function replaceQuotes(string $sql): string
     {
-        return match ($this->driverName) {
+        return match ($this->getDb()->driverName) {
             'mysql', 'sqlite' => str_replace(
                 ['[[', ']]'],
                 '`',
