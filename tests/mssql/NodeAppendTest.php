@@ -6,7 +6,7 @@ namespace yii2\extensions\nestedsets\tests\mssql;
 
 use PHPUnit\Framework\Attributes\Group;
 use yii2\extensions\nestedsets\tests\base\AbstractNodeAppend;
-use yii2\extensions\nestedsets\tests\support\MSSQLConnection;
+use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
 
 /**
  * Test suite for node append and root promotion in nested sets tree behaviors using SQL Server.
@@ -37,10 +37,7 @@ final class NodeAppendTest extends AbstractNodeAppend
 {
     protected function setUp(): void
     {
-        $this->driverName = MSSQLConnection::DRIVER_NAME->value;
-        $this->dsn = MSSQLConnection::DSN->value;
-        $this->password = MSSQLConnection::PASSWORD->value;
-        $this->username = MSSQLConnection::USERNAME->value;
+        $this->connection = DatabaseConnection::MSSQL->connection();
 
         parent::setUp();
     }

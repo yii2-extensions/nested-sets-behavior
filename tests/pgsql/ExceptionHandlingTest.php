@@ -6,12 +6,15 @@ namespace yii2\extensions\nestedsets\tests\pgsql;
 
 use PHPUnit\Framework\Attributes\Group;
 use yii2\extensions\nestedsets\tests\base\AbstractExceptionHandling;
+use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
 
 #[Group('pgsql')]
 final class ExceptionHandlingTest extends AbstractExceptionHandling
 {
-    protected string $driverName = 'pgsql';
-    protected string|null $dsn = 'pgsql:host=localhost;dbname=yiitest;port=5432;';
-    protected string $password = 'root';
-    protected string $username = 'root';
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::PGSQL->connection();
+
+        parent::setUp();
+    }
 }

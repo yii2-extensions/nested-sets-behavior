@@ -29,7 +29,7 @@ jobs:
         {
           "ACCEPT_EULA": "Y",
           "SA_PASSWORD": "YourStrong!Passw0rd",
-          "MSSQL_PID": "Developer"
+          "MSSQL_PID": "Developer",
         }
       database-health-cmd: "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P 'YourStrong!Passw0rd' -Q 'SELECT 1'"
       database-health-retries: 5
