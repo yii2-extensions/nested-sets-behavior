@@ -21,6 +21,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  * Key features.
  * - Coverage for both {@see Tree} and {@see MultipleTree} model implementations.
  * - Ensures correct behavior for left/right value manipulations and ancestor checks.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Tests for `isChildOf()` under different ancestor and boundary scenarios.
  * - Validation of `isRoot()` and `isLeaf()` logic for root, leaf, and intermediate nodes.
  *

@@ -21,6 +21,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  *
  * Key features.
  * - Ensures correct attribute assignment when appending children to root nodes.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Tests strict validation logic for root node creation with and without validation enforcement.
  * - Validates direct invocation of behavior hooks for node attribute initialization.
  * - Verifies left, right, and depth attribute values after root and child node operations.

@@ -21,6 +21,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  * Key features.
  * - Covers both {@see Tree} and {@see MultipleTree} model scenarios.
  * - Ensures correct node ordering and deterministic traversal for children, leaves, and parents.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Tests for order-by enforcement and depth constraints in traversal queries.
  * - Validation of structure updates and relationship methods on SQL Server.
  *

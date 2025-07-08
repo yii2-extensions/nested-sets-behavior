@@ -24,6 +24,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  * - Cross-tree append operations for multi-tree models.
  * - Ensures correct left, right, depth, and tree attribute updates for SQL Server.
  * - Root promotion and attribute refresh verification.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Validation of strict and non-strict append operations.
  * - XML dataset matching after structural changes.
  *
