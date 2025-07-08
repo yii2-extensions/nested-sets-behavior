@@ -12,8 +12,8 @@ use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception};
 /**
  * Nested set behavior for managing hierarchical data in {@see ActiveRecord} models.
  *
- * Provides a set of methods and properties to implement the nested sets pattern in Yii {@see ActiveRecord} models,
- * enabling efficient management of hierarchical data structures such as trees and categories.
+ * Provides a set of methods and properties to implement the nested sets pattern in Yii Active Record model, enabling
+ * efficient management of hierarchical data structures such as trees and categories.
  *
  * This behavior allows nodes to be inserted, moved, or deleted within the tree, and supports querying for parents,
  * children, leaves, and siblings.
@@ -21,7 +21,7 @@ use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception};
  * The behavior manages the left, right, and depth attributes of each node, and can optionally support multiple trees
  * using a tree attribute.
  *
- * It integrates with a Yii event system and can be attached to any {@see ActiveRecord} model.
+ * It integrates with a Yii Event system and can be attached to any {@see ActiveRecord} model.
  *
  * Key features.
  * - Compatible with Yii {@see ActiveRecord} and event system.
@@ -515,8 +515,6 @@ class NestedSetsBehavior extends Behavior
      *
      * If the deletion fails, the transaction is rolled back to maintain data integrity.
      *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
      * @return bool|int Number of rows deleted, or false if the deletion is unsuccessful.
      *
      * Usage example:
@@ -809,7 +807,6 @@ class NestedSetsBehavior extends Behavior
      *
      * Sets the internal operation state to {@see self::OPERATION_MAKE_ROOT} and triggers the save process on the owner
      * model.
-     *
      * - If the attached {@see ActiveRecord} is a new record, this method creates it as the root node of a new tree,
      *   setting `left=1`, `right=2`, and `depth=0`.
      * - If the record already exists, it moves the node to become the root node, updating the nested set structure
@@ -1094,7 +1091,7 @@ class NestedSetsBehavior extends Behavior
 
         if ($this->treeAttribute === false || $currentTreeValue === $targetTreeValue) {
             $this->executeSameTreeMove($context, $currentTreeValue);
-        } elseif ($this->treeAttribute !== false) {
+        } else {
             $this->executeCrossTreeMove($context, $this->treeAttribute, $currentTreeValue, $targetTreeValue);
         }
     }
@@ -1246,6 +1243,25 @@ class NestedSetsBehavior extends Behavior
         return $result;
     }
 
+    /**
+     * Executes a cross-tree move operation for the current node and its descendants.
+     *
+     * Handles the relocation of a subtree from one tree to another in a multi-tree nested set structure, updating left,
+     * right, and depth attributes, and shifting affected nodes in the target tree to maintain integrity.
+     *
+     * This method is called internally when a node is moved across trees, ensuring that all boundaries and depth levels
+     * are recalculated and the subtree is correctly positioned in the new tree context.
+     *
+     * The operation performs the following steps.
+     * - Closes the gap left in the source tree by shifting left and right attributes of remaining nodes.
+     * - Moves the subtree to the target tree, updating tree, left, right, and depth attributes accordingly.
+     * - Shifts left and right attribute values in the target tree to make space for the incoming subtree.
+     *
+     * @param NodeContext $context Immutable context containing all movement data for the operation.
+     * @param string $treeAttribute Name of the tree attribute used for multi-tree support.
+     * @param mixed $currentTreeValue Value of the tree attribute for the current (source) tree.
+     * @param mixed $targetTreeValue Value of the tree attribute for the target tree.
+     */
     private function executeCrossTreeMove(
         NodeContext $context,
         string $treeAttribute,
@@ -1284,6 +1300,27 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
+     * Executes a nested set operation on the current node with the specified target and operation type.
+     *
+     * Sets the internal operation state and target node reference, then save the owner model to perform the requested
+     * structural change in the tree.
+     *
+     * After saving, it refreshes the target or owner as needed to ensure updated attribute values for append and make
+     * root operations.
+     *
+     * This method is used internally by public API methods such as {@see appendTo()}, {@see insertAfter()},
+     * {@see insertBefore()}, {@see prependTo()}, and {@see makeRoot()} to centralize the execution logic for all
+     * supported nested set operations.
+     *
+     * @param ActiveRecord|null $targetNode Target node for the operation, or `null` if not applicable.
+     * @param string $operation Operation type to perform (see OPERATION_* constants).
+     * @param bool $runValidation Whether to perform validation before saving the record.
+     * @param array<string, mixed>|null $attributes List of attributes to save, or `null` for all attributes.
+     *
+     * @throws Exception if an unexpected error occurs during execution.
+     *
+     * @return bool Whether the operation was successful and the node was saved.
+     *
      * @phpstan-param array<string, mixed>|null $attributes
      */
     private function executeOperation(
@@ -1308,6 +1345,25 @@ class NestedSetsBehavior extends Behavior
         return $result;
     }
 
+    /**
+     * Moves the current node and its descendants to a new position within the same tree structure.
+     *
+     * Updates the left, right, and depth attributes for the node and all its descendants when moving a subtree to a
+     * different position within the same tree, ensuring the nested set structure remains consistent.
+     *
+     * The method performs the following operations.
+     * - Adjusts the left and right boundaries of the subtree if it is moved forward in the tree.
+     * - Closes the gap left by the moved subtree by shifting left and right attributes of remaining nodes.
+     * - Shifts left and right attribute values to make space for the moved subtree.
+     * - Updates left and right attributes for all nodes in the subtree to reflect the new position.
+     * - Updates the depth attribute for all nodes in the subtree based on the new target depth.
+     *
+     * This operation is essential for maintaining the integrity of the nested set hierarchy during node reordering
+     * and is used internally by movement operations that do not cross tree boundaries.
+     *
+     * @param NodeContext $context Immutable context containing all movement data for the operation.
+     * @param mixed $currentTreeValue Value of the tree attribute for the current tree.
+     */
     private function executeSameTreeMove(NodeContext $context, mixed $currentTreeValue): void
     {
         $subtreeSize = $this->getRightValue() - $this->getLeftValue() + 1;
@@ -1381,18 +1437,38 @@ class NestedSetsBehavior extends Behavior
         return $this->db ??= $this->getOwner()::getDb();
     }
 
+    /**
+     * Retrieves and caches the depth value of the current node.
+     *
+     * The value is cached on first access to avoid redundant lookups during nested set operations.
+     *
+     * This method is used internally by movement and update operations to determine the current node depth within the
+     * tree structure, ensuring correct calculation of depth offsets and validation of node positions.
+     *
+     * @return int Depth value of the current node as stored in the owner model.
+     */
     private function getDepthValue(): int
     {
         return $this->depthValue ??= $this->getOwner()->getAttribute($this->depthAttribute);
     }
 
+    /**
+     * Retrieves and caches the left boundary value of the current node.
+     *
+     * The value is cached on first access to avoid redundant lookups during nested set operations.
+     *
+     * This method is used internally by movement and update operations to determine the current node left boundary
+     * within the tree structure, ensuring correct calculation of node positions and validation of node movements.
+     *
+     * @return int Left boundary value of the current node as stored in the owner model.
+     */
     private function getLeftValue(): int
     {
         return $this->leftValue ??= $this->getOwner()->getAttribute($this->leftAttribute);
     }
 
     /**
-     * Returns the {@see ActiveRecord} instance to which this behavior is currently attached.
+     * Retrieves the owner model instance to which this behavior is attached.
      *
      * Ensures that the behavior has a valid owner before performing any operations that require access to the model
      * instance.
@@ -1415,6 +1491,16 @@ class NestedSetsBehavior extends Behavior
         return $this->owner;
     }
 
+    /**
+     * Retrieves and caches the right boundary value of the current node.
+     *
+     * The value is cached on first access to avoid redundant lookups during nested set operations.
+     *
+     * This method is used internally by movement and update operations to determine the current node right boundary
+     * within the tree structure, ensuring correct calculation of node positions and validation of node movements.
+     *
+     * @return int Right boundary value of the current node as stored in the owner model.
+     */
     private function getRightValue(): int
     {
         return $this->rightValue ??= $this->getOwner()->getAttribute($this->rightAttribute);

@@ -9,8 +9,8 @@ use yii\db\ActiveRecord;
 /**
  * Immutable context object containing all necessary data for node movement operations.
  *
- * Encapsulates target node, operation type, and derived values to eliminate parameter passing and provide type safety
- * for nested set operations.
+ * Encapsulates target node, operation type, and derived values to remove parameter passing and provide type safety for
+ * nested set operations.
  *
  * Key features.
  * - Calculated positioning values.

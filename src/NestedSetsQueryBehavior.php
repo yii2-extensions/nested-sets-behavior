@@ -11,8 +11,7 @@ use yii\db\{ActiveQuery, Expression};
 /**
  * Behavior for {@see ActiveQuery} to support nested sets tree queries.
  *
- * Provides query methods for retrieving root and leaf nodes in a nested sets tree structure using Yii
- * {@see ActiveQuery}.
+ * Provides query methods for retrieving root and leaf nodes in a nested sets tree structure using Yii Active Query.
  *
  * This behavior is designed to be attached to an {@see ActiveQuery} instance for models implementing the nested sets
  * pattern.
