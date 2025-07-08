@@ -6,6 +6,7 @@ namespace yii2\extensions\nestedsets\tests\mssql;
 
 use PHPUnit\Framework\Attributes\Group;
 use yii2\extensions\nestedsets\tests\base\AbstractNodeInsert;
+use yii2\extensions\nestedsets\tests\support\MSSQLConnection;
 
 /**
  * Test suite for node insertion in nested sets tree behaviors using SQL Server.
@@ -33,23 +34,13 @@ use yii2\extensions\nestedsets\tests\base\AbstractNodeInsert;
 #[Group('mssql')]
 final class NodeInsertTest extends AbstractNodeInsert
 {
-    /**
-     * Database driver name for SQL Server.
-     */
-    protected string $driverName = 'sqlsrv';
+    protected function setUp(): void
+    {
+        $this->driverName = MSSQLConnection::DRIVER_NAME->value;
+        $this->dsn = MSSQLConnection::DSN->value;
+        $this->password = MSSQLConnection::PASSWORD->value;
+        $this->username = MSSQLConnection::USERNAME->value;
 
-    /**
-     * Data Source Name (DSN) for SQL Server connection.
-     */
-    protected string|null $dsn = 'sqlsrv:Server=127.0.0.1,1433;Database=yiitest;Encrypt=no';
-
-    /**
-     * Password for SQL Server connection.
-     */
-    protected string $password = 'YourStrong!Passw0rd';
-
-    /**
-     * Username for SQL Server connection.
-     */
-    protected string $username = 'SA';
+        parent::setUp();
+    }
 }
