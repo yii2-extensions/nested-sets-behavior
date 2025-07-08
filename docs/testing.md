@@ -57,7 +57,7 @@ This package supports testing with multiple database systems to ensure compatibi
 - **Oracle** (23)
 - **PostgreSQL** (15, 16, 17)
 - **SQL Server** (2022-latest)
-- **SQLite** (default, in-memory) - No setup required
+- **SQLite** (default, in-memory) — No setup required
 
 #### Database-Specific Testing
 
@@ -140,8 +140,6 @@ docker exec -it mssql-test /opt/mssql-tools18/bin/sqlcmd \
 ```
 
 ##### SQLite
-SQLite does not require any setup. It uses an in-memory database by default. You can run tests directly.
-
 ```shell
 ./vendor/bin/phpunit --group sqlite
 ```
