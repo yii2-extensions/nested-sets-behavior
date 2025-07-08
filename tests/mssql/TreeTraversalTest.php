@@ -7,11 +7,47 @@ namespace yii2\extensions\nestedsets\tests\mssql;
 use PHPUnit\Framework\Attributes\Group;
 use yii2\extensions\nestedsets\tests\base\AbstractTreeTraversal;
 
+/**
+ * Test suite for tree traversal and relationship methods in nested sets tree behaviors using SQL Server.
+ *
+ * Provides comprehensive unit tests for verifying traversal methods, node ordering, and parent/child/leaf relationships
+ * in both single-tree and multi-tree nested sets models on SQL Server.
+ *
+ * Inherits tests from {@see AbstractTreeTraversal} to ensure correctness and determinism of children, leaves, parents,
+ * next, and previous node retrieval, including order-by requirements and depth constraints, by testing various tree
+ * structures and update scenarios.
+ *
+ * Key features.
+ * - Covers both {@see Tree} and {@see MultipleTree} model scenarios.
+ * - Ensures correct node ordering and deterministic traversal for children, leaves, and parents.
+ * - Tests for order-by enforcement and depth constraints in traversal queries.
+ * - Validation of structure updates and relationship methods on SQL Server.
+ *
+ * @see AbstractTreeTraversal for test logic and scenarios.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 #[Group('mssql')]
 final class TreeTraversalTest extends AbstractTreeTraversal
 {
+    /**
+     * Database driver name for SQL Server.
+     */
     protected string $driverName = 'sqlsrv';
+
+    /**
+     * Data Source Name (DSN) for SQL Server connection.
+     */
     protected string|null $dsn = 'sqlsrv:Server=127.0.0.1,1433;Database=yiitest;Encrypt=no';
+
+    /**
+     * Password for SQL Server connection.
+     */
     protected string $password = 'YourStrong!Passw0rd';
+
+    /**
+     * Username for SQL Server connection.
+     */
     protected string $username = 'SA';
 }
