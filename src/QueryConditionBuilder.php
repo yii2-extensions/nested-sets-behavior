@@ -23,8 +23,8 @@ use function sprintf;
  * - Creates standardized condition arrays for nested sets queries.
  * - Enables consistent tree filtering across multiple operations.
  * - Handles range conditions for subtree operations.
- * - Supports specific node relationship queries (children, parents, siblings).
  * - Provides leaf node and level-based filtering conditions.
+ * - Supports specific node relationship queries (children, parents, siblings).
  *
  * @copyright Copyright (C) 2023 Terabytesoftw.
  * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
@@ -226,11 +226,14 @@ final class QueryConditionBuilder
      *
      * Usage example:
      * ```php
-     * $updates = QueryConditionBuilder::createOffsetUpdates($db, [
-     *     'depth' => -1,
-     *     'lft' => 5,
-     *     'rgt' => 5,
-     * ]);
+     * $updates = QueryConditionBuilder::createOffsetUpdates(
+     *     $db,
+     *     [
+     *         'depth' => -1,
+     *         'lft' => 5,
+     *         'rgt' => 5,
+     *     ],
+     * );
      * // Result: [
      * //     'depth' => Expression('`depth` - 1'),
      * //     'lft' => Expression('`lft` + 5'),
@@ -485,8 +488,8 @@ final class QueryConditionBuilder
     /**
      * Creates a SQL expression for incrementing or decrementing an attribute by a specific offset.
      *
-     * Generates a properly quoted SQL expression that adds or subtracts a value to an attribute, suitable for bulk
-     * update operations in nested sets tree restructuring.
+     * Generates a quoted SQL expression that adds or subtracts a value to an attribute, suitable for bulk update
+     * operations in nested sets tree restructuring.
      *
      * This method ensures consistent expression formatting and proper column name quoting across different database
      * systems.
