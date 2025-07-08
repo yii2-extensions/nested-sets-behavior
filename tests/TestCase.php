@@ -93,14 +93,6 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * Returns the database connection used for tests.
-     */
-    protected function getDb(): Connection
-    {
-        return Yii::$app->getDb();
-    }
-
-    /**
      * Asserts that a list of tree nodes matches the expected order.
      *
      * @param array $nodesList List of tree nodes to validate.
@@ -385,6 +377,14 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         }
 
         return array_values($dataSetMultipleTree);
+    }
+
+    /**
+     * Returns the database connection used for tests.
+     */
+    protected function getDb(): Connection
+    {
+        return Yii::$app->getDb();
     }
 
     /**
