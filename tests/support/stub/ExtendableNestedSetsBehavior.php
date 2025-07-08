@@ -5,21 +5,51 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests\support\stub;
 
 use yii\db\ActiveRecord;
+use yii\db\Exception;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
+use yii2\extensions\nestedsets\NodeContext;
 
 /**
+ * Extensible Nested Sets Behavior stub for testing method exposure and call tracking.
+ *
+ * Provides a test double for {@see NestedSetsBehavior} exposing protected methods and tracking their invocation for
+ * unit testing purposes.
+ *
+ * This class enables direct invocation of internal behavior logic and records method calls, supporting fine-grained
+ * assertions in test scenarios.
+ *
+ * It also allows manual manipulation of internal state for advanced test coverage.
+ *
+ * Key features:
+ * - Allows manual state manipulation (node, operation).
+ * - Exposes protected methods for direct testing.
+ * - Supports cache invalidation tracking.
+ * - Tracks method invocations for assertion.
+ *
  * @phpstan-template T of ActiveRecord
  *
  * @phpstan-extends NestedSetsBehavior<T>
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 {
     /**
+     * Tracks method calls for assertions.
+     *
      * @phpstan-var array<string, bool>
      */
     public array $calledMethods = [];
+
+    /**
+     * Indicates if the cache invalidation method was called.
+     */
     public bool $invalidateCacheCalled = false;
 
+    /**
+     * @throws Exception if an unexpected error occurs during execution.
+     */
     public function exposedBeforeInsertNode(int $value, int $depth): void
     {
         $this->calledMethods['beforeInsertNode'] = true;
@@ -27,6 +57,9 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
         $this->beforeInsertNode($value, $depth);
     }
 
+    /**
+     * @throws Exception if an unexpected error occurs during execution.
+     */
     public function exposedBeforeInsertRootNode(): void
     {
         $this->calledMethods['beforeInsertRootNode'] = true;
@@ -38,7 +71,7 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     {
         $this->calledMethods['moveNode'] = true;
 
-        $context = new \yii2\extensions\nestedsets\NodeContext(
+        $context = new NodeContext(
             $node,
             0,
             0,
