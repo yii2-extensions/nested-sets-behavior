@@ -27,6 +27,7 @@ use yii2\extensions\nestedsets\NodeContext;
  * - Tracks method invocations for assertion.
  *
  * @phpstan-template T of ActiveRecord
+ *
  * @phpstan-extends NestedSetsBehavior<T>
  *
  * @copyright Copyright (C) 2023 Terabytesoftw.
