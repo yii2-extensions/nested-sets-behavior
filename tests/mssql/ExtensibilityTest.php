@@ -19,6 +19,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  *
  * Key features.
  * - Ensures protected methods are accessible for subclass extension.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Supports both single-tree and multi-tree model scenarios.
  * - Tests before-insert and move operations for extensibility.
  * - Validates extensibility for root and non-root node operations.

@@ -23,6 +23,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  * - Covers both {@see Tree} and {@see MultipleTree} model scenarios.
  * - Edge case handling for strict validation and cross-tree insertions.
  * - Ensures correct left, right, depth, and tree attribute updates for SQL Server.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Validation of strict and non-strict insert operations.
  * - XML dataset matching after structural changes.
  *

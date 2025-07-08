@@ -21,6 +21,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  * Key features.
  * - Ensures error handling consistency for unsupported operations on SQL Server.
  * - Full coverage for invalid append, insert, delete, and makeRoot operations.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Support for both single-tree and multi-tree models.
  * - Tests for exception messages and types in various edge cases.
  *

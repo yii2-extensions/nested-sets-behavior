@@ -21,6 +21,7 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  * Key features.
  * - Covers both {@see Tree} and {@see MultipleTree} model scenarios.
  * - Ensures correct left, right, depth, and tree attribute updates after prepend operations for SQL Server.
+ * - SQL Server-specific configuration for database connection and credentials.
  * - Tests for prepending new and existing nodes, including cross-tree operations.
  * - Validation of strict and non-strict prepend operations.
  * - XML dataset matching after structural changes.
