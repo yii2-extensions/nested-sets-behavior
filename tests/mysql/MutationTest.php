@@ -5,10 +5,28 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests\mysql;
 
 use PHPUnit\Framework\Attributes\Group;
+use yii\db\Exception;
 use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
 use yii2\extensions\nestedsets\tests\support\model\MultipleTree;
 use yii2\extensions\nestedsets\tests\TestCase;
 
+/**
+ * Test suite for mutation operations in nested sets tree behaviors using MySQL.
+ *
+ * Verifies correct handling of leaf node ordering and left attribute consistency in multiple tree models on MySQL.
+ *
+ * Ensures that the `leaves()` method returns nodes in the expected order after direct manipulation of left and right
+ * attributes, maintaining data integrity and predictable query results.
+ *
+ * Key features.
+ * - Ensures consistent results from the `leaves()` method.
+ * - MySQL-specific configuration for database connection and credentials.
+ * - Uses the multiple tree model for mutation scenarios.
+ * - Validates leaf node detection and ordering after manual updates.
+ *
+ * @copyright Copyright (C) 2023 Terabytesoftw.
+ * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ */
 #[Group('mutation')]
 final class MutationTest extends TestCase
 {
@@ -19,6 +37,9 @@ final class MutationTest extends TestCase
         parent::setUp();
     }
 
+    /**
+     * @throws Exception if an unexpected error occurs during execution.
+     */
     public function testLeavesMethodRequiresLeftAttributeOrderingForConsistentResults(): void
     {
         $this->createDatabase();
@@ -51,7 +72,7 @@ final class MutationTest extends TestCase
 
         $leaves = MultipleTree::find()->leaves()->all();
 
-        /** @phpstan-var array<array{name: string, lft: int}> */
+        /** @phpstan-var array<array{name: string, lft: int}> $expectedLeaves */
         $expectedLeaves = [
             ['name' => 'Leaf B', 'lft' => 3],
             ['name' => 'Leaf A', 'lft' => 5],
