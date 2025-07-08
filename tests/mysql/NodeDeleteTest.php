@@ -21,7 +21,8 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
  *
  * Key features.
  * - Covers update operations and affected row count for node attribute changes.
- * - Ensures correct affected row counts for node and subtree deletions in both {@see Tree} and {@see MultipleTree} models.
+ * - Ensures correct affected row counts for node and subtree deletions in both {@see Tree} and {@see MultipleTree}
+ *   models.
  * - MySQL-specific configuration for database connection and credentials.
  * - Tests aborting deletions via `beforeDelete()` and transactional behavior.
  * - Validates XML dataset consistency after deletions.
