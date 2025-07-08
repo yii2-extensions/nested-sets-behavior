@@ -192,7 +192,8 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
             throw new RuntimeException('Failed to save XML from DOM.');
         }
 
-        // Replace the tags with 4 spaces
+        // Manually indent child elements with 4 spaces for consistent fixture formatting.
+        // DOM's formatOutput doesn't provide control over indentation depth.
         return str_replace(
             [
                 '<tree', '<multiple_tree'],
@@ -224,6 +225,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         try {
             $this->runMigrate('down', ['all']);
         } catch (RuntimeException) {
+            // Ignore errors when rolling back migrations on a potentially fresh database
         }
 
         foreach ($dropTables as $table) {
@@ -303,7 +305,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         $command = $this->getDb()->createCommand();
 
         // Load XML fixture data into database tables
-        $xml = new SimpleXMLElement("{$this->fixtureDirectory}/test.xml", 0, true);
+        $xml = $this->loadFixtureXML('test.xml');
 
         $children = $xml->children() ?? [];
 
