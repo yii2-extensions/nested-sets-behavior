@@ -3,6 +3,7 @@
 ## System requirements
 
 - [`PHP`](https://www.php.net/downloads) 8.1 or higher.
+- [`Composer`](https://getcomposer.org/download/) for dependency management.
 - [`Yii2`](https://github.com/yiisoft/yii2) 2.0.53+ or 22.x.
 
 ## Installation
