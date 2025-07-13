@@ -378,7 +378,7 @@ For detailed configuration options and advanced usage.
 
 ## License
 
-[![License](https://poser.pugx.org/yii2-extensions/nested-sets-behavior/license)](LICENSE.md)
+[![License](https://img.shields.io/github/license/yii2-extensions/nested-sets-behavior)](LICENSE.md)
 
 ## Fork 
 
