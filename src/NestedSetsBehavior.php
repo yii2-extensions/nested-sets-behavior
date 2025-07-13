@@ -260,8 +260,6 @@ class NestedSetsBehavior extends Behavior
         if ($this->operation === self::OPERATION_MAKE_ROOT) {
             $this->moveNodeAsRoot($currentOwnerTreeValue);
             $this->invalidateCache();
-
-            return;
         }
 
         if ($this->node === null) {
