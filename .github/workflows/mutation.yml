@@ -72,7 +72,6 @@ jobs:
         echo "PGSQL_DSN=pgsql:host=localhost;port=5432;dbname=yiitest" >> $GITHUB_ENV
         echo "PGSQL_USERNAME=root" >> $GITHUB_ENV
         echo "PGSQL_PASSWORD=root" >> $GITHUB_ENV
-      command-coverage-options: --with-uncovered
       extensions: pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
       framework-options: --test-framework-options="--group=sqlite,mutation"
       phpstan: true
