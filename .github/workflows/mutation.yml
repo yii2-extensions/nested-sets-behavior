@@ -73,7 +73,7 @@ jobs:
         echo "PGSQL_USERNAME=root" >> $GITHUB_ENV
         echo "PGSQL_PASSWORD=root" >> $GITHUB_ENV
       command-coverage-options: --with-uncovered
-      extensions: pdo, pdo_pgsql, pdo_sqlite
+      extensions: pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
       framework-options: --test-framework-options="--group=sqlite,mutation"
       phpstan: true
     secrets:
