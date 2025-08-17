@@ -29,7 +29,7 @@ jobs:
       extensions: pdo, pdo_sqlite
       phpunit-group: sqlite
   phpunit-compatibility:
-    uses: php-forge/actions/.github/workflows/phpunit.yml@mfix-mini-31
+    uses: php-forge/actions/.github/workflows/phpunit.yml@fix-mini-31
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
