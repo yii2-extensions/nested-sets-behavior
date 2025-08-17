@@ -21,10 +21,7 @@ jobs:
   mutation:
     uses: php-forge/actions/.github/workflows/infection.yml@fix-mini-31
     with:
-      command-coverage-options: --with-uncovered
-      extensions: pdo, pdo_pgsql, pdo_sqlite
-      framework-options: --test-framework-options="--group=sqlite,mutation"
-      hook: |
+      before-hook: |
         # Config MySQL with Docker
         docker run -d \
           --name mysql-test \
@@ -75,6 +72,9 @@ jobs:
         echo "PGSQL_DSN=pgsql:host=localhost;port=5432;dbname=yiitest" >> $GITHUB_ENV
         echo "PGSQL_USERNAME=root" >> $GITHUB_ENV
         echo "PGSQL_PASSWORD=root" >> $GITHUB_ENV
+      command-coverage-options: --with-uncovered
+      extensions: pdo, pdo_pgsql, pdo_sqlite
+      framework-options: --test-framework-options="--group=sqlite,mutation"
       phpstan: true
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
