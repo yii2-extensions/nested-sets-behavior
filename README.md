@@ -369,7 +369,7 @@ For detailed configuration options and advanced usage.
 [![Latest Stable Version](https://poser.pugx.org/yii2-extensions/nested-sets-behavior/v)](https://github.com/yii2-extensions/nested-sets-behavior/releases)
 [![Total Downloads](https://poser.pugx.org/yii2-extensions/nested-sets-behavior/downloads)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
 [![codecov](https://codecov.io/gh/yii2-extensions/nested-sets-behavior/graph/badge.svg?token=Upc4yA23YN)](https://codecov.io/gh/yii2-extensions/nested-sets-behavior)
-[![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue)](https://github.com/yii2-extensions/localeurls/actions/workflows/static.yml)
+[![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
 [![style-ci](https://github.styleci.io/repos/717718161/shield?branch=main)](https://github.styleci.io/repos/717718161?branch=main)
 
 ## Our social networks
