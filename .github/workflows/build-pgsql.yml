@@ -20,7 +20,7 @@ name: build-pgsql
 jobs:
   pgsql:
     name: PostgreSQL tests.
-    uses: php-forge/actions/.github/workflows/phpunit-database.yml@main
+    uses: php-forge/actions/.github/workflows/phpunit-database.yml@v1
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
