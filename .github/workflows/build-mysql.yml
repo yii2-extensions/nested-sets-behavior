@@ -20,7 +20,7 @@ name: build-mysql
 jobs:
   mysql:
     name: MySQL tests.
-    uses: php-forge/actions/.github/workflows/phpunit-database.yml@fix-mini-31
+    uses: php-forge/actions/.github/workflows/phpunit-database.yml@v1
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
