@@ -18,7 +18,7 @@
         "ext-simplexml": "*",
         "infection/infection": "^0.27|^0.31",
         "maglnet/composer-require-checker": "^4.1",
-        "php-forge/support": "^0.1",
+        "php-forge/support": "^0.2",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan-strict-rules": "^2.0.3",
         "phpunit/phpunit": "^10.2",

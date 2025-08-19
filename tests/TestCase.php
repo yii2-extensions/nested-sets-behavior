@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests;
 
+use PHPForge\Support\TestSupport;
 use RuntimeException;
 use SimpleXMLElement;
 use Yii;
@@ -69,6 +70,7 @@ use function str_replace;
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
     use SchemaBuilderTrait;
+    use TestSupport;
 
     /**
      * Database connection configuration.
