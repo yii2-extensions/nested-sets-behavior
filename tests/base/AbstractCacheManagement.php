@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests\base;
 
-use PHPForge\Support\Assert;
 use yii\base\Behavior;
 use yii\db\ActiveRecord;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
@@ -99,17 +98,17 @@ abstract class AbstractCacheManagement extends TestCase
         );
         self::assertEquals(
             0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
+            self::invokeMethod($behavior, 'getDepthValue'),
             "New cached depth should be '0'.",
         );
         self::assertEquals(
             1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
+            self::invokeMethod($behavior, 'getLeftValue'),
             "New cached left should be '1'.",
         );
         self::assertEquals(
             2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
+            self::invokeMethod($behavior, 'getRightValue'),
             "New cached right should be '2'.",
         );
     }
@@ -284,17 +283,17 @@ abstract class AbstractCacheManagement extends TestCase
 
         self::assertEquals(
             0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
+            self::invokeMethod($behavior, 'getDepthValue'),
             "New cached depth value should be '0' for root.",
         );
         self::assertEquals(
             1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
+            self::invokeMethod($behavior, 'getLeftValue'),
             "New cached left value should be '1' for root.",
         );
         self::assertEquals(
             2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
+            self::invokeMethod($behavior, 'getRightValue'),
             "New cached right value should be '2' for root.",
         );
     }
@@ -322,17 +321,17 @@ abstract class AbstractCacheManagement extends TestCase
 
         self::assertEquals(
             0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
+            self::invokeMethod($behavior, 'getDepthValue'),
             "New cached depth value should be '0' for root.",
         );
         self::assertEquals(
             1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
+            self::invokeMethod($behavior, 'getLeftValue'),
             "New cached left value should be '1' for root.",
         );
         self::assertEquals(
             2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
+            self::invokeMethod($behavior, 'getRightValue'),
             "New cached right value should be '2' for root.",
         );
         self::assertNotFalse(
@@ -375,17 +374,17 @@ abstract class AbstractCacheManagement extends TestCase
 
         self::assertEquals(
             $child->getAttribute('depth'),
-            Assert::invokeMethod($behavior, 'getDepthValue'),
+            self::invokeMethod($behavior, 'getDepthValue'),
             'Initial cached depth value should match attribute.',
         );
         self::assertEquals(
             $child->getAttribute('lft'),
-            Assert::invokeMethod($behavior, 'getLeftValue'),
+            self::invokeMethod($behavior, 'getLeftValue'),
             'Initial cached left value should match attribute.',
         );
         self::assertEquals(
             $child->getAttribute('rgt'),
-            Assert::invokeMethod($behavior, 'getRightValue'),
+            self::invokeMethod($behavior, 'getRightValue'),
             'Initial cached right value should match attribute.',
         );
 
@@ -395,17 +394,17 @@ abstract class AbstractCacheManagement extends TestCase
 
         self::assertEquals(
             0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
+            self::invokeMethod($behavior, 'getDepthValue'),
             "New cached depth value should be '0' for root.",
         );
         self::assertEquals(
             1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
+            self::invokeMethod($behavior, 'getLeftValue'),
             "New cached left value should be '1' for root.",
         );
         self::assertEquals(
             2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
+            self::invokeMethod($behavior, 'getRightValue'),
             "New cached right value should be '2' for root.",
         );
     }
@@ -434,7 +433,7 @@ abstract class AbstractCacheManagement extends TestCase
             'Behavior should be attached to the node.',
         );
 
-        $firstCall = Assert::invokeMethod($behavior, 'getDepthValue');
+        $firstCall = self::invokeMethod($behavior, 'getDepthValue');
 
         self::assertSame(
             42,
@@ -442,7 +441,7 @@ abstract class AbstractCacheManagement extends TestCase
             'First call should return the mocked value.',
         );
 
-        $secondCall = Assert::invokeMethod($behavior, 'getDepthValue');
+        $secondCall = self::invokeMethod($behavior, 'getDepthValue');
 
         self::assertSame(
             42,
@@ -451,7 +450,7 @@ abstract class AbstractCacheManagement extends TestCase
         );
         self::assertSame(
             42,
-            Assert::inaccessibleProperty($behavior, 'depthValue'),
+            self::inaccessibleProperty($behavior, 'depthValue'),
             'Depth value should be cached after first access.',
         );
     }
@@ -480,7 +479,7 @@ abstract class AbstractCacheManagement extends TestCase
             'Behavior should be attached to the node.',
         );
 
-        $firstCall = Assert::invokeMethod($behavior, 'getLeftValue');
+        $firstCall = self::invokeMethod($behavior, 'getLeftValue');
 
         self::assertSame(
             123,
@@ -488,7 +487,7 @@ abstract class AbstractCacheManagement extends TestCase
             'First call should return the mocked value.',
         );
 
-        $secondCall = Assert::invokeMethod($behavior, 'getLeftValue');
+        $secondCall = self::invokeMethod($behavior, 'getLeftValue');
 
         self::assertSame(
             123,
@@ -497,7 +496,7 @@ abstract class AbstractCacheManagement extends TestCase
         );
         self::assertSame(
             123,
-            Assert::inaccessibleProperty($behavior, 'leftValue'),
+            self::inaccessibleProperty($behavior, 'leftValue'),
             'Left value should be cached after first access.',
         );
     }
@@ -525,7 +524,7 @@ abstract class AbstractCacheManagement extends TestCase
             'Behavior should be attached to the node.',
         );
 
-        $firstCall = Assert::invokeMethod($behavior, 'getRightValue');
+        $firstCall = self::invokeMethod($behavior, 'getRightValue');
 
         self::assertSame(
             456,
@@ -533,7 +532,7 @@ abstract class AbstractCacheManagement extends TestCase
             'First call should return the mocked value.',
         );
 
-        $secondCall = Assert::invokeMethod($behavior, 'getRightValue');
+        $secondCall = self::invokeMethod($behavior, 'getRightValue');
 
         self::assertSame(
             456,
@@ -542,7 +541,7 @@ abstract class AbstractCacheManagement extends TestCase
         );
         self::assertSame(
             456,
-            Assert::inaccessibleProperty($behavior, 'rightValue'),
+            self::inaccessibleProperty($behavior, 'rightValue'),
             'Right value should be cached after first access.',
         );
     }
@@ -570,17 +569,17 @@ abstract class AbstractCacheManagement extends TestCase
 
         self::assertEquals(
             0,
-            Assert::invokeMethod($behavior, 'getDepthValue'),
+            self::invokeMethod($behavior, 'getDepthValue'),
             'Depth value should be correctly retrieved after invalidation.',
         );
         self::assertEquals(
             1,
-            Assert::invokeMethod($behavior, 'getLeftValue'),
+            self::invokeMethod($behavior, 'getLeftValue'),
             'Left value should be correctly retrieved after invalidation.',
         );
         self::assertEquals(
             2,
-            Assert::invokeMethod($behavior, 'getRightValue'),
+            self::invokeMethod($behavior, 'getRightValue'),
             'Right value should be correctly retrieved after invalidation.',
         );
     }
@@ -590,20 +589,20 @@ abstract class AbstractCacheManagement extends TestCase
      */
     private function populateAndVerifyCache(Behavior $behavior): void
     {
-        Assert::invokeMethod($behavior, 'getDepthValue');
-        Assert::invokeMethod($behavior, 'getLeftValue');
-        Assert::invokeMethod($behavior, 'getRightValue');
+        self::invokeMethod($behavior, 'getDepthValue');
+        self::invokeMethod($behavior, 'getLeftValue');
+        self::invokeMethod($behavior, 'getRightValue');
 
         self::assertNotNull(
-            Assert::inaccessibleProperty($behavior, 'depthValue'),
+            self::inaccessibleProperty($behavior, 'depthValue'),
             'Depth value cache should be populated.',
         );
         self::assertNotNull(
-            Assert::inaccessibleProperty($behavior, 'leftValue'),
+            self::inaccessibleProperty($behavior, 'leftValue'),
             'Left value cache should be populated.',
         );
         self::assertNotNull(
-            Assert::inaccessibleProperty($behavior, 'rightValue'),
+            self::inaccessibleProperty($behavior, 'rightValue'),
             'Right value cache should be populated.',
         );
     }
@@ -614,23 +613,23 @@ abstract class AbstractCacheManagement extends TestCase
     private function verifyCacheInvalidation(Behavior $behavior): void
     {
         self::assertNull(
-            Assert::inaccessibleProperty($behavior, 'depthValue'),
+            self::inaccessibleProperty($behavior, 'depthValue'),
             "Depth value cache should be invalidated after 'makeRoot()'/'afterInsert()'.",
         );
         self::assertNull(
-            Assert::inaccessibleProperty($behavior, 'leftValue'),
+            self::inaccessibleProperty($behavior, 'leftValue'),
             "Left value cache should be invalidated after 'makeRoot()'/'afterInsert()'.",
         );
         self::assertNull(
-            Assert::inaccessibleProperty($behavior, 'node'),
+            self::inaccessibleProperty($behavior, 'node'),
             "Node cache should be 'null' after manual invalidation.",
         );
         self::assertNull(
-            Assert::inaccessibleProperty($behavior, 'operation'),
+            self::inaccessibleProperty($behavior, 'operation'),
             "Operation cache should be 'null' after manual invalidation.",
         );
         self::assertNull(
-            Assert::inaccessibleProperty($behavior, 'rightValue'),
+            self::inaccessibleProperty($behavior, 'rightValue'),
             "Right value cache should be invalidated after 'makeRoot()'/'afterInsert()'.",
         );
     }
