@@ -8,23 +8,23 @@
 
 <p align="center">
     <a href="https://www.php.net/releases/8.1/en.php" target="_blank">
-        <img src="https://img.shields.io/badge/PHP-%3E%3D8.1-787CB5" alt="PHP Version">
+        <img src="https://img.shields.io/badge/%3E%3D8.1-777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP version">
     </a>
     <a href="https://github.com/yiisoft/yii2/tree/2.0.53" target="_blank">
-        <img src="https://img.shields.io/badge/Yii2%20-2.0.53-blue" alt="Yii2 2.0.53">
+        <img src="https://img.shields.io/badge/2.0.x-0073AA.svg?style=for-the-badge&logo=yii&logoColor=white" alt="Yii 2.0.x">
     </a>
     <a href="https://github.com/yiisoft/yii2/tree/22.0" target="_blank">
-        <img src="https://img.shields.io/badge/Yii2%20-22-blue" alt="Yii2 22.0">
+        <img src="https://img.shields.io/badge/22.0.x-0073AA.svg?style=for-the-badge&logo=yii&logoColor=white" alt="Yii 22.0.x">
     </a>
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml" target="_blank">
-        <img src="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml/badge.svg" alt="PHPUnit">
+        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/build.yml?style=for-the-badge&label=PHPUnit" alt="PHPUnit">
     </a>
     <a href="https://dashboard.stryker-mutator.io/reports/github.com/yii2-extensions/nested-sets-behavior/main" target="_blank">
-        <img src="https://img.shields.io/endpoint?style=flat&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fyii2-extensions%2Fnested-sets-behavior%2Fmain" alt="Mutation Testing">
-    </a>    
-    <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml" target="_blank">        
-        <img src="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml/badge.svg" alt="Static Analysis">
-    </a>  
+        <img src="https://img.shields.io/endpoint?style=for-the-badge&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fyii2-extensions%2Fnested-sets-behavior%2Fmain" alt="Mutation Testing">
+    </a>     
+    <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml" target="_blank">
+        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/static.yml?style=for-the-badge&label=PHPStan" alt="PHPStan">
+    </a>
 </p>
 
 A powerful behavior for managing hierarchical data structures using the nested sets pattern in Yii ActiveRecord models.
@@ -49,15 +49,7 @@ with high-performance database operations.
 [![PostgreSQL](https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-pgsql.yml)
 [![SQLite](https://img.shields.io/badge/sqlite-003B57.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml)
 
-## Quick start
-
-### Installation
-
-```bash
-composer require yii2-extensions/nested-sets-behavior
-```
-
-### How it works
+## How it works
 
 The nested sets model is a technique for storing hierarchical data in a relational database. Unlike adjacency lists
 (parent_id approach), nested sets enable efficient tree operations with minimal database queries.
@@ -67,7 +59,7 @@ The nested sets model is a technique for storing hierarchical data in a relation
 3. **Optimizes queries** using boundary values for efficient tree traversal.
 4. **Supports transactions** to ensure data integrity during complex operations.
 
-#### Why nested sets?
+**Why nested sets?**
 
 - **Fast queries**: Get all descendants with a single query (`lft BETWEEN parent.lft AND parent.rgt`).
 - **Efficient tree operations**: No recursive queries needed for tree traversal.
@@ -84,6 +76,12 @@ Electronics (1,12,0)
     └── Laptops (9,10,2)
 
 Numbers represent: (left, right, depth)
+```
+
+### Installation
+
+```bash
+composer require yii2-extensions/nested-sets-behavior
 ```
 
 ### Database setup
@@ -168,7 +166,7 @@ CREATE INDEX idx_multiple_tree_depth ON multiple_tree (depth);
 CREATE INDEX idx_multiple_tree_tree_lft_rgt ON multiple_tree (tree, lft, rgt);
 ```
 
-### Basic Configuration
+### Quick start
 
 Add the behavior to your ActiveRecord model.
 
@@ -214,8 +212,6 @@ class Category extends ActiveRecord
     }
 }
 ```
-
-### Basic Usage
 
 #### Creating and building trees
 
@@ -304,7 +300,7 @@ $phones->delete();
 $phones->deleteWithChildren();
 ```
 
-### Query builder integration
+#### Query builder integration
 
 Add query behavior for advanced tree queries.
 
@@ -364,21 +360,24 @@ For detailed configuration options and advanced usage.
 - 💡 [Usage Examples](docs/examples.md)
 - 🧪 [Testing Guide](docs/testing.md)
 
+## Package information
+
+[![Latest Stable Version](https://img.shields.io/packagist/v/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=packagist&logoColor=white&label=Stable)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
+[![Total Downloads](https://img.shields.io/packagist/dt/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=packagist&logoColor=white&label=Downloads)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
+
 ## Quality code
 
-[![Latest Stable Version](https://poser.pugx.org/yii2-extensions/nested-sets-behavior/v)](https://github.com/yii2-extensions/nested-sets-behavior/releases)
-[![Total Downloads](https://poser.pugx.org/yii2-extensions/nested-sets-behavior/downloads)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
-[![codecov](https://codecov.io/gh/yii2-extensions/nested-sets-behavior/graph/badge.svg?token=Upc4yA23YN)](https://codecov.io/gh/yii2-extensions/nested-sets-behavior)
-[![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
-[![style-ci](https://github.styleci.io/repos/717718161/shield?branch=main)](https://github.styleci.io/repos/717718161?branch=main)
+[![codecov](https://img.shields.io/codecov/c/github/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=codecov&logoColor=white&label=Coverage)](https://codecov.io/gh/yii2-extensions/nested-sets-behavior)
+[![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue?style=for-the-badge)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
+[![style-ci](https://img.shields.io/badge/StyleCI-Passed-44CC11.svg?style=for-the-badge&logo=styleci&logoColor=white)](https://github.styleci.io/repos/717718161?branch=main)
 
 ## Our social networks
 
-[![X](https://img.shields.io/badge/follow-@terabytesoftw-1DA1F2?logo=x&logoColor=1DA1F2&labelColor=555555&style=flat)](https://x.com/Terabytesoftw)
+[![Follow on X](https://img.shields.io/badge/-Follow%20on%20X-1DA1F2.svg?style=for-the-badge&logo=x&logoColor=white&labelColor=000000)](https://x.com/Terabytesoftw)
 
 ## License
 
-[![License](https://img.shields.io/github/license/yii2-extensions/nested-sets-behavior)](LICENSE.md)
+[![License](https://img.shields.io/github/license/yii2-extensions/nested-sets-behavior?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=333333)](LICENSE.md)
 
 ## Fork 
 
