@@ -6,6 +6,7 @@
 - Bug #87: Update `.gitattributes` to exclude additional files from the package, update `LICENSE.md` and add stable version worflows actions (@terabytesoftw)
 - Bug #88: Remove unused command coverage options from mutation workflow configuration (@terabytesoftw)
 - Bug #89: Update `php-forge/support` version `0.2` in `composer.json` and refactor assertions in test cases (@terabytesoftw)
+- Bug #90: Update badge styles and links in `README.md`, reorganize sections for clarity (@terabytesoftw)
 
 ## 0.1.0 July 8, 2025
 
