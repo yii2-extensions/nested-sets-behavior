@@ -5,18 +5,20 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests\sqlite;
 
 use PDO;
+use PDOException;
 use PHPUnit\Framework\Attributes\{Group, TestWith};
 use RuntimeException;
 use Throwable;
 use Yii;
 use yii\base\{InvalidConfigException, NotSupportedException};
 use yii\caching\ArrayCache;
-use yii\db\{Connection, Exception};
+use yii\db\{ActiveQuery, Connection, Exception};
 use yii\log\Logger;
 use yii2\extensions\nestedsets\exception\Message;
 use yii2\extensions\nestedsets\{NestedSetsBehavior, TreeLock};
-use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
+use yii2\extensions\nestedsets\tests\support\{DatabaseConnection, RewritingConnection};
 use yii2\extensions\nestedsets\tests\support\model\{ConcurrencyTree, NonTransactionalTree, Tree};
+use yii2\extensions\nestedsets\tests\support\stub\NonDbActiveRecord;
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
@@ -28,6 +30,7 @@ final class WriterLockTest extends TestCase
     protected function setUp(): void
     {
         $this->connection = DatabaseConnection::SQLITE->connection();
+        $this->connection['class'] = RewritingConnection::class;
 
         parent::setUp();
 
@@ -509,7 +512,12 @@ final class WriterLockTest extends TestCase
         $db
             ->getMasterPdo()
             ->exec(
-                "CREATE TRIGGER abort_insert BEFORE INSERT ON tree BEGIN SELECT RAISE(ROLLBACK, 'injected native rollback'); END",
+                <<<SQL
+                CREATE TRIGGER abort_insert BEFORE INSERT ON tree
+                BEGIN
+                    SELECT RAISE(ROLLBACK, 'injected native rollback');
+                END
+                SQL,
             );
 
         $root = new Tree(['name' => 'root']);
@@ -541,7 +549,11 @@ final class WriterLockTest extends TestCase
         }
 
         $db
-            ->createCommand('DROP TRIGGER abort_insert')
+            ->createCommand(
+                <<<SQL
+                DROP TRIGGER abort_insert
+                SQL,
+            )
             ->execute();
 
         self::assertTrue(
@@ -621,6 +633,42 @@ final class WriterLockTest extends TestCase
         );
     }
 
+    public function testThrowInvalidConfigExceptionForMissingCatalogTableIdentity(): void
+    {
+        $this->assertCatalogRowIsRejected(
+            "SELECT 'tree' AS name",
+            Message::PHYSICAL_TABLE_IDENTITY_MISSING,
+        );
+    }
+
+    public function testThrowInvalidConfigExceptionForNonActiveRecordCurrentReadModel(): void
+    {
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage(
+            Message::MODEL_NOT_ACTIVE_RECORD->getMessage(),
+        );
+
+        TreeLock::one(new ActiveQuery(NonDbActiveRecord::class));
+    }
+
+    public function testThrowInvalidConfigExceptionForNonActiveRecordExistenceModel(): void
+    {
+        $this->expectException(InvalidConfigException::class);
+        $this->expectExceptionMessage(
+            Message::MODEL_NOT_ACTIVE_RECORD->getMessage(),
+        );
+
+        TreeLock::exists(new ActiveQuery(NonDbActiveRecord::class));
+    }
+
+    public function testThrowInvalidConfigExceptionForNonScalarCatalogMetadata(): void
+    {
+        $this->assertCatalogRowIsRejected(
+            'SELECT NULL AS table_id',
+            Message::INVALID_TABLE_METADATA,
+        );
+    }
+
     public function testThrowInvalidConfigExceptionForViewStorage(): void
     {
         $db = $this->getDb();
@@ -666,6 +714,141 @@ final class WriterLockTest extends TestCase
             $db
                 ->createCommand('DROP VIEW tree_view')
                 ->execute();
+        }
+    }
+
+    public function testThrowInvalidConfigExceptionWhenBusyTimeoutCannotBeRead(): void
+    {
+        $db = $this->getDb();
+
+        self::assertInstanceOf(
+            RewritingConnection::class,
+            $db,
+            'Fixture connection must rewrite statements.',
+        );
+
+        $behavior = $this->behavior();
+        $outer = $db->beginTransaction();
+
+        $db->exact = ['PRAGMA busy_timeout' => "SELECT 'unknown'"];
+
+        try {
+            $behavior->acquireTreeLock();
+
+            self::fail(
+                'An unreadable busy timeout must be rejected before the guard update.',
+            );
+        } catch (InvalidConfigException $exception) {
+            self::assertSame(
+                Message::CANNOT_READ_SQLITE_BUSY_TIMEOUT->getMessage(),
+                $exception->getMessage(),
+                'Message must name the unreadable busy timeout.',
+            );
+
+            $db->exact = [];
+
+            self::assertSame(
+                1,
+                (int) $db->createCommand('SELECT COUNT(*) FROM nested_sets_lock')->queryScalar(),
+                'No resource may be registered.',
+            );
+            self::assertTrue(
+                $outer->getIsActive(),
+                'Outer transaction must stay active.',
+            );
+        } finally {
+            $db->exact = [];
+            $outer->rollBack();
+        }
+    }
+
+    public function testThrowInvalidConfigExceptionWhenRegisteredRowDisappearsBeforeLocking(): void
+    {
+        $db = $this->getDb();
+
+        $db
+            ->getMasterPdo()
+            ->exec(
+                <<<SQL
+                CREATE TRIGGER drop_registration AFTER INSERT ON nested_sets_lock
+                BEGIN
+                    DELETE FROM nested_sets_lock WHERE resource = NEW.resource;
+                END
+                SQL,
+            );
+
+        $outer = $db->beginTransaction();
+
+        try {
+            $this
+                ->behavior()
+                ->acquireTreeLock();
+
+            self::fail(
+                'A registration that cannot be locked must be rejected.',
+            );
+        } catch (InvalidConfigException $exception) {
+            self::assertSame(
+                Message::CANNOT_REGISTER_WRITER_ROW->getMessage(),
+                $exception->getMessage(),
+                'Message must name the unregistered writer row.',
+            );
+            self::assertSame(
+                1,
+                (int) $db->createCommand('SELECT COUNT(*) FROM nested_sets_lock')->queryScalar(),
+                'Only the bootstrap row may remain.',
+            );
+            self::assertTrue(
+                $outer->getIsActive(),
+                'Outer transaction must stay active.',
+            );
+        } finally {
+            $outer->rollBack();
+        }
+    }
+
+    public function testThrowInvalidConfigExceptionWhenTableWasDropped(): void
+    {
+        $db = $this->getDb();
+        $behavior = $this->behavior();
+
+        $db
+            ->createCommand('DROP TABLE tree')
+            ->execute();
+        $db
+            ->getSchema()
+            ->refreshTableSchema('tree');
+
+        self::assertNull(
+            $db->getTableSchema('tree'),
+            'Dropped table metadata must be gone.',
+        );
+
+        $outer = $db->beginTransaction();
+
+        try {
+            $behavior->acquireTreeLock();
+
+            self::fail(
+                'A missing table must be rejected before registering a guard.',
+            );
+        } catch (InvalidConfigException $exception) {
+            self::assertSame(
+                Message::TABLE_NOT_FOUND->getMessage(),
+                $exception->getMessage(),
+                'Message must name the missing table.',
+            );
+            self::assertSame(
+                1,
+                (int) $db->createCommand('SELECT COUNT(*) FROM nested_sets_lock')->queryScalar(),
+                'No resource may be registered.',
+            );
+            self::assertTrue(
+                $outer->getIsActive(),
+                'Outer transaction must stay active.',
+            );
+        } finally {
+            $outer->rollBack();
         }
     }
 
@@ -797,6 +980,91 @@ final class WriterLockTest extends TestCase
         }
     }
 
+    public function testThrowPDOExceptionWhenDiscardedSavepointRecoveryFindsNoNativeTransaction(): void
+    {
+        $db = $this->getDb();
+        $outer = $db->beginTransaction();
+
+        // The listener runs after Yii closed the native transaction, so the native recovery rollback has nothing to end.
+        $db->on(
+            Connection::EVENT_ROLLBACK_TRANSACTION,
+            static function (): never {
+                throw new Exception(
+                    'no such savepoint: LEVEL1',
+                    ['HY000', 1, 'no such savepoint: LEVEL1'],
+                );
+            },
+        );
+
+        try {
+            TreeLock::rollBack($db, $outer, new RuntimeException('cause'));
+
+            self::fail(
+                'The native rollback failure must propagate.',
+            );
+        } catch (Throwable $caught) {
+            self::assertInstanceOf(
+                PDOException::class,
+                $caught,
+                'Native rollback failure must replace the listener failure.',
+            );
+            self::assertSame(
+                'There is no active transaction',
+                $caught->getMessage(),
+                'Message must report the missing native transaction.',
+            );
+            self::assertNull(
+                $db->getTransaction(),
+                'No Yii transaction level may remain.',
+            );
+            self::assertFalse(
+                $db->getMasterPdo()->inTransaction(),
+                'Native transaction must be closed.',
+            );
+        } finally {
+            $db->off(Connection::EVENT_ROLLBACK_TRANSACTION);
+        }
+    }
+
+    public function testThrowRuntimeExceptionWhenRollbackListenerFailsWithANonDatabaseError(): void
+    {
+        $db = $this->getDb();
+        $outer = $db->beginTransaction();
+
+        $injected = new RuntimeException('listener failure');
+
+        $db->on(
+            Connection::EVENT_ROLLBACK_TRANSACTION,
+            static function () use ($injected): never {
+                throw $injected;
+            },
+        );
+
+        try {
+            TreeLock::rollBack($db, $outer, new RuntimeException('cause'));
+
+            self::fail(
+                'The listener failure must propagate.',
+            );
+        } catch (Throwable $caught) {
+            self::assertSame(
+                $injected,
+                $caught,
+                'Listener failure must propagate unchanged.',
+            );
+            self::assertNull(
+                $db->getTransaction(),
+                'No Yii transaction level may remain.',
+            );
+            self::assertFalse(
+                $db->getMasterPdo()->inTransaction(),
+                'Native transaction must be closed.',
+            );
+        } finally {
+            $db->off(Connection::EVENT_ROLLBACK_TRANSACTION);
+        }
+    }
+
     #[TestWith([1])]
     #[TestWith([3600])]
     public function testTimeoutAcceptsBothDocumentedLimits(int $timeout): void
@@ -817,6 +1085,55 @@ final class WriterLockTest extends TestCase
         );
 
         $outer->rollBack();
+    }
+
+    private function assertCatalogRowIsRejected(string $catalogRow, Message $expected): void
+    {
+        $db = $this->getDb();
+
+        self::assertInstanceOf(
+            RewritingConnection::class,
+            $db,
+            'Fixture connection must rewrite statements.',
+        );
+
+        Tree::getTableSchema();
+
+        $behavior = $this->behavior();
+        $outer = $db->beginTransaction();
+
+        // Only the SQLite catalog lookup reads `main.sqlite_master`.
+        $db->fragments = ['sqlite_master' => $catalogRow];
+
+        try {
+            $behavior->acquireTreeLock();
+
+            self::fail(
+                'An invalid catalog row must be rejected before registering a guard.',
+            );
+        } catch (InvalidConfigException $exception) {
+            self::assertSame(
+                $expected->getMessage(),
+                $exception->getMessage(),
+                'Message must name the invalid catalog metadata.',
+            );
+
+            $db->fragments = [];
+
+            self::assertSame(
+                1,
+                (int) $db->createCommand('SELECT COUNT(*) FROM nested_sets_lock')->queryScalar(),
+                'No resource may be registered.',
+            );
+            self::assertTrue(
+                $outer->getIsActive(),
+                'Outer transaction must stay active.',
+            );
+        } finally {
+            $db->fragments = [];
+
+            $outer->rollBack();
+        }
     }
 
     /**

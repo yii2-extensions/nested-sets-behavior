@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests\base;
 
+use LogicException;
+use yii2\extensions\nestedsets\exception\Message;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
-use yii2\extensions\nestedsets\tests\support\model\ExtendableMultipleTree;
+use yii2\extensions\nestedsets\tests\support\model\{ExtendableMultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\TestCase;
 
@@ -202,5 +204,46 @@ abstract class AbstractExtensibility extends TestCase
             $childBehavior->wasMethodCalled('shiftLeftRightAttribute'),
             "'shiftLeftRightAttribute()' should remain protected to allow subclass customization.",
         );
+    }
+
+    public function testThrowLogicExceptionWhenSubclassMovesNodeAsRootWithoutTreeAttribute(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'root']);
+
+        $root->makeRoot();
+
+        // Public makeRoot() rejects single-tree moves earlier; only a subclass can reach the protected move.
+        $behavior = $root->attachBehavior('nestedSetsBehavior', ExtendableNestedSetsBehavior::class);
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $behavior,
+            'Single-tree model must use the extendable behavior.',
+        );
+        self::assertFalse(
+            $behavior->treeAttribute,
+            'Tree attribute must be disabled.',
+        );
+
+        try {
+            $behavior->exposedMoveNodeAsRoot();
+
+            self::fail(
+                'A cross-tree move without a tree attribute must be rejected.',
+            );
+        } catch (LogicException $exception) {
+            self::assertSame(
+                Message::TREE_ATTRIBUTE_REQUIRED->getMessage(),
+                $exception->getMessage(),
+                'Message must name the missing tree attribute.',
+            );
+            self::assertSame(
+                ['lft' => 1, 'rgt' => 2, 'depth' => 0],
+                Tree::findOne($root->getPrimaryKey())?->getAttributes(['lft', 'rgt', 'depth']),
+                'Stored coordinates must stay unchanged.',
+            );
+        }
     }
 }

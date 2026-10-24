@@ -291,7 +291,11 @@ final class WriterLockTest extends TestCase
         $probe = 'nested_sets_probe_' . preg_replace('/\W/', '_', $token);
 
         $fixture = $db
-            ->createCommand('SELECT DATABASE()')
+            ->createCommand(
+                <<<SQL
+                SELECT DATABASE()
+                SQL,
+            )
             ->queryScalar();
 
         self::assertIsString(
@@ -299,17 +303,30 @@ final class WriterLockTest extends TestCase
             'Fixture database must be selected.',
         );
 
+        $probeName = $db->quoteTableName($probe);
+        $probeTree = $db->quoteTableName($probe . '.tree');
+        $fixtureTree = $db->quoteTableName($fixture . '.tree');
+
         // MySQL DDL commits implicitly, so the probe schema is prepared before any transaction starts.
         $db
-            ->createCommand('DROP DATABASE IF EXISTS ' . $db->quoteTableName($probe))
-            ->execute();
-        $db
-            ->createCommand('CREATE DATABASE ' . $db->quoteTableName($probe))
+            ->createCommand(
+                <<<SQL
+                DROP DATABASE IF EXISTS {$probeName}
+                SQL,
+            )
             ->execute();
         $db
             ->createCommand(
-                'CREATE TABLE ' . $db->quoteTableName($probe . '.tree')
-                . ' LIKE ' . $db->quoteTableName($fixture . '.tree'),
+                <<<SQL
+                CREATE DATABASE {$probeName}
+                SQL,
+            )
+            ->execute();
+        $db
+            ->createCommand(
+                <<<SQL
+                CREATE TABLE {$probeTree} LIKE {$fixtureTree}
+                SQL,
             )
             ->execute();
 
@@ -339,7 +356,11 @@ final class WriterLockTest extends TestCase
             );
             self::assertSame(
                 1,
-                (int) $db->createCommand('SELECT COUNT(*) FROM nested_sets_lock')->queryScalar(),
+                (int) $db->createCommand(
+                    <<<SQL
+                    SELECT COUNT(*) FROM nested_sets_lock
+                    SQL,
+                )->queryScalar(),
                 'No resource may be registered.',
             );
         } finally {
@@ -348,7 +369,11 @@ final class WriterLockTest extends TestCase
             ConcurrencyTree::$table = '{{%tree}}';
 
             $db
-                ->createCommand('DROP DATABASE IF EXISTS ' . $db->quoteTableName($probe))
+                ->createCommand(
+                    <<<SQL
+                    DROP DATABASE IF EXISTS {$probeName}
+                    SQL,
+                )
                 ->execute();
         }
     }

@@ -56,8 +56,9 @@ final class ConcurrentProcess
         $this->output = $base . '.out';
         $this->errors = $base . '.err';
 
+        // PHP warnings and startup notices of the worker go to the error file, so they cannot corrupt the JSON report.
         $process = proc_open(
-            [PHP_BINARY, __DIR__ . '/concurrency-worker.php', $bootstrap],
+            [PHP_BINARY, '-d', 'display_errors=stderr', __DIR__ . '/concurrency-worker.php', $bootstrap],
             [
                 0 => ['pipe', 'r'],
                 1 => ['file', $this->output, 'w'],

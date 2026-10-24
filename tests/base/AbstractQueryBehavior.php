@@ -5,11 +5,12 @@ declare(strict_types=1);
 namespace yii2\extensions\nestedsets\tests\base;
 
 use LogicException;
-use yii\db\Exception;
+use yii\db\{ActiveQuery, Exception};
 use yii\helpers\ArrayHelper;
 use yii2\extensions\nestedsets\exception\Message;
 use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree, TreeQuery};
+use yii2\extensions\nestedsets\tests\support\stub\NonDbActiveRecord;
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
@@ -229,6 +230,26 @@ abstract class AbstractQueryBehavior extends TestCase
                 );
             }
         }
+    }
+
+    public function testThrowLogicExceptionForNonActiveRecordQueryModel(): void
+    {
+        $query = new ActiveQuery(NonDbActiveRecord::class);
+
+        $behavior = $query->attachBehavior('nestedSetsQueryBehavior', NestedSetsQueryBehavior::class);
+
+        self::assertInstanceOf(
+            NestedSetsQueryBehavior::class,
+            $behavior,
+            'Query must use the nested sets query behavior.',
+        );
+
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage(
+            Message::MODEL_NOT_ACTIVE_RECORD->getMessage(),
+        );
+
+        $behavior->roots();
     }
 
     public function testThrowLogicExceptionWhenBehaviorIsDetachedFromOwner(): void
