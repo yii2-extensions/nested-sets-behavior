@@ -38,5 +38,5 @@ jobs:
       enable-concurrency: true
       extensions: pdo, pdo_oci
       os: '["ubuntu-latest"]'
-      php-version: '["8.4"]'
+      php-version: '["8.3"]'
       phpunit-group: oci
