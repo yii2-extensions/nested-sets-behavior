@@ -7,24 +7,9 @@ namespace yii2\extensions\nestedsets\tests\support;
 use yii\db\Connection;
 
 /**
- * Enum for supported database connection configurations in test environments.
- *
- * Provides connection settings for various database drivers used in integration and unit tests, enabling consistent and
- * repeatable test execution across multiple database backends.
- *
- * This enum centralizes the configuration for all supported database types, allowing test cases to switch between
- * drivers and ensuring that connection parameters are maintained in a single location for maintainability.
- *
- * Key features.
- * - Centralized configuration for MSSQL, MySQL, Oracle, PostgreSQL, and SQLite test databases.
- * - Ensures consistent connection details for all supported drivers.
- * - Provides connection parameters as associative arrays for use with Yii Database connection classes.
- * - Simplifies test setup and database switching in cross-database test suites.
+ * Provides the connection configuration for each database driver used by the test suites.
  *
  * @see Connection for Yii Database connection implementation.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 enum DatabaseConnection: string
 {
@@ -56,26 +41,11 @@ enum DatabaseConnection: string
     /**
      * Returns the database connection configuration for the current driver.
      *
-     * Provides an associative array of connection parameters for the selected database type, including driver-specific
-     * DSN, credentials, and class reference for Yii Database integration. This method enables test cases to retrieve
-     * consistent connection settings for all supported database backends, facilitating cross-database testing and
-     * centralized configuration management.
-     *
-     * The returned array structure matches the requirements of {@see Connection} and can be used directly to
-     * instantiate or configure Yii Database connections in test environments.
-     *
-     * Usage example:
-     * ```php
-     * $config = DatabaseConnection::MYSQL->connection();
-     * ```
-     *
-     * @return array Connection parameters for the selected database driver.
-     *
-     * @phpstan-return string[]
+     * @return string[] Connection parameters for the selected database driver.
      */
     public function connection(): array
     {
-        return match ($this) {
+        $connection = match ($this) {
             self::MSSQL => [
                 'class' => Connection::class,
                 'dsn' => 'sqlsrv:Server=127.0.0.1,1433;Database=yiitest;Encrypt=no',
@@ -105,5 +75,19 @@ enum DatabaseConnection: string
                 'dsn' => 'sqlite::memory:',
             ],
         };
+
+        foreach (['dsn', 'username', 'password'] as $attribute) {
+            $value = getenv('NESTED_SETS_TEST_' . $this->name . '_' . strtoupper($attribute));
+
+            if ($value !== false) {
+                if ($attribute === 'dsn') {
+                    $token = getenv('TEST_TOKEN');
+                    $value = str_replace('{token}', $token === false ? 'initial' : $token, $value);
+                }
+                $connection[$attribute] = $value;
+            }
+        }
+
+        return $connection;
     }
 }

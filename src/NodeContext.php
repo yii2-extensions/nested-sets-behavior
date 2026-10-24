@@ -7,38 +7,30 @@ namespace yii2\extensions\nestedsets;
 use yii\db\ActiveRecord;
 
 /**
- * Immutable context object containing all necessary data for node movement operations.
- *
- * Encapsulates target node, operation type, and derived values to remove parameter passing and provide type safety for
- * nested set operations.
- *
- * Key features.
- * - Calculated positioning values.
- * - Immutable value object design.
- * - Operation-specific factory methods.
- * - PHPStan compatibility.
- * - Type-safe node references.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ * Represents the immutable target position and depth offset of a node insertion or move relative to a target node.
  */
-final class NodeContext
+final readonly class NodeContext
 {
+    /**
+     * Creates a context for a position relative to the target node.
+     *
+     * @param ActiveRecord $targetNode Node the insertion or move is relative to.
+     * @param int $targetPositionValue Left value the inserted or moved node takes.
+     * @param int $depthLevelDelta Depth offset relative to the target node: `1` for a child, `0` for a sibling.
+     */
     public function __construct(
-        private readonly ActiveRecord $targetNode,
-        public readonly int $targetPositionValue,
-        public readonly int $depthLevelDelta,
+        private ActiveRecord $targetNode,
+        public int $targetPositionValue,
+        public int $depthLevelDelta,
     ) {}
 
     /**
-     * Creates context for append-to operation (last child).
+     * Creates the context that places a node as the last child of the target node.
      *
-     * @param ActiveRecord $targetNode Target node to append to.
-     * @param string $rightAttribute Name of the right attribute.
+     * @param ActiveRecord $targetNode Node that becomes the parent.
+     * @param 'rgt' $rightAttribute Name of the right boundary attribute.
      *
-     * @return self New instance with the specified parameters for append-to operation.
-     *
-     * @phpstan-param 'rgt' $rightAttribute
+     * @return self Context positioned at the target right value.
      */
     public static function forAppendTo(ActiveRecord $targetNode, string $rightAttribute): self
     {
@@ -46,14 +38,12 @@ final class NodeContext
     }
 
     /**
-     * Creates context for insert-after operation (next sibling).
+     * Creates the context that places a node as the next sibling of the target node.
      *
-     * @param ActiveRecord $targetNode Target node to insert after.
-     * @param string $rightAttribute Name of the right attribute.
+     * @param ActiveRecord $targetNode Node that becomes the previous sibling.
+     * @param 'rgt' $rightAttribute Name of the right boundary attribute.
      *
-     * @return self New instance with the specified parameters for insert-after operation.
-     *
-     * @phpstan-param 'rgt' $rightAttribute
+     * @return self Context positioned right after the target right value.
      */
     public static function forInsertAfter(ActiveRecord $targetNode, string $rightAttribute): self
     {
@@ -63,14 +53,12 @@ final class NodeContext
     }
 
     /**
-     * Creates context for insert-before operation (previous sibling).
+     * Creates the context that places a node as the previous sibling of the target node.
      *
-     * @param ActiveRecord $targetNode Target node to insert before.
-     * @param string $leftAttribute Name of the left attribute.
+     * @param ActiveRecord $targetNode Node that becomes the next sibling.
+     * @param 'lft' $leftAttribute Name of the left boundary attribute.
      *
-     * @return self New instance with the specified parameters for insert-before operation.
-     *
-     * @phpstan-param 'lft' $leftAttribute
+     * @return self Context positioned at the target left value.
      */
     public static function forInsertBefore(ActiveRecord $targetNode, string $leftAttribute): self
     {
@@ -80,14 +68,12 @@ final class NodeContext
     }
 
     /**
-     * Creates context for prepend-to operation (first child).
+     * Creates the context that places a node as the first child of the target node.
      *
-     * @param ActiveRecord $targetNode Target node to prepend to.
-     * @param string $leftAttribute Name of the left attribute.
+     * @param ActiveRecord $targetNode Node that becomes the parent.
+     * @param 'lft' $leftAttribute Name of the left boundary attribute.
      *
-     * @return self New instance with the specified parameters for prepend-to operation.
-     *
-     * @phpstan-param 'lft' $leftAttribute
+     * @return self Context positioned right after the target left value.
      */
     public static function forPrependTo(ActiveRecord $targetNode, string $leftAttribute): self
     {
@@ -97,13 +83,11 @@ final class NodeContext
     }
 
     /**
-     * Returns the depth value of the target node.
+     * Returns the depth of the target node.
      *
-     * @param string $depthAttribute Name of the depth attribute.
+     * @param 'depth' $depthAttribute Name of the depth attribute.
      *
-     * @return int Depth value of the target node.
-     *
-     * @phpstan-param 'depth' $depthAttribute
+     * @return int Depth of the target node.e
      */
     public function getTargetDepth(string $depthAttribute): int
     {
@@ -111,11 +95,11 @@ final class NodeContext
     }
 
     /**
-     * Returns the tree attribute value of the target node.
+     * Returns the tree identifier of the target node.
      *
-     * @param false|string $treeAttribute Name of the tree attribute or `false` if disabled.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
      *
-     * @return mixed Tree attribute value or `null` if tree attribute is disabled.
+     * @return mixed Tree identifier, or `null` when `$treeAttribute` is `false`.
      */
     public function getTargetTreeValue(string|false $treeAttribute): mixed
     {

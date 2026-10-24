@@ -4,35 +4,18 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests\base;
 
-use yii2\extensions\nestedsets\tests\support\model\ExtendableMultipleTree;
+use LogicException;
+use yii2\extensions\nestedsets\exception\Message;
+use yii2\extensions\nestedsets\NestedSetsBehavior;
+use yii2\extensions\nestedsets\tests\support\model\{ExtendableMultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Base class for extensibility tests in nested sets tree behaviors.
- *
- * Provides a suite of unit tests to verify the extensibility and subclassing capabilities of the nested sets behavior,
- * ensuring protected methods remain accessible for customization and extension in descendant classes.
- *
- * This class validates that key internal methods of the nested sets behavior—such as node insertion, root insertion,
- * node movement, and attribute shifting—can be invoked and overridden by subclasses, supporting advanced use cases
- * and framework extensibility.
- *
- * The tests cover scenarios for exposing protected methods, confirming their correct execution and the ability to
- * customize node state during tree operations in both single-tree and multi-tree models.
- *
- * Key features.
- * - Ensures protected methods are accessible for subclass extension.
- * - Supports both single-tree and multi-tree model scenarios.
- * - Tests before-insert and move operations for extensibility.
- * - Validates extensibility for root and non-root node operations.
- * - Verifies correct attribute assignment by protected methods.
+ * Unit tests for the protected {@see NestedSetsBehavior} methods that remain accessible to subclasses.
  *
  * @see ExtendableMultipleTree for extensible multi-tree model.
  * @see ExtendableNestedSetsBehavior for behavior subclass exposing protected methods.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractExtensibility extends TestCase
 {
@@ -221,5 +204,46 @@ abstract class AbstractExtensibility extends TestCase
             $childBehavior->wasMethodCalled('shiftLeftRightAttribute'),
             "'shiftLeftRightAttribute()' should remain protected to allow subclass customization.",
         );
+    }
+
+    public function testThrowLogicExceptionWhenSubclassMovesNodeAsRootWithoutTreeAttribute(): void
+    {
+        $this->createDatabase();
+
+        $root = new Tree(['name' => 'root']);
+
+        $root->makeRoot();
+
+        // Public makeRoot() rejects single-tree moves earlier; only a subclass can reach the protected move.
+        $behavior = $root->attachBehavior('nestedSetsBehavior', ExtendableNestedSetsBehavior::class);
+
+        self::assertInstanceOf(
+            ExtendableNestedSetsBehavior::class,
+            $behavior,
+            'Single-tree model must use the extendable behavior.',
+        );
+        self::assertFalse(
+            $behavior->treeAttribute,
+            'Tree attribute must be disabled.',
+        );
+
+        try {
+            $behavior->exposedMoveNodeAsRoot();
+
+            self::fail(
+                'A cross-tree move without a tree attribute must be rejected.',
+            );
+        } catch (LogicException $exception) {
+            self::assertSame(
+                Message::TREE_ATTRIBUTE_REQUIRED->getMessage(),
+                $exception->getMessage(),
+                'Message must name the missing tree attribute.',
+            );
+            self::assertSame(
+                ['lft' => 1, 'rgt' => 2, 'depth' => 0],
+                Tree::findOne($root->getPrimaryKey())?->getAttributes(['lft', 'rgt', 'depth']),
+                'Stored coordinates must stay unchanged.',
+            );
+        }
     }
 }

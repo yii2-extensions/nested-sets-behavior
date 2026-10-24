@@ -1,7 +1,10 @@
 # Usage examples
 
 This document provides comprehensive examples of how to use the Yii Nested Sets Behavior in real-world hierarchical data
-management scenarios.
+management scenarios. Use a model configured as in the [configuration guide](configuration.md), with migrations applied.
+Snippets are separate recipes; they do not form one executable script. Check structural methods' `false` results and
+model errors in application code. Refresh other loaded instances before querying their tree state. Echoed names below
+illustrate CLI output; encode names when displaying them in HTML.
 
 ## Building tree structures
 
@@ -84,15 +87,15 @@ $desktops = new Category(['name' => 'Desktop Computers']);
 $desktops->appendTo($computers);
 
 // Result tree structure:
-// Store Categories (1,16)
-// ├── Electronics (2,13)
+// Store Categories (1,18)
+// ├── Electronics (2,15)
 // │   ├── Mobile Phones (3,8)
 // │   │   ├── Smartphones (4,5)
 // │   │   └── Feature Phones (6,7)
-// │   └── Computers (9,12)
+// │   └── Computers (9,14)
 // │       ├── Laptops (10,11)
 // │       └── Desktop Computers (12,13)
-// └── Clothing (14,15)
+// └── Clothing (16,17)
 ```
 
 ## Inserting and positioning nodes
@@ -108,7 +111,7 @@ declare(strict_types=1);
 $accessories = new Category(['name' => 'Accessories']);
 $accessories->appendTo($electronics); // Becomes last child
 
-// Prepend as first child  
+// Prepend as first child
 $tablets = new Category(['name' => 'Tablets']);
 $tablets->prependTo($electronics); // Becomes first child
 
@@ -130,7 +133,7 @@ $gaming->insertAfter($computers); // Places Gaming after Computers
 $audio = new Category(['name' => 'Audio']);
 $audio->insertBefore($phones); // Places Audio before Mobile Phones
 
-// Result: Electronics now has Audio, Mobile Phones, Computers, Gaming, Accessories
+// If applied after the preceding example: Tablets, Audio, Mobile Phones, Computers, Gaming, Accessories
 ```
 
 ### Positioning nodes with specific ordering
@@ -145,21 +148,21 @@ class ProductController extends Controller
     public function actionOrganizeCategories(): void
     {
         $electronics = Category::findOne(['name' => 'Electronics']);
-        
+
         // Create categories in desired order
         $categories = [
             'Computers',
-            'Mobile Phones', 
+            'Mobile Phones',
             'Audio',
             'Gaming',
             'Accessories'
         ];
-        
+
         $previousCategory = null;
 
         foreach ($categories as $categoryName) {
             $category = new Category(['name' => $categoryName]);
-            
+
             if ($previousCategory === null) {
                 // First category becomes first child
                 $category->prependTo($electronics);
@@ -167,7 +170,7 @@ class ProductController extends Controller
                 // Subsequent categories inserted after previous
                 $category->insertAfter($previousCategory);
             }
-            
+
             $previousCategory = $category;
         }
     }
@@ -343,18 +346,18 @@ class CategoryController extends Controller
     {
         // Reorganize Electronics category structure
         $electronics = Category::findOne(['name' => 'Electronics']);
-        
+
         // Create a new subcategory structure
         $mobile = new Category(['name' => 'Mobile Devices']);
         $mobile->appendTo($electronics);
-        
+
         // Move existing categories under new structure
         $phones = Category::findOne(['name' => 'Mobile Phones']);
         $tablets = Category::findOne(['name' => 'Tablets']);
-        
+
         $phones->appendTo($mobile);
         $tablets->appendTo($mobile);
-        
+
         // Result: Electronics > Mobile Devices > (Mobile Phones, Tablets)
     }
 }
@@ -449,52 +452,55 @@ $deletedCount = $electronics->deleteWithChildren();
 echo "Deleted {$deletedCount} nodes total\n";
 ```
 
-### Batch deletion with validation
+### Deletion with a child check
+
+Acquire the table lock before reading the state used to decide a write, and bypass query caching. This recipe owns a
+fresh transaction; when composing a larger unit of work, acquire the lock before establishing its read snapshot.
 
 ```php
 <?php
 
 declare(strict_types=1);
 
+use app\models\Category;
+
 class CategoryService
 {
     public function deleteCategory(int $categoryId, bool $deleteChildren = false): array
     {
-        $category = Category::findOne($categoryId);
-        
-        if (!$category) {
-            return ['success' => false, 'error' => 'Category not found'];
+        if (Category::getDb()->getTransaction() !== null) {
+            throw new \LogicException('Start this operation outside an existing transaction.');
         }
-        
-        // Check if category has children
-        $hasChildren = $category->children()->exists();
-        
-        if ($hasChildren && !$deleteChildren) {
-            return [
-                'success' => false, 
-                'error' => 'Category has children. Specify deleteChildren=true to proceed'
-            ];
-        }
-        
-        try {
-            if ($deleteChildren) {
-                $deletedCount = $category->deleteWithChildren();
 
-                return [
-                    'success' => true, 
-                    'message' => "Deleted category and {$deletedCount} descendants"
-                ];
-            } else {
-                $category->delete();
+        return Category::getDb()->transaction(static function () use ($categoryId, $deleteChildren): array {
+            (new Category())->acquireTreeLock();
+            $category = Category::find()->where(['id' => $categoryId])->noCache()->one();
 
-                return ['success' => true, 'message' => 'Category deleted'];
+            if ($category === null) {
+                return ['success' => false, 'error' => 'Category not found'];
             }
-        } catch (Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+
+            if (!$deleteChildren && $category->children()->orderBy(null)->noCache()->exists()) {
+                return ['success' => false, 'error' => 'Category has children'];
+            }
+
+            // The child check above permits this for a leaf, including a childless root.
+            $deletedCount = $category->deleteWithChildren();
+
+            if ($deletedCount === false) {
+                throw new \RuntimeException('Category deletion was cancelled.');
+            }
+
+            return ['success' => true, 'deleted' => $deletedCount];
+        });
     }
 }
 ```
+
+The existence check removes ordering for SQL Server compatibility. The count includes the selected node. Database
+exceptions propagate after rollback; retry the complete transaction with fresh records when appropriate.
+`deleteWithChildren()` runs delete hooks on the selected node only, not on each descendant. Put required descendant
+cleanup in application code within the same transaction.
 
 ## Advanced queries and operations
 
@@ -527,31 +533,35 @@ foreach ($grandchildren as $grandchild) {
 
 declare(strict_types=1);
 
+use app\models\Category;
+use yii\base\Widget;
+use yii\helpers\{Html, Url};
+
 class MenuWidget extends Widget
 {
     public $rootId;
     public $maxDepth = 3;
-    
+
     public function run(): string
     {
         $root = Category::findOne($this->rootId);
-        
+
         if (!$root) {
             return '';
         }
-        
+
         $tree = $this->buildTreeArray($root);
 
         return $this->renderTree($tree);
     }
-    
+
     private function buildTreeArray($root): array
     {
         $children = $root->children($this->maxDepth)->all();
-        
+
         $tree = [];
         $currentDepth = $root->depth;
-        
+
         foreach ($children as $node) {
             $tree[] = [
                 'id' => $node->id,
@@ -560,21 +570,21 @@ class MenuWidget extends Widget
                 'url' => Url::to(['category/view', 'id' => $node->id]),
             ];
         }
-        
+
         return $tree;
     }
-    
+
     private function renderTree(array $tree): string
     {
         $html = '<ul class="tree-menu">';
-        
+
         foreach ($tree as $item) {
             $indent = str_repeat('  ', $item['depth']);
             $html .= '<li class="depth-' . $item['depth'] . '">';
-            $html .= Html::a($item['name'], $item['url']);
+            $html .= Html::a(Html::encode($item['name']), $item['url']);
             $html .= '</li>';
         }
-        
+
         $html .= '</ul>';
 
         return $html;
@@ -589,49 +599,55 @@ class MenuWidget extends Widget
 
 declare(strict_types=1);
 
-class CategoryService 
+class CategoryService
 {
     public function isAncestor(Category $ancestor, Category $descendant): bool
     {
         return $descendant->isChildOf($ancestor);
     }
-    
+
     public function isDescendant(Category $descendant, Category $ancestor): bool
     {
         return $descendant->isChildOf($ancestor);
     }
-    
+
     public function isSibling(Category $node1, Category $node2): bool
     {
         // Nodes are siblings if they have the same direct parent
         $parent1 = $node1->parents(1)->one();
         $parent2 = $node2->parents(1)->one();
-        
+
         return $parent1 && $parent2 && $parent1->id === $parent2->id;
     }
-    
+
     public function getCommonAncestor(Category $node1, Category $node2): ?Category
     {
         $ancestors1 = $node1->parents()->all();
         $ancestors2 = $node2->parents()->all();
-        
+
         // Find common ancestors
         $commonAncestors = array_intersect(
             array_column($ancestors1, 'id'),
             array_column($ancestors2, 'id')
         );
-        
+
         if (empty($commonAncestors)) {
             return null;
         }
-        
+
         // Return the deepest common ancestor
-        return Category::findOne(max($commonAncestors));
+        return Category::find()
+            ->where(['id' => $commonAncestors])
+            ->orderBy(['depth' => SORT_DESC])
+            ->one();
     }
 }
 ```
 
-### Tree validation and integrity
+### Basic tree checks
+
+These checks are diagnostic only: queries based on stored boundaries cannot discover every gap, overlap, orphan, or
+duplicate boundary. Run a complete integrity audit with writers stopped before accepting migrated data.
 
 ```php
 <?php
@@ -640,46 +656,42 @@ declare(strict_types=1);
 
 class TreeValidator
 {
-    public function validateTreeIntegrity(int $treeId = null): array
+    public function validateTreeIntegrity(?int $treeId = null): array
     {
         $errors = [];
-        
+
         $query = Category::find();
         if ($treeId !== null) {
             $query->andWhere(['tree' => $treeId]);
         }
-        
+
         $categories = $query->all();
-        
+
         foreach ($categories as $category) {
             // Check left < right
             if ($category->lft >= $category->rgt) {
                 $errors[] = "Invalid boundaries for {$category->name}: lft={$category->lft}, rgt={$category->rgt}";
             }
-            
+
             // Check children boundaries
             $children = $category->children(1)->all();
             foreach ($children as $child) {
                 if ($child->lft <= $category->lft || $child->rgt >= $category->rgt) {
                     $errors[] = "Child {$child->name} boundaries invalid relative to parent {$category->name}";
                 }
-                
+
                 if ($child->depth !== $category->depth + 1) {
                     $errors[] = "Child {$child->name} has incorrect depth";
                 }
             }
         }
-        
+
         return $errors;
     }
 }
 ```
 
-This comprehensive examples guide demonstrates practical usage patterns for the Yii Nested Sets Behavior across different
-scenarios, from basic tree building to complex hierarchical data management in real-world applications.
+This comprehensive examples guide demonstrates practical usage patterns for the Yii Nested Sets Behavior across
+different scenarios, from basic tree building to complex hierarchical data management in real-world applications.
 
-## Next steps
-
-- 📚 [Installation Guide](installation.md)
-- ⚙️ [Configuration Guide](configuration.md)
-- 🧪 [Testing Guide](testing.md)
+[Back to documentation](../README.md#documentation)

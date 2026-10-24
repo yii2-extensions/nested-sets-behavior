@@ -8,33 +8,13 @@ use yii\db\ActiveRecord;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
 
 /**
- * Active Record model for testing strict validation rules with nested sets behavior.
+ * Active Record model with strict validation rules used by the behavior tests.
  *
- * This class attaches the {@see NestedSetsBehavior} to enable hierarchical data structure operations for a single tree,
- * with additional strict validation rules applied to the name attribute.
- *
- * The model is designed for testing property resolution, behavior integration, and validation scenarios involving a
- * single tree with custom validation requirements.
- *
- * It ensures proper type inference and property access when behaviors are attached to Yii Active Record models, and
- * enforces strict validation for the name property, including required, minimum length, and pattern constraints.
- *
- * Key features:
- * - Behavior attachment for hierarchical data structures with single tree support.
- * - Nested sets model functionality for tree operations.
- * - Property resolution testing for behavior integration.
- * - Static analysis validation for behavior property access.
- * - Strict validation rules for the name attribute (required, minimum length, pattern).
- * - Table mapping with the `tree` table.
- *
- * @phpstan-property int $depth
- * @phpstan-property int $id
- * @phpstan-property int $lft
- * @phpstan-property int $rgt
- * @phpstan-property string $name
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ * @property int $depth
+ * @property int $id
+ * @property int $lft
+ * @property int $rgt
+ * @property string $name
  */
 final class TreeWithStrictValidation extends ActiveRecord
 {
@@ -46,7 +26,7 @@ final class TreeWithStrictValidation extends ActiveRecord
     }
 
     /**
-     * @phpstan-return TreeQuery<self>
+     * @return TreeQuery<self>
      */
     public static function find(): TreeQuery
     {
@@ -77,7 +57,7 @@ final class TreeWithStrictValidation extends ActiveRecord
     }
 
     /**
-     * @phpstan-return array<string, int>
+     * @return array<string, int>
      */
     public function transactions(): array
     {

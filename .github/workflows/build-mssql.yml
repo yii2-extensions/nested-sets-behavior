@@ -1,26 +1,25 @@
+---
 on:
-  pull_request:
+  pull_request: &ignore-paths
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.gitattributes'
+      - ".gitattributes"
+      - ".gitignore"
+      - "CHANGELOG.md"
+      - "docs/**"
+      - "README.md"
+      - "UPGRADE.md"
 
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.gitattributes'
+  push: *ignore-paths
 
 name: build-mssql
+
+permissions:
+  contents: read
 
 jobs:
   mssql:
     name: SQL Server tests.
-    uses: php-forge/actions/.github/workflows/phpunit-database.yml@v2
+    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@f0e06ea5cc965cff4431177d448add7b7c98668b # v2.0.1
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
@@ -29,7 +28,7 @@ jobs:
         {
           "ACCEPT_EULA": "Y",
           "SA_PASSWORD": "YourStrong!Passw0rd",
-          "MSSQL_PID": "Developer",
+          "MSSQL_PID": "Developer"
         }
       database-health-cmd: "/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P 'YourStrong!Passw0rd' -Q 'SELECT 1'"
       database-health-retries: 5
@@ -50,7 +49,7 @@ jobs:
         sleep 15
 
         # Create test database
-        docker exec -i database /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P 'YourStrong!Passw0rd' -Q "
+        docker exec -i "database-${GITHUB_RUN_ID}" /opt/mssql-tools18/bin/sqlcmd -C -S localhost -U SA -P 'YourStrong!Passw0rd' -Q "
         IF NOT EXISTS (SELECT name FROM sys.databases WHERE name = 'yiitest')
         BEGIN
             CREATE DATABASE yiitest;

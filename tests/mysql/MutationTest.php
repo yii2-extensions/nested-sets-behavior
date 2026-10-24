@@ -6,26 +6,13 @@ namespace yii2\extensions\nestedsets\tests\mysql;
 
 use PHPUnit\Framework\Attributes\Group;
 use yii\db\Exception;
+use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
 use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
 use yii2\extensions\nestedsets\tests\support\model\MultipleTree;
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Test suite for mutation operations in nested sets tree behaviors using MySQL.
- *
- * Verifies correct handling of leaf node ordering and left attribute consistency in multiple tree models on MySQL.
- *
- * Ensures that the `leaves()` method returns nodes in the expected order after direct manipulation of left and right
- * attributes, maintaining data integrity and predictable query results.
- *
- * Key features.
- * - Ensures consistent results from the `leaves()` method.
- * - MySQL-specific configuration for database connection and credentials.
- * - Uses the multiple tree model for mutation scenarios.
- * - Validates leaf node detection and ordering after manual updates.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ * Unit tests for the {@see NestedSetsQueryBehavior} leaf ordering after direct boundary updates against MySQL.
  */
 #[Group('mutation')]
 final class MutationTest extends TestCase
@@ -66,13 +53,21 @@ final class MutationTest extends TestCase
 
         $command = $this->getDb()->createCommand();
 
-        $command->update('multiple_tree', ['lft' => 3, 'rgt' => 4], ['name' => 'Leaf B'])->execute();
-        $command->update('multiple_tree', ['lft' => 5, 'rgt' => 6], ['name' => 'Leaf A'])->execute();
-        $command->update('multiple_tree', ['lft' => 1, 'rgt' => 7], ['name' => 'Root'])->execute();
+        $command
+            ->update('multiple_tree', ['lft' => 3, 'rgt' => 4], ['name' => 'Leaf B'])
+            ->execute();
+        $command
+            ->update('multiple_tree', ['lft' => 5, 'rgt' => 6], ['name' => 'Leaf A'])
+            ->execute();
+        $command
+            ->update('multiple_tree', ['lft' => 1, 'rgt' => 7], ['name' => 'Root'])
+            ->execute();
 
-        $leaves = MultipleTree::find()->leaves()->all();
+        $leaves = MultipleTree::find()
+            ->leaves()
+            ->all();
 
-        /** @phpstan-var array<array{name: string, lft: int}> $expectedLeaves */
+        /** @var array<array{name: string, lft: int}> $expectedLeaves */
         $expectedLeaves = [
             ['name' => 'Leaf B', 'lft' => 3],
             ['name' => 'Leaf A', 'lft' => 5],

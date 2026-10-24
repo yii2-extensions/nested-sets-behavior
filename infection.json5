@@ -1,14 +1,20 @@
 {
-    "$schema": "vendor/infection/infection/resources/schema.json",
-    "logs": {
-        "text": "php:\/\/stderr",
-        "stryker": {
-            "report": "main"
-        }
+    $schema: "./vendor/infection/infection/resources/schema.json",
+    ignoreMsiWithNoMutations: true,
+    initialTestsPhpOptions: "-d memory_limit=-1",
+    logs: {
+        text: "php://stderr",
+        stryker: {
+            report: "main",
+        },
     },
-    "source": {
-        "directories": [
-            "src"
-        ]
-    }
+    minCoveredMsi: 100,
+    minMsi: 100,
+    source: {
+        directories: ["src"],
+    },
+    staticAnalysisToolOptions: "--memory-limit=-1",
+    testFrameworkExtraArgs: "--group=sqlite,mutation -d memory_limit=-1",
+    threads: 4,
+    timeout: 120,
 }

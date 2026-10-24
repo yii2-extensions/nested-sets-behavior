@@ -31,13 +31,15 @@ class m250707_103609_tree extends Migration
         $this->createIndex('idx_tree_depth', '{{%tree}}', 'depth');
         $this->createIndex('idx_tree_lft_rgt', '{{%tree}}', ['lft', 'rgt']);
 
+        $tableName = $this->db->getSchema()->getRawTableName('{{%tree}}');
+
         if ($this->db->driverName !== 'sqlite') {
-            $this->addCommentOnTable('{{%tree}}', 'Nested sets tree structure for hierarchical data');
-            $this->addCommentOnColumn('{{%tree}}', 'id', 'Primary key of the tree node');
-            $this->addCommentOnColumn('{{%tree}}', 'name', 'Name of the tree node');
-            $this->addCommentOnColumn('{{%tree}}', 'lft', 'Left boundary of nested set');
-            $this->addCommentOnColumn('{{%tree}}', 'rgt', 'Right boundary of nested set');
-            $this->addCommentOnColumn('{{%tree}}', 'depth', 'Node depth in the tree hierarchy');
+            $this->addCommentOnTable($tableName, 'Nested sets tree structure for hierarchical data');
+            $this->addCommentOnColumn($tableName, 'id', 'Primary key of the tree node');
+            $this->addCommentOnColumn($tableName, 'name', 'Name of the tree node');
+            $this->addCommentOnColumn($tableName, 'lft', 'Left boundary of nested set');
+            $this->addCommentOnColumn($tableName, 'rgt', 'Right boundary of nested set');
+            $this->addCommentOnColumn($tableName, 'depth', 'Node depth in the tree hierarchy');
         }
     }
 

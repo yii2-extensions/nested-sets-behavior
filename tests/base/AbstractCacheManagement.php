@@ -12,32 +12,10 @@ use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Base class for cache invalidation tests in nested sets tree behaviors.
- *
- * Provides a comprehensive suite of integration and unit tests for cache management in nested sets tree structures,
- * ensuring correct cache population, invalidation, and memoization across various node operations and scenarios.
- *
- * This class validates the cache lifecycle for the nested sets behavior by simulating node insertions, updates,
- * deletions, and structural changes, covering both single and multiple tree models.
- *
- * The tests ensure that cache values for depth, left, and right attributes are correctly populated, invalidated, and
- * memoized, and that cache invalidation is triggered by all relevant operations, including manual and automatic cases.
- *
- * Key features.
- * - Coverage for tree attribute handling and owner assignment.
- * - Integration tests for cache invalidation after node insert, update, append, delete, and makeRoot operations.
- * - Memoization tests for depth, left, and right value accessors.
- * - Support for both single-tree and multi-tree models.
- * - Tests for manual and automatic cache invalidation.
- * - Use of mock objects to verify memoization and cache state.
- * - Verification of cache state before and after invalidation events.
+ * Unit tests for the {@see NestedSetsBehavior} memoization and invalidation of cached node values.
  *
  * @see MultipleTree for multi-tree model.
- * @see NestedSetsBehavior for behavior implementation.
  * @see Tree for single-tree model.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractCacheManagement extends TestCase
 {
@@ -220,7 +198,10 @@ abstract class AbstractCacheManagement extends TestCase
 
         $behavior = $child2->getBehavior('nestedSetsBehavior');
 
-        self::assertNotNull($behavior, 'Behavior should be attached to the child node.');
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the child node.',
+        );
 
         $child2->appendTo($root);
 
@@ -228,7 +209,6 @@ abstract class AbstractCacheManagement extends TestCase
 
         $child2->setAttribute('lft', 3);
         $child2->save();
-
         $child2->appendTo($child1);
 
         $this->verifyCacheInvalidation($behavior);
@@ -251,7 +231,10 @@ abstract class AbstractCacheManagement extends TestCase
         $grandchild->appendTo($child);
         $behavior = $child->getBehavior('nestedSetsBehavior');
 
-        self::assertNotNull($behavior, 'Behavior should be attached to the child node.');
+        self::assertNotNull(
+            $behavior,
+            'Behavior should be attached to the child node.',
+        );
 
         $this->populateAndVerifyCache($behavior);
 
@@ -371,7 +354,6 @@ abstract class AbstractCacheManagement extends TestCase
             $behavior,
             'Behavior should be attached to the child node.',
         );
-
         self::assertEquals(
             $child->getAttribute('depth'),
             self::invokeMethod($behavior, 'getDepthValue'),
@@ -417,7 +399,8 @@ abstract class AbstractCacheManagement extends TestCase
 
         $node->makeRoot();
 
-        $mock = $this->getMockBuilder(Tree::class)
+        $mock = $this
+            ->getMockBuilder(Tree::class)
             ->onlyMethods(['getAttribute'])
             ->getMock();
 
@@ -463,7 +446,8 @@ abstract class AbstractCacheManagement extends TestCase
 
         $node->makeRoot();
 
-        $mock = $this->getMockBuilder(Tree::class)
+        $mock = $this
+            ->getMockBuilder(Tree::class)
             ->onlyMethods(['getAttribute'])
             ->getMock();
 
@@ -506,9 +490,11 @@ abstract class AbstractCacheManagement extends TestCase
         $this->createDatabase();
 
         $node = new Tree(['name' => 'Root']);
+
         $node->makeRoot();
 
-        $mock = $this->getMockBuilder(Tree::class)
+        $mock = $this
+            ->getMockBuilder(Tree::class)
             ->onlyMethods(['getAttribute'])
             ->getMock();
 
@@ -585,7 +571,9 @@ abstract class AbstractCacheManagement extends TestCase
     }
 
     /**
-     * @phpstan-param Behavior<ActiveRecord> $behavior
+     * @template TModel of ActiveRecord
+     *
+     * @param Behavior<TModel> $behavior
      */
     private function populateAndVerifyCache(Behavior $behavior): void
     {
@@ -608,7 +596,9 @@ abstract class AbstractCacheManagement extends TestCase
     }
 
     /**
-     * @phpstan-param Behavior<ActiveRecord> $behavior
+     * @template TModel of ActiveRecord
+     *
+     * @param Behavior<TModel> $behavior
      */
     private function verifyCacheInvalidation(Behavior $behavior): void
     {

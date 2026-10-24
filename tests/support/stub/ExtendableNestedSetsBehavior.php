@@ -10,35 +10,18 @@ use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\NodeContext;
 
 /**
- * Extensible Nested Sets Behavior stub for testing method exposure and call tracking.
+ * Exposes the protected {@see NestedSetsBehavior} methods to tests and records which of them are called.
  *
- * Provides a test double for {@see NestedSetsBehavior} exposing protected methods and tracking their invocation for
- * unit testing purposes.
+ * @template T of ActiveRecord
  *
- * This class enables direct invocation of internal behavior logic and records method calls, supporting fine-grained
- * assertions in test scenarios.
- *
- * It also allows manual manipulation of internal state for advanced test coverage.
- *
- * Key features:
- * - Allows manual state manipulation (node, operation).
- * - Exposes protected methods for direct testing.
- * - Supports cache invalidation tracking.
- * - Tracks method invocations for assertion.
- *
- * @phpstan-template T of ActiveRecord
- *
- * @phpstan-extends NestedSetsBehavior<T>
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ * @extends NestedSetsBehavior<T>
  */
 final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
 {
     /**
      * Tracks method calls for assertions.
      *
-     * @phpstan-var array<string, bool>
+     * @var array<string, bool>
      */
     public array $calledMethods = [];
 
@@ -94,7 +77,7 @@ final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
     }
 
     /**
-     * @phpstan-return array<string, bool>
+     * @return array<string, bool>
      */
     public function getCalledMethods(): array
     {
