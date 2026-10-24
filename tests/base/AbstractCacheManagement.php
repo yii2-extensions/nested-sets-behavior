@@ -572,6 +572,7 @@ abstract class AbstractCacheManagement extends TestCase
 
     /**
      * @template TModel of ActiveRecord
+     *
      * @param Behavior<TModel> $behavior
      */
     private function populateAndVerifyCache(Behavior $behavior): void
@@ -596,6 +597,7 @@ abstract class AbstractCacheManagement extends TestCase
 
     /**
      * @template TModel of ActiveRecord
+     *
      * @param Behavior<TModel> $behavior
      */
     private function verifyCacheInvalidation(Behavior $behavior): void

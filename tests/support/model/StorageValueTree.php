@@ -11,6 +11,7 @@ final class StorageValueTree extends Tree
 {
     /**
      * @param string[]|null $names
+     *
      * @return array<array-key, mixed>
      */
     public function getDirtyAttributes($names = null): array

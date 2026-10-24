@@ -1394,7 +1394,7 @@ abstract class AbstractIntegrity extends TestCase
     }
 
     /**
-     * @param class-string<Tree|MultipleTree> $class
+     * @param class-string<MultipleTree|Tree> $class
      */
     private function assertIntegrity(string $class): void
     {

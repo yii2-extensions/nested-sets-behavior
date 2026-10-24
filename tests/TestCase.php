@@ -230,7 +230,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
      *
      * @param TreeStructure $structure Hierarchical tree structure definition.
      * @param UpdateData $updates Database updates to apply after creation.
-     * @param class-string<Tree|MultipleTree> $modelClass Model class to use ({@see Tree::class} or
+     * @param class-string<MultipleTree|Tree> $modelClass Model class to use ({@see Tree::class} or
      * {@see MultipleTree::class}.
      *
      * @throws Exception if an unexpected error occurs during execution.
@@ -506,10 +506,9 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
      *
      * @param array $updates Array of updates to apply.
      * @param string $tableName Name of the table to apply updates to.
+     * @param UpdateData $updates
      *
      * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @param UpdateData $updates
      */
     private function applyUpdates(array $updates, string $tableName): void
     {

@@ -11,6 +11,7 @@ use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
  * Active Query for {@see ExtendableMultipleTree} with the nested sets query behavior attached.
  *
  * @template T of ExtendableMultipleTree
+ *
  * @extends ActiveQuery<T>
  */
 final class ExtendableMultipleTreeQuery extends ActiveQuery

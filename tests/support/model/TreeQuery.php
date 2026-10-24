@@ -11,6 +11,7 @@ use yii2\extensions\nestedsets\NestedSetsQueryBehavior;
  * Active Query for {@see Tree} and {@see TreeWithStrictValidation} with the nested sets query behavior attached.
  *
  * @template T of Tree|TreeWithStrictValidation
+ *
  * @extends ActiveQuery<T>
  */
 final class TreeQuery extends ActiveQuery

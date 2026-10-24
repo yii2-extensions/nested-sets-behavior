@@ -13,6 +13,7 @@ use yii2\extensions\nestedsets\NodeContext;
  * Exposes the protected {@see NestedSetsBehavior} methods to tests and records which of them are called.
  *
  * @template T of ActiveRecord
+ *
  * @extends NestedSetsBehavior<T>
  */
 final class ExtendableNestedSetsBehavior extends NestedSetsBehavior
