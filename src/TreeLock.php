@@ -214,11 +214,10 @@ final class TreeLock
     /**
      * Resolves the qualified lock registry table and the canonical resource key of the owner's physical table.
      *
-     * @return array{string, string} Qualified lock table and canonical resource hash.
-     *
      * @throws InvalidConfigException if the table does not exist, is not a visible base table, or, on MySQL, if
      * identifier case rules cannot be resolved or either table does not use InnoDB.
      * @throws NotSupportedException if the driver is not supported or a SQLite table is outside the `main` database.
+     * @return array{string, string} Qualified lock table and canonical resource hash.
      */
     private static function identity(ActiveRecord $owner, Connection $db): array
     {
@@ -495,8 +494,8 @@ final class TreeLock
      * Runs the acquisition with the session `innodb_lock_wait_timeout` set to the timeout, then restores the old value.
      *
      * @param Connection $db Database connection to use.
-     * @param callable(): int $acquire Acquisition callback that returns the number of updated registry rows.
      * @param int $timeout Lock wait timeout in seconds.
+     * @param callable(): int $acquire Acquisition callback that returns the number of updated registry rows.
      *
      * @return int Number of updated registry rows.
      */
