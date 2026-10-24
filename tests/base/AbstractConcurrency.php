@@ -118,15 +118,15 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must commit.',
         );
 
         $this->assertLockFailure($blocked);
 
-        self::assertTrue(
-            $this->start($payload)->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $this->start($payload)->await('finished'),
             'Retried move must commit.',
         );
 
@@ -216,15 +216,15 @@ abstract class AbstractConcurrency extends TestCase
 
             touch($gate);
 
-            self::assertTrue(
-                $first->await('finished')['success'] ?? false,
+            $this->assertWorkerSucceeded(
+                $first->await('finished'),
                 'Holding writer must commit.',
             );
 
             $this->assertLockFailure($blocked);
 
-            self::assertTrue(
-                $this->start($payload)->await('finished')['success'] ?? false,
+            $this->assertWorkerSucceeded(
+                $this->start($payload)->await('finished'),
                 'Retried deletion must commit.',
             );
 
@@ -277,8 +277,8 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must commit.',
         );
         self::assertSame(
@@ -481,12 +481,12 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must commit.',
         );
-        self::assertTrue(
-            $independent['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $independent,
             'An existing guard for another table must not contend.',
         );
     }
@@ -531,8 +531,8 @@ abstract class AbstractConcurrency extends TestCase
 
         $old->await('prepared');
 
-        self::assertTrue(
-            $this->start(['name' => 'current'])->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $this->start(['name' => 'current'])->await('finished'),
             'Current writer must commit.',
         );
 
@@ -632,8 +632,8 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must finish.',
         );
 
@@ -644,14 +644,14 @@ abstract class AbstractConcurrency extends TestCase
             Tree::find()->select('name')->column(),
             'Rolled back changes must not persist.',
         );
-        self::assertTrue(
+        $this->assertWorkerSucceeded(
             $this->start(
                 [
                     'operation' => 'append',
                     'target' => $root->getAttributes(),
                     'name' => 'retry',
                 ],
-            )->await('finished')['success'] ?? false,
+            )->await('finished'),
             'Retried append must commit.',
         );
 
@@ -704,21 +704,21 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must commit.',
         );
 
         $this->assertLockFailure($secondResult);
 
-        self::assertTrue(
+        $this->assertWorkerSucceeded(
             $this->start(
                 [
                     'operation' => 'append',
                     'target' => $root->getAttributes(),
                     'name' => 'retry',
                 ],
-            )->await('finished')['success'] ?? false,
+            )->await('finished'),
             'Retried append must commit.',
         );
 
@@ -802,8 +802,8 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must commit.',
         );
         self::assertSame(
@@ -826,8 +826,8 @@ abstract class AbstractConcurrency extends TestCase
             ],
         )->await('finished');
 
-        self::assertTrue(
-            $result['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $result,
             'Reentrant write must commit.',
         );
         self::assertSame(
@@ -864,14 +864,14 @@ abstract class AbstractConcurrency extends TestCase
             $failure['message'] ?? null,
             'Failure message must propagate.',
         );
-        self::assertTrue(
+        $this->assertWorkerSucceeded(
             $this->start(
                 [
                     'operation' => 'append',
                     'target' => $root->getAttributes(),
                     'name' => 'after-failure',
                 ],
-            )->await('finished')['success'] ?? false,
+            )->await('finished'),
             'Write after failure must commit.',
         );
 
@@ -945,14 +945,14 @@ abstract class AbstractConcurrency extends TestCase
         $first->await('held');
         $first->close();
 
-        self::assertTrue(
+        $this->assertWorkerSucceeded(
             $this->start(
                 [
                     'operation' => 'append',
                     'target' => $root->getAttributes(),
                     'name' => 'after-exit',
                 ],
-            )->await('finished')['success'] ?? false,
+            )->await('finished'),
             'Next writer must acquire the released lock.',
         );
         self::assertSame(
@@ -1074,8 +1074,8 @@ abstract class AbstractConcurrency extends TestCase
 
         touch($gate);
 
-        self::assertTrue(
-            $first->await('finished')['success'] ?? false,
+        $this->assertWorkerSucceeded(
+            $first->await('finished'),
             'Holding writer must commit.',
         );
 
@@ -1148,7 +1148,8 @@ abstract class AbstractConcurrency extends TestCase
         );
         self::assertTrue(
             is_a($exception, Exception::class, true),
-            'Expected a database lock failure rather than a worker/configuration error.',
+            'Expected a database lock failure rather than a worker/configuration error. Reported: '
+            . json_encode($message, JSON_THROW_ON_ERROR),
         );
 
         $text = $message['message'] ?? null;
@@ -1160,7 +1161,7 @@ abstract class AbstractConcurrency extends TestCase
         self::assertMatchesRegularExpression(
             '/lock|timeout|deadlock|resource busy/i',
             $text,
-            'Failure must be caused by lock contention.',
+            'Failure must be caused by lock contention. Reported: ' . json_encode($message, JSON_THROW_ON_ERROR),
         );
         self::assertSame(
             $message['timeoutBefore'] ?? null,
@@ -1170,11 +1171,22 @@ abstract class AbstractConcurrency extends TestCase
     }
 
     /**
+     * @param array<string, mixed> $message
+     */
+    private function assertWorkerSucceeded(array $message, string $expectation): void
+    {
+        self::assertTrue(
+            $message['success'] ?? false,
+            $expectation . ' Reported: ' . json_encode($message, JSON_THROW_ON_ERROR),
+        );
+    }
+
+    /**
      * @param array<string, mixed> $payload
      */
     private function start(array $payload): ConcurrentProcess
     {
-        $worker = new ConcurrentProcess(['db' => $this->connection] + $payload);
+        $worker = new ConcurrentProcess(['db' => $this->connection] + $payload, $this->directory);
 
         $this->workers[] = $worker;
 

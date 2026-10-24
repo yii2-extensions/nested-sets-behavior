@@ -182,9 +182,12 @@ This package supports testing with multiple database systems to ensure compatibi
 - **SQLite** (default, in-memory) — No setup required
 
 The external database suites drop and recreate `migration`, `tree`, `multiple_tree`, and `nested_sets_lock`. Use a
-disposable database with no application data. Override the fixture connection with `NESTED_SETS_TEST_<DRIVER>_DSN`,
-`NESTED_SETS_TEST_<DRIVER>_USERNAME`, and `NESTED_SETS_TEST_<DRIVER>_PASSWORD`. Driver names are `MYSQL`, `PGSQL`,
-`MSSQL`, `ORACLE`, and `SQLITE`. For example, for a disposable PostgreSQL container published on port 15432:
+disposable database with no application data. The MySQL suite also creates and drops a disposable
+`nested_sets_probe_<token>` database, so the fixture user needs `CREATE` and `DROP` privileges on databases matching
+`nested_sets_probe_%`; `root` in the provided setups already has them. Override the fixture connection with
+`NESTED_SETS_TEST_<DRIVER>_DSN`, `NESTED_SETS_TEST_<DRIVER>_USERNAME`, and `NESTED_SETS_TEST_<DRIVER>_PASSWORD`. Driver
+names are `MYSQL`, `PGSQL`, `MSSQL`, `ORACLE`, and `SQLITE`. For example, for a disposable PostgreSQL container
+published on port 15432:
 
 ```bash
 NESTED_SETS_TEST_PGSQL_DSN='pgsql:host=127.0.0.1;port=15432;dbname=yiitest' \

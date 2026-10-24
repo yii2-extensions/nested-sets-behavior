@@ -7,10 +7,11 @@ namespace yii2\extensions\nestedsets\tests\sqlite;
 use PDO;
 use PHPUnit\Framework\Attributes\{Group, TestWith};
 use RuntimeException;
+use Throwable;
 use Yii;
 use yii\base\{InvalidConfigException, NotSupportedException};
 use yii\caching\ArrayCache;
-use yii\db\Exception;
+use yii\db\{Connection, Exception};
 use yii\log\Logger;
 use yii2\extensions\nestedsets\exception\Message;
 use yii2\extensions\nestedsets\{NestedSetsBehavior, TreeLock};
@@ -499,6 +500,96 @@ final class WriterLockTest extends TestCase
             $root->makeRoot(),
             'Fresh operation must succeed.',
         );
+    }
+
+    public function testServerRollbackWithoutOuterTransactionClearsTheNativeFlagAndAllowsAFreshOperation(): void
+    {
+        $db = $this->getDb();
+
+        $db
+            ->getMasterPdo()
+            ->exec(
+                "CREATE TRIGGER abort_insert BEFORE INSERT ON tree BEGIN SELECT RAISE(ROLLBACK, 'injected native rollback'); END",
+            );
+
+        $root = new Tree(['name' => 'root']);
+
+        try {
+            $root->makeRoot();
+
+            self::fail(
+                'The injected native rollback must fail the operation.',
+            );
+        } catch (Exception $exception) {
+            self::assertMatchesRegularExpression(
+                '/injected native rollback|no such savepoint: LEVEL[0-9]+|cannot rollback - no transaction is active/',
+                $exception->getMessage(),
+                'Failure must come from the native rollback.',
+            );
+            self::assertNull(
+                $db->getTransaction(),
+                'No Yii transaction level may remain.',
+            );
+            self::assertFalse(
+                $db->getMasterPdo()->inTransaction(),
+                'Native transaction must be closed.',
+            );
+            self::assertTrue(
+                $root->getIsNewRecord(),
+                'Owner must stay a new record.',
+            );
+        }
+
+        $db
+            ->createCommand('DROP TRIGGER abort_insert')
+            ->execute();
+
+        self::assertTrue(
+            $root->makeRoot(),
+            'Fresh operation must succeed.',
+        );
+    }
+
+    #[TestWith([1, 'injected rollback failure'])]
+    #[TestWith([5, 'cannot rollback - no transaction is active'])]
+    public function testThrowExceptionWhenRollbackListenerFailsWithAnUnrelatedError(int $code, string $message): void
+    {
+        $db = $this->getDb();
+        $outer = $db->beginTransaction();
+
+        // Only SQLITE_ERROR (code 1) reporting a discarded transaction may be swallowed; anything else must propagate.
+        $injected = new Exception($message, ['HY000', $code, $message]);
+
+        $db->on(
+            Connection::EVENT_ROLLBACK_TRANSACTION,
+            static function () use ($injected): never {
+                throw $injected;
+            },
+        );
+
+        try {
+            TreeLock::rollBack($db, $outer, new RuntimeException('cause'));
+
+            self::fail(
+                'The listener failure must propagate.',
+            );
+        } catch (Throwable $caught) {
+            self::assertSame(
+                $injected,
+                $caught,
+                'Listener failure must propagate unchanged.',
+            );
+            self::assertNull(
+                $db->getTransaction(),
+                'No Yii transaction level may remain.',
+            );
+            self::assertFalse(
+                $db->getMasterPdo()->inTransaction(),
+                'Native transaction must be closed.',
+            );
+        } finally {
+            $db->off(Connection::EVENT_ROLLBACK_TRANSACTION);
+        }
     }
 
     public function testThrowInvalidConfigExceptionForLockTimeoutOutsideDocumentedRange(): void

@@ -280,6 +280,79 @@ final class WriterLockTest extends TestCase
         }
     }
 
+    public function testThrowInvalidConfigExceptionForRegistryMissingFromOwnerSchema(): void
+    {
+        $db = $this->getDb();
+
+        $token = getenv('TEST_TOKEN');
+
+        $token = $token === false || $token === '' ? 'initial' : $token;
+
+        $probe = 'nested_sets_probe_' . preg_replace('/\W/', '_', $token);
+
+        $fixture = $db
+            ->createCommand('SELECT DATABASE()')
+            ->queryScalar();
+
+        self::assertIsString(
+            $fixture,
+            'Fixture database must be selected.',
+        );
+
+        // MySQL DDL commits implicitly, so the probe schema is prepared before any transaction starts.
+        $db
+            ->createCommand('DROP DATABASE IF EXISTS ' . $db->quoteTableName($probe))
+            ->execute();
+        $db
+            ->createCommand('CREATE DATABASE ' . $db->quoteTableName($probe))
+            ->execute();
+        $db
+            ->createCommand(
+                'CREATE TABLE ' . $db->quoteTableName($probe . '.tree')
+                . ' LIKE ' . $db->quoteTableName($fixture . '.tree'),
+            )
+            ->execute();
+
+        ConcurrencyTree::$table = $probe . '.tree';
+
+        try {
+            $db->beginTransaction();
+
+            $behavior = (new ConcurrencyTree())->getBehavior('nestedSetsBehavior');
+
+            self::assertInstanceOf(
+                NestedSetsBehavior::class,
+                $behavior,
+                'Behavior must be attached to the probe model.',
+            );
+
+            $behavior->acquireTreeLock();
+
+            self::fail(
+                'A registry missing from the owner schema must be rejected before writing.',
+            );
+        } catch (InvalidConfigException $exception) {
+            self::assertSame(
+                Message::LOCK_REQUIRES_INNODB->getMessage(),
+                $exception->getMessage(),
+                'Message must name the required engine.',
+            );
+            self::assertSame(
+                1,
+                (int) $db->createCommand('SELECT COUNT(*) FROM nested_sets_lock')->queryScalar(),
+                'No resource may be registered.',
+            );
+        } finally {
+            $db->getTransaction()?->rollBack();
+
+            ConcurrencyTree::$table = '{{%tree}}';
+
+            $db
+                ->createCommand('DROP DATABASE IF EXISTS ' . $db->quoteTableName($probe))
+                ->execute();
+        }
+    }
+
     public function testThrowInvalidConfigExceptionForUnknownReportedIdentifierMode(): void
     {
         $db = $this->getDb();
