@@ -4,29 +4,15 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests\base;
 
+use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Base class for node state and relationship tests in nested sets tree behaviors.
- *
- * Provides a suite of unit tests for verifying node state, parent-child relationships, and root/leaf detection in both
- * single-tree and multi-tree nested sets models.
- *
- * This class ensures the correctness of methods that determine node ancestry, root status, and leaf status by testing
- * various edge cases and boundary conditions, such as equal left/right values and ancestor chains.
- *
- * Key features.
- * - Coverage for both {@see Tree} and {@see MultipleTree} model implementations.
- * - Ensures correct behavior for left/right value manipulations and ancestor checks.
- * - Tests for `isChildOf()` under different ancestor and boundary scenarios.
- * - Validation of `isRoot()` and `isLeaf()` logic for root, leaf, and intermediate nodes.
+ * Unit tests for the {@see NestedSetsBehavior} root, leaf and child-of state checks.
  *
  * @see MultipleTree for multi-tree model.
  * @see Tree for single-tree model.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractNodeState extends TestCase
 {
@@ -37,8 +23,14 @@ abstract class AbstractNodeState extends TestCase
         $parentNode = Tree::findOne(2);
         $childNode = Tree::findOne(3);
 
-        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
-        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
+        self::assertNotNull(
+            $parentNode,
+            'Parent node should exist for boundary testing.',
+        );
+        self::assertNotNull(
+            $childNode,
+            'Child node should exist for boundary testing.',
+        );
 
         $originalChildLeft = $childNode->getAttribute('lft');
 
@@ -60,8 +52,14 @@ abstract class AbstractNodeState extends TestCase
         $parentNode = Tree::findOne(2);
         $childNode = Tree::findOne(3);
 
-        self::assertNotNull($parentNode, 'Parent node should exist for boundary testing.');
-        self::assertNotNull($childNode, 'Child node should exist for boundary testing.');
+        self::assertNotNull(
+            $parentNode,
+            'Parent node should exist for boundary testing.',
+        );
+        self::assertNotNull(
+            $childNode,
+            'Child node should exist for boundary testing.',
+        );
 
         $originalChildRight = $childNode->getAttribute('rgt');
 
@@ -138,7 +136,13 @@ abstract class AbstractNodeState extends TestCase
     {
         $this->generateFixtureTree();
 
-        self::assertTrue(Tree::findOne(1)?->isRoot(), "Node with ID '1' should be identified as root.");
-        self::assertFalse(Tree::findOne(2)?->isRoot(), "Node with ID '2' should not be identified as root.");
+        self::assertTrue(
+            Tree::findOne(1)?->isRoot(),
+            "Node with ID '1' should be identified as root.",
+        );
+        self::assertFalse(
+            Tree::findOne(2)?->isRoot(),
+            "Node with ID '2' should not be identified as root.",
+        );
     }
 }

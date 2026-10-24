@@ -9,61 +9,24 @@ use yii\db\{Connection, Expression};
 use function sprintf;
 
 /**
- * Utility class for building query conditions for nested sets operations.
- *
- * Provides static methods to create standardized condition arrays for common nested sets queries such as finding
- * descendants, ancestors, siblings, or filtering by tree.
- *
- * These methods ensure consistent condition structure and reduce code duplication across the nested sets behavior.
- *
- * This class focuses on creating query conditions without executing them, making it useful for both the behavior
- * implementation and external queries that need to work with nested sets.
- *
- * Key features:
- * - Creates standardized condition arrays for nested sets queries.
- * - Enables consistent tree filtering across multiple operations.
- * - Handles range conditions for subtree operations.
- * - Provides leaf node and level-based filtering conditions.
- * - Supports specific node relationship queries (children, parents, siblings).
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
+ * Builds Yii condition arrays and offset expressions for nested set queries and bulk coordinate updates.
  */
 final class QueryConditionBuilder
 {
     /**
-     * Creates a condition array for finding children of a node with specific left and right values.
-     *
-     * This method builds a condition that identifies all nodes that are direct descendants of a node with the specified
-     * boundaries.
-     *
-     * It requires the left attribute to be greater than the parent's left value and the right attribute to be less than
-     * the parent's right value.
-     *
-     * Optionally limits the depth of children if the depth parameter is provided.
+     * Returns a condition matching the descendants of a node, optionally limited to a maximum depth below it.
      *
      * @param string $leftAttribute Name of the left boundary attribute.
-     * @param int $leftValue Parent node left value.
+     * @param int $leftValue Left value of the ancestor.
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param int $rightValue Parent node right value.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
-     * @param string|null $depthAttribute Name of the depth attribute, or `null` if depth filtering is not needed.
-     * @param int|null $parentDepth Parent node depth value, required if $maxRelativeDepth is provided.
-     * @param int|null $maxRelativeDepth Maximum relative depth from parent, or `null` for all descendants.
+     * @param int $rightValue Right value of the ancestor.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
+     * @param string|null $depthAttribute Name of the depth attribute, or `null` to skip depth filtering.
+     * @param int|null $parentDepth Depth of the ancestor; required together with `$maxRelativeDepth`.
+     * @param int|null $maxRelativeDepth Maximum number of levels below the ancestor, or `null` for all descendants.
      *
-     * @return array Condition array for finding children of the specified node.
-     *
-     * Usage example:
-     * ```php
-     * // Find all children up to 2 levels deep
-     * $condition = QueryConditionBuilder::createChildrenCondition(
-     *     'lft', $node->lft, 'rgt', $node->rgt, 'tree', $node->tree, 'depth', $node->depth, 2,
-     * );
-     * $children = MyModel::find()->andWhere($condition)->all();
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the descendants.
      */
     public static function createChildrenCondition(
         string $leftAttribute,
@@ -94,24 +57,16 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for cross-tree movement operations.
+     * Returns a condition matching the nodes of a tree whose boundary value is at least the given value.
      *
-     * This method builds a condition for updating nodes when moving subtrees between different trees.
+     * Opens space in the destination tree before a subtree moves into it.
      *
-     * @param string $attribute Name of the attribute to check (left or right).
-     * @param int $value Minimum value for the attribute.
-     * @param string $treeAttribute Name of tree attribute.
-     * @param mixed $treeValue Tree value to filter by.
+     * @param string $attribute Name of the left or right boundary attribute to compare.
+     * @param int $value Lowest boundary value to match, inclusive.
+     * @param string $treeAttribute Name of the tree attribute.
+     * @param mixed $treeValue Identifier of the tree that receives the subtree.
      *
-     * @return array Condition array for cross-tree operations.
-     *
-     * Usage example:
-     * ```php
-     * $condition = QueryConditionBuilder::createCrossTreeMoveCondition('lft', 5, 'tree', 2);
-     * MyModel::updateAll(['lft' => new Expression('lft + 10')], $condition);
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the nodes to shift.
      */
     public static function createCrossTreeMoveCondition(
         string $attribute,
@@ -127,33 +82,16 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for finding leaf nodes (nodes without children).
-     *
-     * This method builds a condition that identifies all nodes where the right attribute is exactly one greater than
-     * the left attribute, indicating that the node has no children.
-     *
-     * Optionally restricts the search to descendants of a specific node if parent boundaries are provided.
+     * Returns a condition matching the leaf nodes strictly inside the given ancestor boundaries.
      *
      * @param string $leftAttribute Name of the left boundary attribute.
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
-     * @param int|null $parentLeftValue Optional parent left value to restrict search to a subtree.
-     * @param int|null $parentRightValue Optional parent right value to restrict search to a subtree.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
+     * @param int|null $parentLeftValue Left value of the ancestor whose leaves are matched.
+     * @param int|null $parentRightValue Right value of the ancestor whose leaves are matched.
      *
-     * @return array Condition array for finding leaf nodes.
-     *
-     * Usage example:
-     * ```php
-     * // Find all leaf nodes in the tree
-     * $condition = QueryConditionBuilder::createLeavesCondition('lft', 'rgt', 'tree', 1);
-     * $leaves = MyModel::find()->andWhere($condition)->all();
-     *
-     * // Find leaf nodes only within a specific subtree
-     * $condition = QueryConditionBuilder::createLeavesCondition('lft', 'rgt', 'tree', 1, $node->lft, $node->rgt);
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the leaf descendants.
      */
     public static function createLeavesCondition(
         string $leftAttribute,
@@ -178,25 +116,14 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for finding the next sibling of a node.
-     *
-     * This method builds a condition that identifies the node whose left attribute is exactly one greater than the
-     * right attribute of the reference node.
+     * Returns a condition matching the node whose left value immediately follows the given right value.
      *
      * @param string $leftAttribute Name of the left boundary attribute.
-     * @param int $rightValue Reference node right value.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
+     * @param int $rightValue Right value of the reference node.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
      *
-     * @return array Condition array for finding the next sibling.
-     *
-     * Usage example:
-     * ```php
-     * $condition = QueryConditionBuilder::createNextSiblingCondition('lft', $node->rgt, 'tree', $node->tree);
-     * $nextSibling = MyModel::find()->andWhere($condition)->one();
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the next sibling.
      */
     public static function createNextSiblingCondition(
         string $leftAttribute,
@@ -214,38 +141,12 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates multiple SQL expressions for incrementing or decrementing attributes by specific offsets.
+     * Returns column expressions for `updateAll()` that add a signed offset to each given attribute.
      *
-     * Generates an array of attribute => Expression pairs for bulk update operations in nested sets tree restructuring.
-     * This method simplifies creating multiple offset expressions in a single call.
+     * @param Connection $db Connection used to quote the column names.
+     * @param array<string, int> $attributeOffsets Signed offsets indexed by attribute name.
      *
-     * @param Connection $db Database connection for proper column quoting.
-     * @param array $attributeOffsets Array of attribute => offset pairs.
-     *
-     * @return array Array of attribute => Expression pairs for updateAll operations.
-     *
-     * Usage example:
-     * ```php
-     * $updates = QueryConditionBuilder::createOffsetUpdates(
-     *     $db,
-     *     [
-     *         'depth' => -1,
-     *         'lft' => 5,
-     *         'rgt' => 5,
-     *     ],
-     * );
-     * // Result: [
-     * //     'depth' => Expression('`depth` - 1'),
-     * //     'lft' => Expression('`lft` + 5'),
-     * //     'rgt' => Expression('`rgt` + 5'),
-     * // ]
-     *
-     * MyModel::updateAll($updates, $condition);
-     * ```
-     *
-     * @phpstan-param array<string, int> $attributeOffsets
-     *
-     * @phpstan-return array<string, Expression>
+     * @return array<string, Expression> Offset expressions indexed by attribute name.
      */
     public static function createOffsetUpdates(Connection $db, array $attributeOffsets): array
     {
@@ -259,38 +160,19 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for finding parent nodes of a node with specific left and right values.
-     *
-     * This method builds a condition that identifies all nodes that are ancestors of a node with the specified
-     * boundaries.
-     *
-     * It requires the left attribute to be less than the child's left value and the right attribute to be greater than
-     * the child's right value.
-     *
-     * Optionally limits the depth of parents if the depth parameter is provided.
+     * Returns a condition matching the ancestors of a node, optionally limited to a maximum number of levels above it.
      *
      * @param string $leftAttribute Name of the left boundary attribute.
-     * @param int $leftValue Child node left value.
+     * @param int $leftValue Left value of the node.
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param int $rightValue Child node right value.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
-     * @param string|null $depthAttribute Name of the depth attribute, or `null` if depth filtering is not needed.
-     * @param int|null $childDepth Child node depth value, required if $maxRelativeDepth is provided.
-     * @param int|null $maxRelativeDepth Maximum relative depth from child, or `null` for all ancestors.
+     * @param int $rightValue Right value of the node.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
+     * @param string|null $depthAttribute Name of the depth attribute, or `null` to skip depth filtering.
+     * @param int|null $childDepth Depth of the node; required together with `$maxRelativeDepth`.
+     * @param int|null $maxRelativeDepth Maximum number of levels above the node, or `null` for all ancestors.
      *
-     * @return array Condition array for finding parents of the specified node.
-     *
-     * Usage example:
-     * ```php
-     * // Find direct parent and grandparent only
-     * $condition = QueryConditionBuilder::createParentsCondition(
-     *     'lft', $node->lft, 'rgt', $node->rgt, 'tree', $node->tree, 'depth', $node->depth, 2,
-     * );
-     * $parents = MyModel::find()->andWhere($condition)->all();
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the ancestors.
      */
     public static function createParentsCondition(
         string $leftAttribute,
@@ -321,25 +203,14 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for finding the previous sibling of a node.
-     *
-     * This method builds a condition that identifies the node whose right attribute is exactly one less than the left
-     * attribute of the reference node.
+     * Returns a condition matching the node whose right value immediately precedes the given left value.
      *
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param int $leftValue Reference node left value.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
+     * @param int $leftValue Left value of the reference node.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
      *
-     * @return array Condition array for finding the previous sibling.
-     *
-     * Usage example:
-     * ```php
-     * $condition = QueryConditionBuilder::createPrevSiblingCondition('rgt', $node->lft, 'tree', $node->tree);
-     * $prevSibling = MyModel::find()->andWhere($condition)->one();
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the previous sibling.
      */
     public static function createPrevSiblingCondition(
         string $rightAttribute,
@@ -357,33 +228,16 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for finding nodes within a range of left and right values.
-     *
-     * This is the core condition builder for nested sets operations, used to identify nodes within a specific subtree
-     * boundary.
-     *
-     * It creates an 'and' condition that requires both the left attribute to be greater than or equal to the left
-     * value, and the right attribute to be less than or equal to the right value.
-     *
-     * This condition is essential for operations like finding descendants, deleting subtrees, or moving nodes within
-     * the nested set structure.
+     * Returns a condition matching the nodes whose boundaries lie within the given range, inclusive.
      *
      * @param string $leftAttribute Name of the left boundary attribute.
-     * @param int $leftValue Left boundary value.
+     * @param int $leftValue Lowest left value to match.
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param int $rightValue Right boundary value.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
+     * @param int $rightValue Highest right value to match.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
      *
-     * @return array Condition array for finding nodes within the specified range.
-     *
-     * Usage example:
-     * ```php
-     * $condition = QueryConditionBuilder::createRangeCondition('lft', 5, 'rgt', 10, 'tree', 1);
-     * $descendants = MyModel::find()->andWhere($condition)->all();
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the subtree, including its root.
      */
     public static function createRangeCondition(
         string $leftAttribute,
@@ -407,25 +261,14 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for shifting left/right attributes.
+     * Returns a condition matching the nodes whose boundary value is at least the given value.
      *
-     * This method builds a condition for nodes that need their left or right attributes updated during tree
-     * restructuring operations.
+     * @param string $attribute Name of the left or right boundary attribute to compare.
+     * @param int $value Lowest boundary value to match, inclusive.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $treeValue Tree identifier to match; ignored when `$treeAttribute` is `false`.
      *
-     * @param string $attribute Name of the attribute to check (left or right).
-     * @param int $value Minimum value for the attribute.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $treeValue Tree value to filter by (ignored if treeAttribute is `false`).
-     *
-     * @return array Condition array for shifting operations.
-     *
-     * Usage example:
-     * ```php
-     * $condition = QueryConditionBuilder::createShiftCondition('lft', 10, 'tree', 1);
-     * MyModel::updateAll(['lft' => new Expression('lft + 2')], $condition);
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the nodes to shift.
      */
     public static function createShiftCondition(
         string $attribute,
@@ -443,26 +286,16 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a condition array for moving a subtree to a different tree.
-     *
-     * This method builds a condition for identifying nodes in a subtree that need to be moved from one tree to another.
+     * Returns a condition matching a subtree, including its root, within its current tree.
      *
      * @param string $leftAttribute Name of the left boundary attribute.
-     * @param int $leftValue Left boundary value of the subtree.
+     * @param int $leftValue Left value of the subtree root.
      * @param string $rightAttribute Name of the right boundary attribute.
-     * @param int $rightValue Right boundary value of the subtree.
-     * @param false|string $treeAttribute Name of tree attribute or `false` if disabled.
-     * @param mixed $currentTreeValue Current tree value of the subtree.
+     * @param int $rightValue Right value of the subtree root.
+     * @param false|string $treeAttribute Name of the tree attribute, or `false` when multiple trees are disabled.
+     * @param mixed $currentTreeValue Identifier of the tree that currently contains the subtree.
      *
-     * @return array Condition array for subtree movement.
-     *
-     * Usage example:
-     * ```php
-     * $condition = QueryConditionBuilder::createSubtreeMoveCondition('lft', 5, 'rgt', 10, 'tree', 1);
-     * MyModel::updateAll(['tree' => 2], $condition);
-     * ```
-     *
-     * @phpstan-return array<int|string, mixed>
+     * @return array<int|string, mixed> Condition matching the subtree to move.
      */
     public static function createSubtreeMoveCondition(
         string $leftAttribute,
@@ -486,30 +319,13 @@ final class QueryConditionBuilder
     }
 
     /**
-     * Creates a SQL expression for incrementing or decrementing an attribute by a specific offset.
+     * Returns an expression that adds a signed offset to the quoted column of an attribute.
      *
-     * Generates a quoted SQL expression that adds or subtracts a value to an attribute, suitable for bulk update
-     * operations in nested sets tree restructuring.
+     * @param Connection $db Connection used to quote the column name.
+     * @param string $attribute Name of the attribute to offset.
+     * @param int $offset Signed amount to add.
      *
-     * This method ensures consistent expression formatting and proper column name quoting across different database
-     * systems.
-     *
-     * @param Connection $db Database connection for proper column quoting.
-     * @param string $attribute Name of the attribute to modify.
-     * @param int $offset Amount to add to the attribute (can be negative for subtraction).
-     *
-     * @return Expression SQL expression for the attribute update.
-     *
-     * Usage example:
-     * ```php
-     * $expression = QueryConditionBuilder::createOffsetExpression($db, 'lft', 5);
-     * // Result: `lft` + 5
-     *
-     * $expression = QueryConditionBuilder::createOffsetExpression($db, 'lft', -3);
-     * // Result: `lft` - 3
-     *
-     * MyModel::updateAll(['lft' => $expression], $condition);
-     * ```
+     * @return Expression Offset expression for a bulk update.
      */
     private static function createOffsetExpression(Connection $db, string $attribute, int $offset): Expression
     {

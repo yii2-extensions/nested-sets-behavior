@@ -8,36 +8,16 @@ use LogicException;
 use Throwable;
 use yii\base\NotSupportedException;
 use yii\db\{Exception, StaleObjectException};
+use yii2\extensions\nestedsets\exception\Message;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Base class for exception handling tests in nested sets tree behaviors.
- *
- * Provides a comprehensive suite of unit tests for exception scenarios in nested sets tree structures, ensuring correct
- * exception throwing and error messages for invalid node operations and edge cases.
- *
- * This class validates the robustness of the nested sets behavior by simulating invalid operations such as appending,
- * inserting, deleting, and making root nodes under unsupported conditions, covering both single and multiple tree
- * models.
- *
- * The tests ensure that exceptions are thrown with the expected messages for cases like new records, root nodes, child
- * nodes, same node operations, and missing primary keys, as well as logic errors when the behavior is not attached.
- *
- * Key features.
- * - Coverage for invalid append, insert, delete, and makeRoot operations.
- * - Ensures error handling consistency for unsupported operations.
- * - Support for both single-tree and multi-tree models.
- * - Tests for exception messages and types in various edge cases.
- * - Validation of logic exceptions when the behavior is detached or not attached to the owner.
+ * Unit tests for the exceptions that {@see NestedSetsBehavior} raises on invalid tree operations.
  *
  * @see MultipleTree for multi-tree model.
- * @see NestedSetsBehavior for behavior implementation.
  * @see Tree for single-tree model.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractExceptionHandling extends TestCase
 {
@@ -48,7 +28,9 @@ abstract class AbstractExceptionHandling extends TestCase
         $node = new Tree(['name' => 'New node']);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_CREATE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+        );
 
         $node->appendTo(new Tree());
     }
@@ -72,7 +54,9 @@ abstract class AbstractExceptionHandling extends TestCase
         );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_CHILD->getMessage(),
+        );
 
         $node->appendTo($childOfNode);
     }
@@ -83,10 +67,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' must exist before calling 'appendTo()' on another node.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'appendTo()' on another node.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+        );
 
         $node->appendTo(new Tree());
     }
@@ -97,14 +86,22 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'appendTo()' on another node.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'appendTo()' on another node.",
+        );
 
         $childOfNode = Tree::findOne(9);
 
-        self::assertNotNull($childOfNode, "Target node with ID '9' should exist before calling 'appendTo()' on it.");
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '9' should exist before calling 'appendTo()' on it.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_SAME->getMessage(),
+        );
 
         $node->appendTo($childOfNode);
     }
@@ -121,7 +118,9 @@ abstract class AbstractExceptionHandling extends TestCase
         $node = new Tree();
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not delete a node when it is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_DELETE_NEW_RECORD->getMessage(),
+        );
 
         $node->delete();
     }
@@ -133,7 +132,9 @@ abstract class AbstractExceptionHandling extends TestCase
         $node = new Tree();
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not delete a node when it is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_DELETE_NEW_RECORD->getMessage(),
+        );
 
         $node->deleteWithChildren();
     }
@@ -152,7 +153,9 @@ abstract class AbstractExceptionHandling extends TestCase
         );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is root.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_CREATE_NODE_TARGET_IS_ROOT->getMessage(),
+        );
 
         $node->insertAfter($rootNode);
     }
@@ -177,7 +180,7 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $this->expectException(Exception::class);
         $this->expectExceptionMessage(
-            'Can not move a node when the target node is child.',
+            Message::CANNOT_MOVE_NODE_TARGET_IS_CHILD->getMessage(),
         );
 
         $node->insertAfter($childOfNode);
@@ -189,10 +192,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' must exist before attempting to 'insertAfter()' a new record.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before attempting to 'insertAfter()' a new record.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+        );
 
         $node->insertAfter(new Tree());
     }
@@ -203,14 +211,22 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before attempting to 'insertAfter()' the root node.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before attempting to 'insertAfter()' the root node.",
+        );
 
         $rootNode = Tree::findOne(1);
 
-        self::assertNotNull($rootNode, "Root node with ID '1' should exist before attempting to 'insertAfter()' it.");
+        self::assertNotNull(
+            $rootNode,
+            "Root node with ID '1' should exist before attempting to 'insertAfter()' it.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is root.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_ROOT->getMessage(),
+        );
 
         $node->insertAfter($rootNode);
     }
@@ -221,10 +237,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' must exist before attempting to 'insertAfter()' itself.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before attempting to 'insertAfter()' itself.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_SAME->getMessage(),
+        );
 
         $node->insertAfter($node);
     }
@@ -236,7 +257,9 @@ abstract class AbstractExceptionHandling extends TestCase
         $node = new Tree(['name' => 'New node']);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_CREATE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+        );
 
         $node->insertBefore(new Tree());
     }
@@ -254,7 +277,9 @@ abstract class AbstractExceptionHandling extends TestCase
         );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create a node when the target node is root.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_CREATE_NODE_TARGET_IS_ROOT->getMessage(),
+        );
 
         $node->insertBefore($rootNode);
     }
@@ -278,7 +303,9 @@ abstract class AbstractExceptionHandling extends TestCase
         );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_CHILD->getMessage(),
+        );
 
         $node->insertBefore($childOfNode);
     }
@@ -289,10 +316,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on a new record.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'insertBefore()' on a new record.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+        );
 
         $node->insertBefore(new Tree());
     }
@@ -303,14 +335,22 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on another node.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'insertBefore()' on another node.",
+        );
 
         $rootNode = Tree::findOne(1);
 
-        self::assertNotNull($rootNode, "Root node with ID '1' should exist before calling 'insertBefore()' on it.");
+        self::assertNotNull(
+            $rootNode,
+            "Root node with ID '1' should exist before calling 'insertBefore()' on it.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is root.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_ROOT->getMessage(),
+        );
 
         $node->insertBefore($rootNode);
     }
@@ -321,10 +361,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'insertBefore()' on itself.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'insertBefore()' on itself.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_SAME->getMessage(),
+        );
 
         $node->insertBefore($node);
     }
@@ -346,7 +391,9 @@ abstract class AbstractExceptionHandling extends TestCase
         };
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage(sprintf('"%s" must have a primary key.', $node::class));
+        $this->expectExceptionMessage(
+            Message::PRIMARY_KEY_REQUIRED->getMessage($node::class),
+        );
 
         $node->makeRoot();
     }
@@ -357,10 +404,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'makeRoot()' on it in 'Tree'.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'makeRoot()' on it in 'Tree'.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node as the root when "treeAttribute" is false.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_AS_ROOT->getMessage(),
+        );
 
         $node->makeRoot();
     }
@@ -377,7 +429,9 @@ abstract class AbstractExceptionHandling extends TestCase
         );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move the root node as the root.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_ROOT_AS_ROOT->getMessage(),
+        );
 
         $node->makeRoot();
     }
@@ -389,7 +443,9 @@ abstract class AbstractExceptionHandling extends TestCase
         $node = new Tree(['name' => 'Root']);
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not create more than one root when "treeAttribute" is false.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_CREATE_MULTIPLE_ROOTS->getMessage(),
+        );
 
         $node->makeRoot();
     }
@@ -400,14 +456,22 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' must exist before calling 'prependTo()' on another node.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'prependTo()' on another node.",
+        );
 
         $childOfNode = Tree::findOne(11);
 
-        self::assertNotNull($childOfNode, "Target node with ID '11' must exist before calling 'prependTo()' on it.");
+        self::assertNotNull(
+            $childOfNode,
+            "Target node with ID '11' must exist before calling 'prependTo()' on it.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is child.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_CHILD->getMessage(),
+        );
 
         $node->prependTo($childOfNode);
     }
@@ -418,10 +482,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' must exist before calling 'prependTo()' on another node.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' must exist before calling 'prependTo()' on another node.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is new record.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+        );
 
         $node->prependTo(new Tree());
     }
@@ -432,10 +501,15 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before calling 'prependTo()' on itself.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before calling 'prependTo()' on itself.",
+        );
 
         $this->expectException(Exception::class);
-        $this->expectExceptionMessage('Can not move a node when the target node is same.');
+        $this->expectExceptionMessage(
+            Message::CANNOT_MOVE_NODE_TARGET_IS_SAME->getMessage(),
+        );
 
         $node->prependTo($node);
     }
@@ -448,12 +522,18 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $behavior = $node->getBehavior('nestedSetsBehavior');
 
-        self::assertInstanceOf(NestedSetsBehavior::class, $behavior);
+        self::assertInstanceOf(
+            NestedSetsBehavior::class,
+            $behavior,
+            'Behavior must be an instance of NestedSetsBehavior.',
+        );
 
         $node->detachBehavior('nestedSetsBehavior');
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
+        $this->expectExceptionMessage(
+            Message::BEHAVIOR_NOT_ATTACHED->getMessage(),
+        );
 
         $behavior->parents();
     }
@@ -463,7 +543,9 @@ abstract class AbstractExceptionHandling extends TestCase
         $behavior = new NestedSetsBehavior();
 
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('The "owner" property must be set before using the behavior.');
+        $this->expectExceptionMessage(
+            Message::BEHAVIOR_NOT_ATTACHED->getMessage(),
+        );
 
         $behavior->parents();
     }
@@ -486,7 +568,7 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::delete" is not supported for deleting root nodes.',
+            Message::DELETE_ROOT_NOT_SUPPORTED->getMessage(Tree::class),
         );
 
         $node->delete();
@@ -503,7 +585,7 @@ abstract class AbstractExceptionHandling extends TestCase
 
         $this->expectException(NotSupportedException::class);
         $this->expectExceptionMessage(
-            'Method "yii2\extensions\nestedsets\tests\support\model\Tree::insert" is not supported for inserting new nodes.',
+            Message::INSERT_NOT_SUPPORTED->getMessage(Tree::class),
         );
 
         $node->insert();

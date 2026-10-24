@@ -33,12 +33,14 @@ class m250707_104009_multiple_tree extends Migration
         $this->createIndex('idx_multiple_tree_depth', '{{%multiple_tree}}', 'depth');
         $this->createIndex('idx_multiple_tree_tree_lft_rgt', '{{%multiple_tree}}', ['tree', 'lft', 'rgt']);
 
+        $tableName = $this->db->getSchema()->getRawTableName('{{%multiple_tree}}');
+
         if ($this->db->driverName !== 'sqlite') {
-            $this->addCommentOnTable('{{%multiple_tree}}', 'Multiple nested sets tree structure for hierarchical data');
-            $this->addCommentOnColumn('{{%multiple_tree}}', 'tree', 'Tree identifier for multiple trees support');
-            $this->addCommentOnColumn('{{%multiple_tree}}', 'lft', 'Left boundary of nested set');
-            $this->addCommentOnColumn('{{%multiple_tree}}', 'rgt', 'Right boundary of nested set');
-            $this->addCommentOnColumn('{{%multiple_tree}}', 'depth', 'Node depth in the tree hierarchy');
+            $this->addCommentOnTable($tableName, 'Multiple nested sets tree structure for hierarchical data');
+            $this->addCommentOnColumn($tableName, 'tree', 'Tree identifier for multiple trees support');
+            $this->addCommentOnColumn($tableName, 'lft', 'Left boundary of nested set');
+            $this->addCommentOnColumn($tableName, 'rgt', 'Right boundary of nested set');
+            $this->addCommentOnColumn($tableName, 'depth', 'Node depth in the tree hierarchy');
         }
     }
 

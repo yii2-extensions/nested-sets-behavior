@@ -1,26 +1,25 @@
+---
 on:
-  pull_request:
+  pull_request: &ignore-paths
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.gitattributes'
+      - ".gitattributes"
+      - ".gitignore"
+      - "CHANGELOG.md"
+      - "docs/**"
+      - "README.md"
+      - "UPGRADE.md"
 
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.gitattributes'
+  push: *ignore-paths
 
 name: build-oracle
+
+permissions:
+  contents: read
 
 jobs:
   oracle:
     name: Oracle tests.
-    uses: php-forge/actions/.github/workflows/phpunit-database.yml@v2
+    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@f0e06ea5cc965cff4431177d448add7b7c98668b # v2.0.1
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
@@ -28,7 +27,7 @@ jobs:
       database-env: |
         {
           "ORACLE_DATABASE": "yiitest",
-          "ORACLE_PASSWORD": "root",
+          "ORACLE_PASSWORD": "root"
         }
       database-health-cmd: "healthcheck.sh"
       database-health-retries: 10

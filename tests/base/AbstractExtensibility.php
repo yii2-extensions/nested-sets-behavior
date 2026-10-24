@@ -4,35 +4,16 @@ declare(strict_types=1);
 
 namespace yii2\extensions\nestedsets\tests\base;
 
+use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\support\model\ExtendableMultipleTree;
 use yii2\extensions\nestedsets\tests\support\stub\ExtendableNestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Base class for extensibility tests in nested sets tree behaviors.
- *
- * Provides a suite of unit tests to verify the extensibility and subclassing capabilities of the nested sets behavior,
- * ensuring protected methods remain accessible for customization and extension in descendant classes.
- *
- * This class validates that key internal methods of the nested sets behavior—such as node insertion, root insertion,
- * node movement, and attribute shifting—can be invoked and overridden by subclasses, supporting advanced use cases
- * and framework extensibility.
- *
- * The tests cover scenarios for exposing protected methods, confirming their correct execution and the ability to
- * customize node state during tree operations in both single-tree and multi-tree models.
- *
- * Key features.
- * - Ensures protected methods are accessible for subclass extension.
- * - Supports both single-tree and multi-tree model scenarios.
- * - Tests before-insert and move operations for extensibility.
- * - Validates extensibility for root and non-root node operations.
- * - Verifies correct attribute assignment by protected methods.
+ * Unit tests for the protected {@see NestedSetsBehavior} methods that remain accessible to subclasses.
  *
  * @see ExtendableMultipleTree for extensible multi-tree model.
  * @see ExtendableNestedSetsBehavior for behavior subclass exposing protected methods.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractExtensibility extends TestCase
 {

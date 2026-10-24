@@ -6,159 +6,132 @@ namespace yii2\extensions\nestedsets;
 
 use LogicException;
 use RuntimeException;
+use Throwable;
 use yii\base\{Behavior, NotSupportedException};
-use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception};
+use yii\db\{ActiveQuery, ActiveRecord, Connection, Exception, StaleObjectException};
+use yii2\extensions\nestedsets\exception\Message;
+
+use function array_key_exists;
+use function is_scalar;
 
 /**
- * Nested set behavior for managing hierarchical data in {@see ActiveRecord} models.
+ * Manages hierarchical data in {@see ActiveRecord} models using the nested sets pattern.
  *
- * Provides a set of methods and properties to implement the nested sets pattern in Yii Active Record model, enabling
- * efficient management of hierarchical data structures such as trees and categories.
+ * Maintains the left, right and depth attributes of each node and, when {@see $treeAttribute} is set, a tree identifier
+ * that stores several trees in one table. Structural writes serialize on a per-table writer lock held until the
+ * outermost transaction ends, so the connection must enable savepoints and the `nested_sets_lock` registry table must
+ * exist. A plain `delete()` acquires that lock in {@see beforeDelete()} and therefore requires an active Yii
+ * transaction, for example through {@see ActiveRecord::transactions()}.
  *
- * This behavior allows nodes to be inserted, moved, or deleted within the tree, and supports querying for parents,
- * children, leaves, and siblings.
+ * @template T of ActiveRecord
  *
- * The behavior manages the left, right, and depth attributes of each node, and can optionally support multiple trees
- * using a tree attribute.
- *
- * It integrates with a Yii Event system and can be attached to any {@see ActiveRecord} model.
- *
- * Key features.
- * - Compatible with Yii {@see ActiveRecord} and event system.
- * - Delete nodes with or without their children.
- * - Insert nodes as root, before/after, or as children of other nodes.
- * - Move nodes within the tree while maintaining integrity.
- * - Query for parents, children, leaves, previous and next siblings.
- * - Supports custom attribute names for left, right, depth, and tree columns.
- *
- * @phpstan-template T of ActiveRecord
- *
- * @phpstan-extends Behavior<T>
+ * @extends Behavior<T>
  *
  * @property int $depth
  * @property int $lft
  * @property int $rgt
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 class NestedSetsBehavior extends Behavior
 {
     /**
-     * Operation constant for appending the current node as the last child of a target node.
+     * Identifies the operation that places the owner as the last child of a target node.
      */
-    public const OPERATION_APPEND_TO = 'appendTo';
+    public const string OPERATION_APPEND_TO = 'appendTo';
+    /**
+     * Identifies the operation that deletes the owner together with all its descendants.
+     */
+    public const string OPERATION_DELETE_WITH_CHILDREN = 'deleteWithChildren';
+    /**
+     * Identifies the operation that places the owner as the next sibling of a target node.
+     */
+    public const string OPERATION_INSERT_AFTER = 'insertAfter';
+    /**
+     * Identifies the operation that places the owner as the previous sibling of a target node.
+     */
+    public const string OPERATION_INSERT_BEFORE = 'insertBefore';
+    /**
+     * Identifies the operation that creates the owner as a root or promotes it to the root of a new tree.
+     */
+    public const string OPERATION_MAKE_ROOT = 'makeRoot';
+    /**
+     * Identifies the operation that places the owner as the first child of a target node.
+     */
+    public const string OPERATION_PREPEND_TO = 'prependTo';
 
     /**
-     * Operation constant for deleting a node along with all its descendant nodes.
-     */
-    public const OPERATION_DELETE_WITH_CHILDREN = 'deleteWithChildren';
-
-    /**
-     * Operation constant for inserting the current node immediately after a target node at the same level.
-     */
-    public const OPERATION_INSERT_AFTER = 'insertAfter';
-
-    /**
-     * Operation constant for inserting the current node immediately before a target node at the same level.
-     */
-    public const OPERATION_INSERT_BEFORE = 'insertBefore';
-
-    /**
-     * Operation constant for making the current node a root node in the tree.
-     */
-    public const OPERATION_MAKE_ROOT = 'makeRoot';
-
-    /**
-     * Operation constant for prepending the current node as the first child of a target node.
-     */
-    public const OPERATION_PREPEND_TO = 'prependTo';
-
-    /**
-     * Name of the attribute that stores the depth (level) of the node in the tree.
+     * Name of the attribute that stores the node depth, `0` for a root.
      *
-     * @phpstan-var 'depth' attribute name.
+     * @var 'depth' attribute name.
      */
     public string $depthAttribute = 'depth';
-
     /**
-     * Name of the attribute that stores the left boundary value of the node in the nested set tree.
+     * Name of the attribute that stores the left boundary of the node.
      *
-     * @phpstan-var 'lft' attribute name.
+     * @var 'lft' attribute name.
      */
     public string $leftAttribute = 'lft';
-
     /**
-     * Name of the attribute that stores the right boundary value of the node in the nested set tree.
+     * Maximum wait in seconds for each guard-row acquisition; valid range is 1 through 3600.
+     */
+    public int $lockTimeout = 10;
+    /**
+     * Name of the attribute that stores the right boundary of the node.
      *
-     * @phpstan-var 'rgt' attribute name.
+     * @var 'rgt' attribute name.
      */
     public string $rightAttribute = 'rgt';
-
     /**
-     * Name of the attribute that stores the tree identifier for supporting multiple trees.
+     * Name of the attribute that stores the tree identifier, or `false` to keep a single tree per table.
      */
     public string|false $treeAttribute = false;
 
     /**
-     * Stores the depth value for the current operation.
+     * Cached depth of the owner, or `null` when it must be read from the owner attributes.
      */
     protected int|null $depthValue = null;
-
     /**
-     * Stores the left value for the current operation.
+     * Cached left value of the owner, or `null` when it must be read from the owner attributes.
      */
     protected int|null $leftValue = null;
-
     /**
-     * Holds the reference to the current node involved in a nested set operation.
-     *
-     * Stores the {@see ActiveRecord} instance representing the node being manipulated by the behavior during operations
-     * such as insertion, movement, or deletion within the tree structure.
+     * Target node of the pending operation, or `null` when the operation has no target.
      *
      * @template T of NestedSetsBehavior
      *
-     * @phpstan-var ActiveRecord<T>|null
+     * @var ActiveRecord<T>|null
      */
     protected ActiveRecord|null $node = null;
-
     /**
-     * Stores the current operation being performed on the node.
-     *
-     * Holds the operation type as a string identifier, such as 'appendTo', 'deleteWithChildren', or other defined
-     * operation constants.
+     * Pending operation, one of the `OPERATION_*` constants, or `null` when no structural operation is pending.
      */
     protected string|null $operation = null;
-
     /**
-     * Stores the right value for the current operation.
+     * Cached right value of the owner, or `null` when it must be read from the owner attributes.
      */
     protected int|null $rightValue = null;
 
     /**
-     * Database connection instance used for executing queries.
-     *
-     * This property is used to access the database connection associated with the attached {@see ActiveRecord} model,
-     * allowing the behavior to perform database operations such as updates and queries.
+     * Cached database connection of the owner model.
      */
     private Connection|null $db = null;
 
     /**
-     * Handles post-deletion updates for the nested set structure.
+     * Acquires the table writer lock before application reads or raw SQL in an existing Yii transaction.
      *
-     * Updates left, right, and depth attributes of affected nodes after a node is deleted, ensuring the tree remains
-     * consistent.
-     * - If the node is deleted with its children or is a leaf, shifts the left/right values accordingly.
-     * - Otherwise, updates the subtree and shifts attributes for remaining nodes.
+     * The database retains the lock until that transaction commits or rolls back.
      *
-     * This method is automatically triggered after a node deletion event and is essential for maintaining the integrity
-     * of the nested set hierarchy.
+     * @throws Throwable if no Yii transaction is active, savepoints are disabled, {@see $lockTimeout} is out of range,
+     * the `nested_sets_lock` registry is missing, or the lock wait times out.
+     */
+    public function acquireTreeLock(): void
+    {
+        TreeLock::acquire($this->getOwner(), $this->lockTimeout);
+    }
+
+    /**
+     * Closes the gap left by the deleted owner, moving the children of a node deleted on its own one level up.
      *
-     * Usage example:
-     * ```php
-     * // `afterDelete()` is called automatically to update the tree structure
-     * $model->delete();
-     * ``
+     * @throws Exception if updating the remaining coordinates fails.
      */
     public function afterDelete(): void
     {
@@ -166,6 +139,7 @@ class NestedSetsBehavior extends Behavior
             $deltaValue = $this->getLeftValue() - $this->getRightValue() - 1;
         } else {
             $deltaValue = -2;
+
             $this->getOwner()::updateAll(
                 QueryConditionBuilder::createOffsetUpdates(
                     $this->getDb(),
@@ -186,44 +160,34 @@ class NestedSetsBehavior extends Behavior
             );
         }
 
-        $this->shiftLeftRightAttribute($this->getRightValue(), $deltaValue);
+        $this->shiftLeftRightAttribute(
+            $this->getRightValue(),
+            $deltaValue,
+        );
         $this->invalidateCache();
     }
 
     /**
-     * Handles post-insert updates for the nested set structure when making a node root.
+     * Assigns the primary key of a new root as its tree identifier when {@see $treeAttribute} is enabled.
      *
-     * If the current operation is {@see self::OPERATION_MAKE_ROOT} and the {@see treeAttribute} is enabled, this method
-     * sets the tree attribute of the node to its primary key and updates the corresponding record in the database.
-     *
-     * This ensures that the root node of a tree is correctly identified and its tree attribute is synchronized after
-     * insertion.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * Usage example:
-     * ```php
-     * // `afterInsert()` is called automatically to set the tree attribute
-     * $model->makeRoot();
-     * ```
+     * @throws Exception if the owner model has no primary key or the tree identifier update fails.
      */
     public function afterInsert(): void
     {
         if ($this->operation === self::OPERATION_MAKE_ROOT && $this->treeAttribute !== false) {
             $this->getOwner()->setAttribute($this->treeAttribute, $this->getOwner()->getPrimaryKey());
+
             $primaryKey = $this->getOwner()::primaryKey();
 
             if (isset($primaryKey[0]) === false) {
-                throw new Exception('"' . $this->getOwner()::class . '" must have a primary key.');
+                throw new Exception(
+                    Message::PRIMARY_KEY_REQUIRED->getMessage($this->getOwner()::class),
+                );
             }
 
             $this->getOwner()::updateAll(
-                [
-                    $this->treeAttribute => $this->getTreeValue($this->getOwner()),
-                ],
-                [
-                    $primaryKey[0] => $this->getTreeValue($this->getOwner()),
-                ],
+                [$this->treeAttribute => $this->getTreeValue($this->getOwner())],
+                [$primaryKey[0] => $this->getTreeValue($this->getOwner())],
             );
         }
 
@@ -231,27 +195,20 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Handles post-update operations for the nested set structure after a node modification.
+     * Clears cached coordinates after a model refresh without cancelling an active operation.
+     */
+    public function afterRefresh(): void
+    {
+        $this->depthValue = null;
+        $this->leftValue = null;
+        $this->rightValue = null;
+    }
+
+    /**
+     * Moves the owner subtree to the position requested by the pending operation and reloads the owner coordinates.
      *
-     * Executes the appropriate node movement logic based on the current operation type, ensuring the integrity and
-     * consistency of the nested set hierarchy after an update.
-     *
-     * This method is automatically triggered after an update event on the attached {@see ActiveRecord} model.
-     *
-     * The operation performed depends on the value of {@see operation}.
-     * - {@see self::OPERATION_APPEND_TO}: Moves the node as the last child of the target node.
-     * - {@see self::OPERATION_INSERT_AFTER}: Moves the node as the next sibling of the target node.
-     * - {@see self::OPERATION_INSERT_BEFORE}: Moves the node as the previous sibling of the target node.
-     * - {@see self::OPERATION_MAKE_ROOT}: Moves the node to become a root node.
-     * - {@see self::OPERATION_PREPEND_TO}: Moves the node as the first child of the target node.
-     *
-     * After the operation, the internal state is reset to prepare for subsequent operations.
-     *
-     * Usage example:
-     * ```php
-     * // `afterUpdate()` is called automatically to move the node
-     * $model->update();
-     * ```
+     * @throws RuntimeException if the pending operation does not move the owner relative to a target node.
+     * @throws StaleObjectException if the owner no longer exists when its coordinates are reloaded.
      */
     public function afterUpdate(): void
     {
@@ -259,6 +216,7 @@ class NestedSetsBehavior extends Behavior
 
         if ($this->operation === self::OPERATION_MAKE_ROOT) {
             $this->moveNodeAsRoot($currentOwnerTreeValue);
+            $this->refreshStructure($this->getOwner());
         }
 
         if ($this->node === null) {
@@ -268,40 +226,25 @@ class NestedSetsBehavior extends Behavior
         }
 
         $context = $this->createMoveContext($this->node, $this->operation);
+
         $this->moveNode($context);
+        $this->refreshStructure($this->getOwner());
         $this->invalidateCache();
     }
 
     /**
-     * Appends the current node as the last child of the specified target node.
+     * Appends the owner as the last child of the target node, inserting a new owner or moving an existing subtree.
      *
-     * - If the attached {@see ActiveRecord} is new, this method creates it as the last child of the given node.
-     * - If the record already exists, it moves the node as the last child of the target node, updating the nested set
-     *   structure accordingly.
+     * Runs in its own transaction, acquires the table writer lock, rolls back and restores the owner on failure, and
+     * reloads the coordinates of the owner and the target on success.
      *
-     * This operation is essential for building and maintaining hierarchical data structures, such as categories or menu
-     * trees, where nodes can be dynamically inserted or reorganized within the tree.
+     * @param T $node Node that becomes the parent of the owner.
+     * @param bool $runValidation Whether to validate the owner before saving.
+     * @param list<string>|null $attributes Attributes to save, or `null` to save all attributes.
      *
-     * @param ActiveRecord $node Target node to which the current node will be appended as the last child.
-     * @param bool $runValidation Whether to perform validation before saving the record.
-     * @param array|null $attributes List of attributes that need to be saved. Defaults to `null`, meaning all
-     * attributes.
+     * @throws Throwable if a lifecycle handler or database operation fails.
      *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @return bool Whether the operation was successful and the node was appended or moved.
-     *
-     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
-     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
-     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
-     *
-     * Usage example:
-     * ```php
-     * $category->appendTo($parentCategory);
-     * ```
-     *
-     * @phpstan-param T $node
-     * @phpstan-param array<string, mixed>|null $attributes
+     * @return bool Whether the owner was saved.
      */
     public function appendTo(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
@@ -309,173 +252,154 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Handles pre-deletion validation and restrictions for the nested set node.
+     * Acquires the table writer lock, reloads the owner coordinates, and rejects deleting a root node on its own.
      *
-     * Ensures that only valid nodes can be deleted and enforces restrictions on root node deletion unless the operation
-     * is explicitly set to delete with children.
-     *
-     * This method is automatically triggered before a node deletion event and is essential for maintaining the
-     * integrity of the nested set hierarchy.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     * @throws NotSupportedException if the operation is not supported for the current node.
-     *
-     * Usage example:
-     * ```php
-     * // `beforeDelete()` is called automatically to validate the deletion
-     * $model->delete();
-     * ```
+     * @throws Exception if the owner is a new record.
+     * @throws NotSupportedException if the owner is a root and the deletion is not run by {@see deleteWithChildren()}.
+     * @throws StaleObjectException if the owner no longer exists or its optimistic lock version has changed.
+     * @throws Throwable if the writer lock cannot be acquired, for example without an active Yii transaction.
      */
     public function beforeDelete(): void
     {
         if ($this->getOwner()->getIsNewRecord()) {
-            throw new Exception('Can not delete a node when it is new record.');
+            throw new Exception(
+                Message::CANNOT_DELETE_NEW_RECORD->getMessage(),
+            );
         }
+
+        TreeLock::acquire($this->getOwner(), $this->lockTimeout);
+
+        $this->refreshStructure($this->getOwner(), true);
 
         if ($this->operation !== self::OPERATION_DELETE_WITH_CHILDREN && $this->getOwner()->isRoot()) {
             throw new NotSupportedException(
-                'Method "' . $this->getOwner()::class . '::delete" is not supported for deleting root nodes.',
+                Message::DELETE_ROOT_NOT_SUPPORTED->getMessage($this->getOwner()::class),
             );
         }
     }
 
     /**
-     * Handles pre-insert operations for the nested set structure before a node is inserted.
+     * Reloads the target coordinates and assigns the coordinates of the new owner according to the pending operation.
      *
-     * Determines the appropriate insertion logic based on the current operation type and the state of the target node.
-     *
-     * This method is automatically triggered before an insert event on the attached {@see ActiveRecord} model.
-     *
-     * It ensures that the nested set attributes are correctly prepared for the intended operation, such as making a
-     * node root, prepending/appending as a child, or inserting as a sibling.
-     *
-     * The operation performed depends on the value of {@see $operation}.
-     * - {@see self::OPERATION_APPEND_TO}: Prepares the node to be inserted as the last child of the target node.
-     * - {@see self::OPERATION_INSERT_AFTER}: Prepares the node to be inserted as the next sibling of the target node.
-     * - {@see self::OPERATION_INSERT_BEFORE}: Prepares the node to be inserted as the previous sibling of the target
-     *   node.
-     * - {@see self::OPERATION_MAKE_ROOT}: Prepares the node to be inserted as a root node.
-     * - {@see self::OPERATION_PREPEND_TO}: Prepares the node to be inserted as the first child of the target node.
-     *
-     * If the target node is not new, it is refreshed to ensure up-to-date attribute values before insertion.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     * @throws NotSupportedException if the operation is not supported for the current node.
-     *
-     * Usage example:
-     * ```php
-     * // `beforeInsert()` is called automatically to prepare the node for insertion
-     * $model->insert();
-     * ```
+     * @throws Exception if the target node is a new record or uses another connection or table, if a sibling of a root
+     * is requested, or if a second root is created while {@see $treeAttribute} is `false`.
+     * @throws NotSupportedException if no supported operation is pending, for example on a plain `insert()`.
+     * @throws StaleObjectException if the target node no longer exists.
      */
     public function beforeInsert(): void
     {
         if ($this->node?->getIsNewRecord() === true) {
-            throw new Exception('Can not create a node when the target node is new record.');
+            throw new Exception(
+                Message::CANNOT_CREATE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+            );
+        }
+
+        if ($this->node !== null) {
+            $this->refreshTarget($this->node);
         }
 
         match (true) {
-            $this->operation === self::OPERATION_APPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forAppendTo($this->node, $this->rightAttribute),
-            ),
-            $this->operation === self::OPERATION_INSERT_AFTER && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forInsertAfter($this->node, $this->rightAttribute),
-            ),
-            $this->operation === self::OPERATION_INSERT_BEFORE && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forInsertBefore($this->node, $this->leftAttribute),
-            ),
+            $this->operation === self::OPERATION_APPEND_TO
+                && $this->node !== null => $this->beforeInsertNodeWithContext(
+                    NodeContext::forAppendTo($this->node, $this->rightAttribute),
+                ),
+            $this->operation === self::OPERATION_INSERT_AFTER
+                && $this->node !== null => $this->beforeInsertNodeWithContext(
+                    NodeContext::forInsertAfter($this->node, $this->rightAttribute),
+                ),
+            $this->operation === self::OPERATION_INSERT_BEFORE
+                && $this->node !== null => $this->beforeInsertNodeWithContext(
+                    NodeContext::forInsertBefore($this->node, $this->leftAttribute),
+                ),
             $this->operation === self::OPERATION_MAKE_ROOT => $this->beforeInsertRootNode(),
-            $this->operation === self::OPERATION_PREPEND_TO && $this->node !== null => $this->beforeInsertNodeWithContext(
-                NodeContext::forPrependTo($this->node, $this->leftAttribute),
-            ),
+            $this->operation === self::OPERATION_PREPEND_TO
+                && $this->node !== null => $this->beforeInsertNodeWithContext(
+                    NodeContext::forPrependTo($this->node, $this->leftAttribute),
+                ),
             default => throw new NotSupportedException(
-                'Method "' . $this->getOwner()::class . '::insert" is not supported for inserting new nodes.',
+                Message::INSERT_NOT_SUPPORTED->getMessage($this->getOwner()::class),
             ),
         };
     }
 
     /**
-     * Handles pre-update validation and restrictions for the nested set node.
+     * Reloads the coordinates of the owner and the target and validates the pending move before the owner is updated.
      *
-     * Ensures that only valid node movements are allowed and enforces restrictions on moving nodes within the tree
-     * structure.
+     * For structural moves, also marks the optimistic lock attribute dirty so that the update checks and increments it.
      *
-     * This method is automatically triggered before an update event on the attached {@see ActiveRecord} model and is
-     * essential for maintaining the integrity of the nested set hierarchy during node movement operations.
-     *
-     * The operation performed depends on the value of {@see $operation}.
-     * - {@see self::OPERATION_MAKE_ROOT}: Validates that the node can be moved as root and that the tree attribute is
-     *   enabled.
-     * - {@see self::OPERATION_INSERT_AFTER}, {@see self::OPERATION_INSERT_BEFORE}: Prevents moving a node when the
-     *   target node is root.
-     * - {@see self::OPERATION_APPEND_TO}, {@see self::OPERATION_PREPEND_TO}: Prevents moving a node to an invalid
-     *   target (new record, same node, or child node).
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * Usage example:
-     * ```php
-     * // `beforeUpdate()` is called automatically to validate the movement
-     * $model->update();
-     * ```
+     * @throws Exception if the move is invalid: promoting a root, making a root while {@see $treeAttribute} is `false`,
+     * or targeting a new record, the owner itself, one of its descendants, or a root for sibling moves.
+     * @throws StaleObjectException if the owner or the target no longer exists, or the owner optimistic lock version
+     * has changed.
      */
     public function beforeUpdate(): void
     {
+        // Structural moves acquire the writer lock in runOperation(); ordinary updates do not change coordinates.
+        if ($this->operation !== null) {
+            $this->refreshStructure($this->getOwner(), true);
+
+            if ($this->node !== null && $this->node->getIsNewRecord() === false) {
+                $this->refreshTarget($this->node);
+            }
+        }
+
         switch ($this->operation) {
             case self::OPERATION_MAKE_ROOT:
                 if ($this->treeAttribute === false) {
-                    throw new Exception('Can not move a node as the root when "treeAttribute" is false.');
+                    throw new Exception(
+                        Message::CANNOT_MOVE_NODE_AS_ROOT->getMessage(),
+                    );
                 }
 
                 if ($this->getOwner()->isRoot()) {
-                    throw new Exception('Can not move the root node as the root.');
+                    throw new Exception(
+                        Message::CANNOT_MOVE_ROOT_AS_ROOT->getMessage(),
+                    );
                 }
 
                 break;
             case self::OPERATION_INSERT_AFTER:
             case self::OPERATION_INSERT_BEFORE:
                 if ($this->node?->isRoot() === true) {
-                    throw new Exception('Can not move a node when the target node is root.');
+                    throw new Exception(
+                        Message::CANNOT_MOVE_NODE_TARGET_IS_ROOT->getMessage(),
+                    );
                 }
                 // no break
             case self::OPERATION_APPEND_TO:
             case self::OPERATION_PREPEND_TO:
                 if ($this->node?->getIsNewRecord() === true) {
-                    throw new Exception('Can not move a node when the target node is new record.');
+                    throw new Exception(
+                        Message::CANNOT_MOVE_NODE_TARGET_IS_NEW_RECORD->getMessage(),
+                    );
                 }
 
                 if ($this->node !== null && $this->getOwner()->equals($this->node)) {
-                    throw new Exception('Can not move a node when the target node is same.');
+                    throw new Exception(
+                        Message::CANNOT_MOVE_NODE_TARGET_IS_SAME->getMessage(),
+                    );
                 }
 
                 if ($this->node !== null && $this->node->isChildOf($this->getOwner())) {
-                    throw new Exception('Can not move a node when the target node is child.');
+                    throw new Exception(
+                        Message::CANNOT_MOVE_NODE_TARGET_IS_CHILD->getMessage(),
+                    );
                 }
+        }
+
+        $lock = $this->getOwner()->optimisticLock();
+
+        if ($this->operation !== null && $lock !== null) {
+            $this->getOwner()->markAttributeDirty($lock);
         }
     }
 
     /**
-     * Returns an {@see ActiveQuery} for the children of the current node, optionally limited by depth.
+     * Returns a query for the descendants of the owner, ordered by left value and optionally limited in depth.
      *
-     * Retrieves all descendant nodes that are children of the current node, ordered by the left attribute ascending.
+     * @param int|null $depth Maximum number of levels below the owner, or `null` for all descendants.
      *
-     * If the optional `$depth` parameter is provided, only children up to the specified depth relative to the current
-     * node are included.
-     *
-     * The query automatically applies the tree attribute condition if configured, ensuring correct results for
-     * multi-tree structures.
-     *
-     * @param int|null $depth Maximum depth relative to the current node, or `null` for all descendants.
-     *
-     * @return ActiveQuery ActiveQuery instance for fetching child nodes.
-     *
-     * Usage example:
-     * ```php
-     * // Retrieves all children of the current node
-     * $children = $model->children();
-     * ```
-     *
-     * @phpstan-return ActiveQuery<T>
+     * @return ActiveQuery<T> Query for the descendants of the owner.
      */
     public function children(int|null $depth = null): ActiveQuery
     {
@@ -492,57 +416,34 @@ class NestedSetsBehavior extends Behavior
                     $depth !== null ? $this->getDepthValue() : null,
                     $depth,
                 ),
-            )->addOrderBy(
-                [
-                    $this->leftAttribute => SORT_ASC,
-                ],
-            );
+            )->addOrderBy([$this->leftAttribute => SORT_ASC]);
     }
 
     /**
-     * Deletes the current node and all its descendant nodes from the nested set tree.
+     * Deletes the owner together with all its descendants.
      *
-     * Removes the node to which this behavior is attached, along with all its children, from the hierarchical
-     * structure.
+     * Runs in its own transaction regardless of the model `transactions()` configuration, acquires the table writer
+     * lock, reloads the owner coordinates before deleting, and rolls back and restores the owner on failure.
      *
-     * This method sets the internal operation state to {@see self::OPERATION_DELETE_WITH_CHILDREN} and performs the
-     * deletion within a database transaction if the model is not already transactional for delete operations.
+     * @throws Throwable if a lifecycle handler or database operation fails.
      *
-     * The deletion is delegated to {@see deleteWithChildrenInternal()}, which executes the actual removal logic.
-     *
-     * If the deletion fails, the transaction is rolled back to maintain data integrity.
-     *
-     * @return bool|int Number of rows deleted, or false if the deletion is unsuccessful.
-     *
-     * Usage example:
-     * ```php
-     * $model->deleteWithChildren();
-     * ```
+     * @return bool|int Number of deleted rows, or `false` if {@see ActiveRecord::beforeDelete()} cancels the deletion.
      */
     public function deleteWithChildren(): bool|int
     {
-        $this->operation = self::OPERATION_DELETE_WITH_CHILDREN;
+        return $this->runOperation(function (): bool|int {
+            $this->operation = self::OPERATION_DELETE_WITH_CHILDREN;
 
-        return $this->deleteWithChildrenInternal();
+            return $this->deleteWithChildrenInternal();
+        });
     }
 
     /**
-     * Declares event handlers for {@see ActiveRecord} lifecycle events.
+     * Returns the {@see ActiveRecord} lifecycle event handlers of the behavior.
      *
-     * This method enables the behavior to automatically respond to insert, update, and delete operations on the
-     * attached {@see ActiveRecord} model by invoking the appropriate handler methods.
+     * @return array Handler method names indexed by event name.
      *
-     * It ensures that the nested set structure remains consistent during model persistence operations.
-     *
-     * @return array Event-to-handler map for {@see ActiveRecord} lifecycle events.
-     *
-     * Usage example:
-     * ```php
-     * // Behavior will automatically handle events like `beforeInsert`, `afterInsert`, etc.
-     * $model->attachBehavior('nestedSets', new NestedSetsBehavior());
-     * ```
-     *
-     * @phpstan-return string[]
+     * @return string[] The event handlers of the behavior.
      */
     public function events(): array
     {
@@ -553,45 +454,23 @@ class NestedSetsBehavior extends Behavior
             ActiveRecord::EVENT_AFTER_UPDATE => 'afterUpdate',
             ActiveRecord::EVENT_BEFORE_DELETE => 'beforeDelete',
             ActiveRecord::EVENT_AFTER_DELETE => 'afterDelete',
+            ActiveRecord::EVENT_AFTER_REFRESH => 'afterRefresh',
         ];
     }
 
     /**
-     * Inserts the current node as the next sibling of the specified target node or moves it if it already exists.
+     * Places the owner as the next sibling of the target node, inserting a new owner or moving an existing subtree.
      *
-     * - If the attached {@see ActiveRecord} is a new record, this method creates it as the next sibling of the given
-     *   node.
-     * - If the record already exists, it moves the node as the next sibling of the target node, updating the nested set
-     *   structure accordingly.
+     * Runs in its own transaction, acquires the table writer lock, rolls back and restores the owner on failure, and
+     * reloads the coordinates of the owner and the target on success.
      *
-     * This operation is essential for maintaining hierarchical data structures where nodes can be dynamically inserted
-     * or reorganized within the tree at the same level as the target node.
+     * @param ActiveRecord $node Node that becomes the previous sibling of the owner.
+     * @param bool $runValidation Whether to validate the owner before saving.
+     * @param list<string>|null $attributes Attributes to save, or `null` to save all attributes.
      *
-     * The method sets the internal operation state to {@see self::OPERATION_INSERT_AFTER} and stores the reference to
-     * the target node.
+     * @throws Throwable if a lifecycle handler or database operation fails.
      *
-     * The actual insertion or movement is performed by saving the owner model, which triggers the appropriate lifecycle
-     * events and updates the tree structure.
-     *
-     * @param ActiveRecord $node Target node after which the current node will be inserted as the next sibling.
-     * @param bool $runValidation Whether to perform validation before saving the record.
-     * @param array|null $attributes List of attributes that need to be saved. Defaults to `null`, meaning all
-     * attributes.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @return bool Whether the operation was successful and the node was inserted or moved.
-     *
-     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
-     * database transactions if the model's {@see ActiveRecord::isTransactional()} method returns `true` for the
-     * current scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
-     *
-     * Usage example:
-     * ```php
-     * $category->insertAfter($siblingCategory);
-     * ```
-     *
-     * @phpstan-param array<string, mixed>|null $attributes
+     * @return bool Whether the owner was saved.
      */
     public function insertAfter(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
@@ -599,41 +478,18 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Inserts the current node as the previous sibling of the specified target node or moves it if it already exists.
+     * Places the owner as the previous sibling of the target node, inserting a new owner or moving an existing subtree.
      *
-     * - If the attached {@see ActiveRecord} is a new record, this method creates it as the previous sibling of the
-     *   given node.
-     * - If the record already exists, it moves the node as the previous sibling of the target node, updating the nested
-     *   set structure accordingly.
+     * Runs in its own transaction, acquires the table writer lock, rolls back and restores the owner on failure, and
+     * reloads the coordinates of the owner and the target on success.
      *
-     * This operation is essential for maintaining hierarchical data structures where nodes can be dynamically inserted
-     * or reorganized within the tree at the same level as the target node.
+     * @param ActiveRecord $node Node that becomes the next sibling of the owner.
+     * @param bool $runValidation Whether to validate the owner before saving.
+     * @param list<string>|null $attributes Attributes to save, or `null` to save all attributes.
      *
-     * The method sets the internal operation state to {@see self::OPERATION_INSERT_BEFORE} and stores the reference to
-     * the target node.
+     * @throws Throwable if a lifecycle handler or database operation fails.
      *
-     * The actual insertion or movement is performed by saving the owner model, which triggers the appropriate lifecycle
-     * events and updates the tree structure.
-     *
-     * @param ActiveRecord $node Target node before which the current node will be inserted as the previous sibling.
-     * @param bool $runValidation Whether to perform validation before saving the record.
-     * @param array|null $attributes List of attributes that need to be saved. Defaults to `null`, meaning all
-     * attributes.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @return bool Whether the operation was successful and the node was inserted or moved.
-     *
-     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
-     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
-     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
-     *
-     * Usage example:
-     * ```php
-     * $category->insertBefore($siblingCategory);
-     * ```
-     *
-     * @phpstan-param array<string, mixed>|null $attributes
+     * @return bool Whether the owner was saved.
      */
     public function insertBefore(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
@@ -641,51 +497,22 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Invalidates cached attribute values and resets internal state.
-     *
-     * Clears the cached depth, left, and right attribute values, forcing them to be re-fetched from the owner model
-     * on next access.
-     *
-     * This method should be called after operations that modify the owner model's attributes to ensure that cached
-     * values remain consistent with the actual model state.
-     *
-     * Usage example:
-     * ```php
-     * // After modifying the model's attributes externally
-     * $behavior->invalidateCache();
-     * ```
+     * Clears the cached coordinates and discards the pending operation and target node.
      */
     public function invalidateCache(): void
     {
-        $this->depthValue = null;
-        $this->leftValue = null;
+        $this->afterRefresh();
+
         $this->node = null;
         $this->operation = null;
-        $this->rightValue = null;
     }
 
     /**
-     * Determines whether the current node is a direct or indirect child of the specified parent node.
+     * Returns whether the owner is a descendant of the given node within the same tree.
      *
-     * Evaluates the nested set boundaries to check if the node to which this behavior is attached is contained within
-     * the left and right boundaries of the given parent node.
+     * @param ActiveRecord $node Candidate ancestor of the owner.
      *
-     * If the behavior is configured for multi-tree support (that is, {@see treeAttribute} is enabled), the method also
-     * verifies that both nodes belong to the same tree by comparing their tree attribute values.
-     *
-     * This method is useful for validating hierarchical relationships, enforcing tree integrity, and implementing
-     * access or movement restrictions based on parent-child relationships within the nested set structure.
-     *
-     * @param ActiveRecord $node Parent node to check against.
-     *
-     * @return bool Whether the current node is a child (descendant) of the specified parent node.
-     *
-     * Usage example:
-     * ```php
-     * if ($category->isChildOf($parentCategory)) {
-     *     // Perform logic for child nodes
-     * }
-     * ```
+     * @return bool Whether the owner lies strictly inside the boundaries of the node and shares its tree identifier.
      */
     public function isChildOf(ActiveRecord $node): bool
     {
@@ -704,25 +531,9 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Determines whether the current node is a leaf node in the nested set tree.
+     * Returns whether the owner has no descendants.
      *
-     * Evaluates the left and right attribute values of the node to check if it has no children, according to the nested
-     * sets model.
-     *
-     * A node is considered a leaf if the difference between its right and left attribute values is exactly one,
-     * indicating that it has no child nodes within the tree structure.
-     *
-     * This method is useful for identifying terminal nodes in hierarchical data, enabling logic for deletion, movement,
-     * or display of leaf nodes in tree-based structures.
-     *
-     * @return bool Whether the current node is a leaf node (has no children).
-     *
-     * Usage example:
-     * ```php
-     * if ($category->isLeaf()) {
-     *     // Perform logic for leaf nodes
-     * }
-     * ```
+     * @return bool Whether the right value of the owner exceeds its left value by exactly `1`.
      */
     public function isLeaf(): bool
     {
@@ -730,25 +541,9 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Determines whether the current node is a root node in the nested set tree.
+     * Returns whether the owner is a root node.
      *
-     * Evaluates the left attribute value of the node to check if it is positioned as the root node within the tree
-     * structure.
-     *
-     * A node is considered root if its left attribute value is exactly one, which is the standard convention in the
-     * nested sets model for identifying the root node of a tree.
-     *
-     * This method is useful for validating root status, enforcing tree integrity, and implementing logic that applies
-     * only to root nodes in hierarchical data structures.
-     *
-     * @return bool Whether the current node is a root node (left attribute equals one).
-     *
-     * Usage example:
-     * ```php
-     * if ($category->isRoot()) {
-     *     // Perform logic for root nodes
-     * }
-     * ```
+     * @return bool Whether the left value of the owner is `1`.
      */
     public function isRoot(): bool
     {
@@ -756,28 +551,9 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Retrieves all leaf nodes that are descendants of the current node.
+     * Returns a query for the leaf descendants of the owner, ordered by left value.
      *
-     * Returns an {@see ActiveQuery} representing all leaf nodes (nodes without children) that are contained within the
-     * left and right boundaries of the node to which this behavior is attached.
-     *
-     * A node is considered a leaf if its right attribute value is exactly one greater than its left attribute value.
-     *
-     * This method constructs a query to select all such nodes that are descendants of the current node, ordered by the
-     * left attribute in ascending order.
-     *
-     * This is useful for efficiently retrieving all terminal nodes in a subtree, such as for rendering category trees,
-     * generating navigation menus, or performing operations on leaf nodes only.
-     *
-     * @return ActiveQuery ActiveQuery instance for all leaf nodes under the current node.
-     *
-     * Usage example:
-     * ```php
-     * // Get all leaf nodes under the current node
-     * $leaves = $model->leaves()->all();
-     * ```
-     *
-     * @phpstan-return ActiveQuery<T>
+     * @return ActiveQuery<T> Query for the descendants of the owner that have no children.
      */
     public function leaves(): ActiveQuery
     {
@@ -792,54 +568,21 @@ class NestedSetsBehavior extends Behavior
                     $this->getRightValue(),
                 ),
             )
-            ->addOrderBy(
-                [
-                    $this->leftAttribute => SORT_ASC,
-                ],
-            );
+            ->addOrderBy([$this->leftAttribute => SORT_ASC]);
     }
 
     /**
-     * Creates the root node if the active record is new, or moves it as the root node in the nested set tree.
+     * Makes the owner a root, starting a new tree for a new owner or promoting an existing subtree to a new tree.
      *
-     * Sets the internal operation state to {@see self::OPERATION_MAKE_ROOT} and triggers the save process on the owner
-     * model.
-     * - If the attached {@see ActiveRecord} is a new record, this method creates it as the root node of a new tree,
-     *   setting `left=1`, `right=2`, and `depth=0`.
-     * - If the record already exists, it moves the node to become the root node, updating the nested set structure
-     *   accordingly and adjusting all affected nodes in the tree.
+     * Runs in its own transaction, acquires the table writer lock, rolls back and restores the owner on failure, and
+     * reloads the owner coordinates on success. Promoting an existing node requires {@see $treeAttribute}.
      *
-     * This operation is essential for initializing or reorganizing hierarchical data structures, such as category
-     * trees, where nodes can be promoted to root status or new trees can be started.
+     * @param bool $runValidation Whether to validate the owner before saving.
+     * @param list<string>|null $attributes Attributes to save, or `null` to save all attributes.
      *
-     * The actual creation or movement is performed by saving the owner model, which triggers the appropriate lifecycle
-     * events and updates the tree structure. Upon successful save, the model is automatically refreshed to ensure all
-     * nested set attributes reflect their current database values.
+     * @throws Throwable if a lifecycle handler or database operation fails.
      *
-     * @param bool $runValidation Whether to perform validation before saving the record.
-     * @param array|null $attributes List of attributes that need to be saved. Defaults to `null`, meaning all
-     * attributes.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @return bool Whether the operation was successful and the node was created or moved as root.
-     *
-     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
-     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
-     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
-     *
-     * Usage example:
-     * ```php
-     * // Create a new root node
-     * $category = new Category(['name' => 'Electronics']);
-     * $category->makeRoot();
-     *
-     * // Move existing node to become root
-     * $existingNode = Category::findOne(5);
-     * $existingNode->makeRoot();
-     * ```
-     *
-     * @phpstan-param array<string, mixed>|null $attributes
+     * @return bool Whether the owner was saved.
      */
     public function makeRoot(bool $runValidation = true, array|null $attributes = null): bool
     {
@@ -847,27 +590,10 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Returns an {@see ActiveQuery} for the next sibling node in the nested set tree.
+     * Returns a query for the next sibling of the owner.
      *
-     * Constructs a query to retrieve the node whose left attribute value is exactly one greater than the right
-     * attribute value of the current node, selecting the immediate next sibling at the same hierarchical level.
-     *
-     * If the behavior is configured for multi-tree support (that is, {@see treeAttribute} is enabled), the query will
-     * include a condition to ensure that the sibling belongs to the same tree as the current node.
-     *
-     * This method is useful for traversing sibling nodes in hierarchical data structures, such as categories or menu
-     * trees, and enables efficient navigation or manipulation of adjacent nodes within the same parent.
-     *
-     * @return ActiveQuery ActiveQuery instance for the next sibling node, or an empty result if there is no next
-     * sibling.
-     *
-     * Usage example:
-     * ```php
-     * // Get the next sibling of the current node
-     * $nextSibling = $model->next()->one();
-     * ```
-     *
-     * @phpstan-return ActiveQuery<T>
+     * @return ActiveQuery<T> Query for the node whose left value follows the right value of the owner; empty when there
+     * is none.
      */
     public function next(): ActiveQuery
     {
@@ -882,36 +608,11 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Retrieves all ancestor nodes (parents) of the current node in the nested set tree.
+     * Returns a query for the ancestors of the owner, ordered by left value and optionally limited in depth.
      *
-     * Returns an {@see ActiveQuery} representing all parent nodes of the node to which this behavior is attached,
-     * ordered by the left attribute in ascending order.
+     * @param int|null $depth Maximum number of levels above the owner, or `null` for all ancestors.
      *
-     * The query includes all nodes that enclose the current node according to the nested sets model, optionally limited
-     * by a specified depth.
-     *
-     * This method is useful for traversing the hierarchy upwards, such as for building breadcrumb navigation,
-     * validating ancestry, or applying logic based on parent relationships in hierarchical data structures.
-     *
-     * If the optional `$depth` parameter is provided, only parents within the specified depth from the current node
-     * will be included in the result.
-     *
-     * @param int|null $depth Optional depth limit for parent retrieval.
-     * - If set, only parents within this depth from the current node are returned.
-     * - If `null`, all ancestor nodes are returned.
-     *
-     * @return ActiveQuery ActiveQuery instance for all parent nodes of the current node, ordered by left attribute.
-     *
-     * Usage example:
-     * ```php
-     * // Get all parent nodes (ancestors) of the current node
-     * $parents = $model->parents()->all();
-     *
-     * // Get parents up to 2 levels above the current node
-     * $limitedParents = $model->parents(2)->all();
-     * ```
-     *
-     * @phpstan-return ActiveQuery<T>
+     * @return ActiveQuery<T> Query for the ancestors of the owner.
      */
     public function parents(int|null $depth = null): ActiveQuery
     {
@@ -929,49 +630,22 @@ class NestedSetsBehavior extends Behavior
                     $depth,
                 ),
             )
-            ->addOrderBy(
-                [
-                    $this->leftAttribute => SORT_ASC,
-                ],
-            );
+            ->addOrderBy([$this->leftAttribute => SORT_ASC]);
     }
 
     /**
-     * Inserts the current node as the first child of the specified target node or moves it if it already exists.
+     * Prepends the owner as the first child of the target node, inserting a new owner or moving an existing subtree.
      *
-     * - If the attached {@see ActiveRecord} is a new record, this method creates it as the first child of the given
-     *   node.
-     * - If the record already exists, it moves the node as the first child of the target node, updating the nested set
-     *   structure accordingly.
+     * Runs in its own transaction, acquires the table writer lock, rolls back and restores the owner on failure, and
+     * reloads the coordinates of the owner and the target on success.
      *
-     * This operation is essential for building and maintaining hierarchical data structures, such as categories or menu
-     * trees, where nodes can be dynamically inserted or reorganized within the tree.
+     * @param ActiveRecord $node Node that becomes the parent of the owner.
+     * @param bool $runValidation Whether to validate the owner before saving.
+     * @param list<string>|null $attributes Attributes to save, or `null` to save all attributes.
      *
-     * The method sets the internal operation state to {@see self::OPERATION_PREPEND_TO} and stores the reference to the
-     * target node.
+     * @throws Throwable if a lifecycle handler or database operation fails.
      *
-     * The actual insertion or movement is performed by saving the owner model, which triggers the appropriate lifecycle
-     * events and updates the tree structure.
-     *
-     * @param ActiveRecord $node Target node to which the current node will be prepended as the first child.
-     * @param bool $runValidation Whether to perform validation before saving the record.
-     * @param array|null $attributes List of attributes that need to be saved. Defaults to `null`, meaning all
-     * attributes.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @return bool Whether the operation was successful and the node was prepended or moved.
-     *
-     * **Note:** This method uses {@see ActiveRecord::save()} internally, which means Yii2 will automatically handle
-     * database transactions if the model {@see ActiveRecord::isTransactional()} method returns `true` for the current
-     * scenario and {@see ActiveRecord::OP_INSERT} or {@see ActiveRecord::OP_UPDATE} operations.
-     *
-     * Usage example:
-     * ```php
-     * $category->prependTo($parentCategory);
-     * ```
-     *
-     * @phpstan-param array<string, mixed>|null $attributes
+     * @return bool Whether the owner was saved.
      */
     public function prependTo(ActiveRecord $node, bool $runValidation = true, array|null $attributes = null): bool
     {
@@ -979,27 +653,10 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Returns an {@see ActiveQuery} for the previous sibling node in the nested set tree.
+     * Returns a query for the previous sibling of the owner.
      *
-     * Constructs a query to retrieve the node whose right attribute value is exactly one less than the left attribute
-     * value of the current node, selecting the immediate previous sibling at the same hierarchical level.
-     *
-     * If the behavior is configured for multi-tree support (that is, {@see treeAttribute} is enabled), the query will
-     * include a condition to ensure that the sibling belongs to the same tree as the current node.
-     *
-     * This method is useful for traversing sibling nodes in hierarchical data structures, such as categories or menu
-     * trees, and enables efficient navigation or manipulation of adjacent nodes within the same parent.
-     *
-     * @return ActiveQuery ActiveQuery instance for the previous sibling node, or an empty result if there is no
-     * previous sibling.
-     *
-     * Usage example:
-     * ```php
-     * // Get the previous sibling of the current node
-     * $prevSibling = $model->prev()->one();
-     * ```
-     *
-     * @phpstan-return ActiveQuery<T>
+     * @return ActiveQuery<T> Query for the node whose right value precedes the left value of the owner; empty when
+     * there is none.
      */
     public function prev(): ActiveQuery
     {
@@ -1014,23 +671,19 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Prepares the current node for insertion as a child or sibling in the nested set tree.
+     * Assigns the coordinates of a new child or sibling at the given position and opens space for it in the tree.
      *
-     * Sets the left, right, and depth attributes of the node to be inserted, based on the target node and the specified
-     * depth.
+     * @param int $value Left value of the new node.
+     * @param int $depth Depth offset relative to the target node: `0` for a sibling, `1` for a child.
      *
-     * This method is called internally before inserting a node as a child or sibling, ensuring the nested set
-     * attributes are correctly initialized.
-     *
-     * @param int $value Left attribute value for the new node, or `null` if not applicable.
-     * @param int $depth Depth offset relative to the target node (`0` for sibling, `1` for child).
-     *
-     * @throws Exception if an unexpected error occurs during execution.
+     * @throws Exception if a sibling of a root node is requested.
      */
     protected function beforeInsertNode(int $value, int $depth): void
     {
         if ($depth === 0 && $this->node?->isRoot() === true) {
-            throw new Exception('Can not create a node when the target node is root.');
+            throw new Exception(
+                Message::CANNOT_CREATE_NODE_TARGET_IS_ROOT->getMessage(),
+            );
         }
 
         $this->getOwner()->setAttribute($this->leftAttribute, $value);
@@ -1044,28 +697,21 @@ class NestedSetsBehavior extends Behavior
             $this->getOwner()->setAttribute($this->treeAttribute, $this->node->getAttribute($this->treeAttribute));
         }
 
-        $this->shiftLeftRightAttribute($value, 2);
+        $this->shiftLeftRightAttribute(
+            $value,
+            2,
+        );
     }
 
     /**
-     * Prepares the current node for insertion as a root node in the nested set tree.
+     * Assigns root coordinates to a new owner.
      *
-     * Sets the left, right, and depth attributes of the node to their initial values, establishing it as the root node
-     * of the tree.
-     *
-     * If multi-tree support is disabled (that is, {@see treeAttribute} is `false`), this method ensures that only one
-     * root node can exist by checking for the presence of an existing root and throwing an exception if another root is
-     * found.
-     *
-     * This method is called internally before inserting a root node and is essential for maintaining the integrity of
-     * the nested set structure.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
+     * @throws Exception if {@see $treeAttribute} is `false` and the table already contains a node.
      */
     protected function beforeInsertRootNode(): void
     {
-        if ($this->treeAttribute === false && $this->getOwner()::find()->exists()) {
-            throw new Exception('Can not create more than one root when "treeAttribute" is false.');
+        if ($this->treeAttribute === false && TreeLock::exists($this->getOwner()::find())) {
+            throw new Exception(Message::CANNOT_CREATE_MULTIPLE_ROOTS->getMessage());
         }
 
         $this->getOwner()->setAttribute($this->leftAttribute, 1);
@@ -1074,12 +720,9 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Executes node movement using the provided context.
+     * Moves the owner subtree to the position described by the context, within its tree or into another tree.
      *
-     * Handles both same-tree and cross-tree movements, determining the strategy based on tree attribute configuration
-     * and tree values from the context.
-     *
-     * @param NodeContext $context Immutable context containing all movement data.
+     * @param NodeContext $context Target position and depth offset of the move.
      */
     protected function moveNode(NodeContext $context): void
     {
@@ -1087,31 +730,24 @@ class NestedSetsBehavior extends Behavior
         $targetTreeValue = $context->getTargetTreeValue($this->treeAttribute);
 
         if ($this->treeAttribute === false || $currentTreeValue === $targetTreeValue) {
-            $this->executeSameTreeMove($context, $currentTreeValue);
+            $this->executeSameTreeMove(
+                $context,
+                $currentTreeValue,
+            );
         } else {
-            $this->executeCrossTreeMove($context, $this->treeAttribute, $currentTreeValue, $targetTreeValue);
+            $this->executeCrossTreeMove(
+                $context,
+                $this->treeAttribute,
+                $currentTreeValue,
+                $targetTreeValue,
+            );
         }
     }
 
     /**
-     * Moves the current node and its descendants to become a new root in the nested set tree.
+     * Promotes the owner subtree to a new tree identified by the owner primary key and closes the gap it leaves.
      *
-     * Updates the left, right, and depth attributes of the node and all its descendants so that the node becomes a root
-     * node.
-     *
-     * If multi-tree support is enabled (that is, {@see treeAttribute} is not `false`), the tree attribute is updated to
-     * the node primary key.
-     *
-     * This method is used internally when a node is promoted to root, ensuring the nested set structure remains
-     * consistent and all affected nodes are updated in a single operation.
-     *
-     * The method performs the following operations.
-     * - Resets the depth of the node and its descendants to zero-based.
-     * - Shifts left and right boundaries of the node and its descendants to start from 1.
-     * - Shifts left/right values of remaining nodes to close the gap left by the moved subtree.
-     * - Updates the tree attribute to the new root identifier if multi-tree is enabled.
-     *
-     * @param mixed $treeValue Tree attribute value to which the node will be moved, or `false` if not applicable.
+     * @param mixed $treeValue Identifier of the tree that currently contains the subtree.
      */
     protected function moveNodeAsRoot(mixed $treeValue): void
     {
@@ -1123,23 +759,17 @@ class NestedSetsBehavior extends Behavior
             1 - $this->getLeftValue(),
             $this->getRightValue(),
         );
-        $this->shiftLeftRightAttribute($this->getRightValue(), $this->getLeftValue() - $this->getRightValue() - 1);
+        $this->shiftLeftRightAttribute(
+            $this->getRightValue(),
+            $this->getLeftValue() - $this->getRightValue() - 1,
+        );
     }
 
     /**
-     * Shifts left and right attribute values for nodes after a structural change in the nested set tree.
+     * Adds the delta to every left and right value greater than or equal to the given value within the owner tree.
      *
-     * Updates the left and right boundary attributes of all nodes whose attribute value is greater than or equal to the
-     * specified value, applying the given delta.
-     *
-     * This operation is essential for maintaining the integrity of the nested set structure after insertions,
-     * deletions, or moves, ensuring that all affected nodes are correctly renumbered.
-     *
-     * The method applies the tree attribute condition if multi-tree support is enabled, restricting the update to nodes
-     * within the same tree.
-     *
-     * @param int $value Attribute value from which to start shifting (inclusive).
-     * @param int $delta Amount to add to the attribute value for affected nodes (can be negative).
+     * @param int $value Lowest boundary value to shift, inclusive.
+     * @param int $delta Signed offset to add; a negative value closes a gap.
      */
     protected function shiftLeftRightAttribute(int $value, int $delta): void
     {
@@ -1162,17 +792,11 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Prepares the current node for insertion using a NodeContext.
+     * Assigns the coordinates of a new owner from the insertion context.
      *
-     * Sets the left, right, and depth attributes of the node to be inserted, based on the provided context which
-     * encapsulates the target node, operation type, and calculated values.
+     * @param NodeContext $context Target position and depth offset of the insertion.
      *
-     * This method delegates to {@see beforeInsertNode()} using the values from the NodeContext, ensuring consistency
-     * and reducing code duplication.
-     *
-     * @param NodeContext $context Immutable context containing all necessary data for node insertion.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
+     * @throws Exception if a sibling of a root node is requested.
      */
     private function beforeInsertNodeWithContext(NodeContext $context): void
     {
@@ -1180,14 +804,14 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Creates a typed movement context based on operation and target node.
+     * Returns the movement context for the given operation and target node.
      *
-     * @param ActiveRecord $targetNode Target node for the operation.
-     * @param string|null $operation Operation type to perform.
+     * @param ActiveRecord $targetNode Node the move is relative to.
+     * @param string|null $operation Pending operation identifier.
      *
-     * @throws RuntimeException if a runtime error prevents the operation from completing successfully.
+     * @throws RuntimeException if the operation does not move a node relative to a target.
      *
-     * @return NodeContext New instance with the specified parameters for the operation.
+     * @return NodeContext Target position and depth offset of the move.
      */
     private function createMoveContext(ActiveRecord $targetNode, string|null $operation): NodeContext
     {
@@ -1196,26 +820,14 @@ class NestedSetsBehavior extends Behavior
             self::OPERATION_INSERT_AFTER => NodeContext::forInsertAfter($targetNode, $this->rightAttribute),
             self::OPERATION_INSERT_BEFORE => NodeContext::forInsertBefore($targetNode, $this->leftAttribute),
             self::OPERATION_PREPEND_TO => NodeContext::forPrependTo($targetNode, $this->leftAttribute),
-            default => throw new RuntimeException("Unsupported operation: {$operation}"),
+            default => throw new RuntimeException(Message::UNSUPPORTED_OPERATION->getMessage((string) $operation)),
         };
     }
 
     /**
-     * Deletes the current node and all its descendant nodes from the nested set tree.
+     * Deletes the owner subtree in one statement, running the owner delete lifecycle hooks around it.
      *
-     * Executes a bulk deletion of the node to which this behavior is attached, along with all its children, by
-     * constructing a condition that matches all nodes within the left and right boundaries of the current node.
-     *
-     * This method is used internally to efficiently remove entire subtrees in a single operation, ensuring the
-     * integrity of the nested set structure.
-     *
-     * It also triggers the appropriate lifecycle events before and after deletion, and resets the old attributes of the
-     * owner model.
-     *
-     * The method applies the tree attribute condition if multi-tree support is enabled, restricting the deletion to
-     * nodes within the same tree.
-     *
-     * @return false|int Number of rows deleted, or `false` if the deletion is unsuccessful for any reason.
+     * @return false|int Number of deleted rows, or `false` if {@see ActiveRecord::beforeDelete()} cancels the deletion.
      */
     private function deleteWithChildrenInternal(): bool|int
     {
@@ -1241,23 +853,12 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Executes a cross-tree move operation for the current node and its descendants.
+     * Moves the owner subtree into another tree at the context position and closes the gap in the source tree.
      *
-     * Handles the relocation of a subtree from one tree to another in a multi-tree nested set structure, updating left,
-     * right, and depth attributes, and shifting affected nodes in the target tree to maintain integrity.
-     *
-     * This method is called internally when a node is moved across trees, ensuring that all boundaries and depth levels
-     * are recalculated and the subtree is correctly positioned in the new tree context.
-     *
-     * The operation performs the following steps.
-     * - Closes the gap left in the source tree by shifting left and right attributes of remaining nodes.
-     * - Moves the subtree to the target tree, updating tree, left, right, and depth attributes accordingly.
-     * - Shifts left and right attribute values in the target tree to make space for the incoming subtree.
-     *
-     * @param NodeContext $context Immutable context containing all movement data for the operation.
-     * @param string $treeAttribute Name of the tree attribute used for multi-tree support.
-     * @param mixed $currentTreeValue Value of the tree attribute for the current (source) tree.
-     * @param mixed $targetTreeValue Value of the tree attribute for the target tree.
+     * @param NodeContext $context Target position and depth offset of the move.
+     * @param string $treeAttribute Name of the tree attribute.
+     * @param mixed $currentTreeValue Identifier of the source tree.
+     * @param mixed $targetTreeValue Identifier of the destination tree.
      */
     private function executeCrossTreeMove(
         NodeContext $context,
@@ -1293,32 +894,23 @@ class NestedSetsBehavior extends Behavior
             $context->targetPositionValue - $this->getLeftValue(),
             $this->getRightValue(),
         );
-        $this->shiftLeftRightAttribute($this->getRightValue(), $this->getLeftValue() - $this->getRightValue() - 1);
+        $this->shiftLeftRightAttribute(
+            $this->getRightValue(),
+            $this->getLeftValue() - $this->getRightValue() - 1,
+        );
     }
 
     /**
-     * Executes a nested set operation on the current node with the specified target and operation type.
+     * Saves the owner with the given pending operation through {@see runOperation()} and reloads affected coordinates.
      *
-     * Sets the internal operation state and target node reference, then save the owner model to perform the requested
-     * structural change in the tree.
+     * @param ActiveRecord|null $targetNode Node the operation is relative to, or `null` for {@see OPERATION_MAKE_ROOT}.
+     * @param string $operation Operation identifier, one of the `OPERATION_*` constants.
+     * @param bool $runValidation Whether to validate the owner before saving.
+     * @param list<string>|null $attributes Attributes to save, or `null` to save all attributes.
      *
-     * After saving, it refreshes the target or owner as needed to ensure updated attribute values for append and make
-     * root operations.
+     * @throws Exception if the saved node cannot be reloaded.
      *
-     * This method is used internally by public API methods such as {@see appendTo()}, {@see insertAfter()},
-     * {@see insertBefore()}, {@see prependTo()}, and {@see makeRoot()} to centralize the execution logic for all
-     * supported nested set operations.
-     *
-     * @param ActiveRecord|null $targetNode Target node for the operation, or `null` if not applicable.
-     * @param string $operation Operation type to perform (see OPERATION_* constants).
-     * @param bool $runValidation Whether to perform validation before saving the record.
-     * @param array<string, mixed>|null $attributes List of attributes to save, or `null` for all attributes.
-     *
-     * @throws Exception if an unexpected error occurs during execution.
-     *
-     * @return bool Whether the operation was successful and the node was saved.
-     *
-     * @phpstan-param array<string, mixed>|null $attributes
+     * @return bool Whether the owner was saved.
      */
     private function executeOperation(
         ActiveRecord|null $targetNode,
@@ -1326,40 +918,54 @@ class NestedSetsBehavior extends Behavior
         bool $runValidation,
         array|null $attributes = null,
     ): bool {
-        $this->operation = $operation;
-        $this->node = $targetNode;
+        return $this->runOperation(function () use ($targetNode, $operation, $runValidation, $attributes): bool {
+            $this->operation = $operation;
+            $this->node = $targetNode;
 
-        $result = $this->getOwner()->save($runValidation, $attributes);
+            $isNewRecord = $this->getOwner()->getIsNewRecord();
+            $lock = $this->getOwner()->optimisticLock();
 
-        if ($operation === self::OPERATION_APPEND_TO) {
-            $targetNode?->refresh();
-        }
+            if ($attributes !== null && $isNewRecord) {
+                $attributes = [...$attributes, ...$this->structuralAttributes()];
+            } elseif ($attributes !== null && $lock !== null) {
+                $attributes[] = $lock;
+            }
 
-        if ($operation === self::OPERATION_MAKE_ROOT) {
-            $this->getOwner()->refresh();
-        }
+            $result = $this->getOwner()->save($runValidation, $attributes);
 
-        return $result;
+            if ($result) {
+                if ($isNewRecord) {
+                    $owner = $this->getOwner();
+
+                    $pending = array_intersect_key($owner->getAttributes(), $owner->getDirtyAttributes());
+
+                    foreach ($this->structuralAttributes() as $attribute) {
+                        unset($pending[$attribute]);
+                    }
+
+                    if ($owner->refresh() === false) {
+                        throw new StaleObjectException(Message::NODE_NOT_FOUND->getMessage());
+                    }
+
+                    $owner->setAttributes($pending, false);
+                } else {
+                    $this->refreshStructure($this->getOwner());
+                }
+
+                if ($targetNode !== null) {
+                    $this->refreshStructure($targetNode, false, false);
+                }
+            }
+
+            return $result;
+        });
     }
 
     /**
-     * Moves the current node and its descendants to a new position within the same tree structure.
+     * Moves the owner subtree to the context position within its current tree.
      *
-     * Updates the left, right, and depth attributes for the node and all its descendants when moving a subtree to a
-     * different position within the same tree, ensuring the nested set structure remains consistent.
-     *
-     * The method performs the following operations.
-     * - Adjusts the left and right boundaries of the subtree if it is moved forward in the tree.
-     * - Closes the gap left by the moved subtree by shifting left and right attributes of remaining nodes.
-     * - Shifts left and right attribute values to make space for the moved subtree.
-     * - Updates left and right attributes for all nodes in the subtree to reflect the new position.
-     * - Updates the depth attribute for all nodes in the subtree based on the new target depth.
-     *
-     * This operation is essential for maintaining the integrity of the nested set hierarchy during node reordering
-     * and is used internally by movement operations that do not cross tree boundaries.
-     *
-     * @param NodeContext $context Immutable context containing all movement data for the operation.
-     * @param mixed $currentTreeValue Value of the tree attribute for the current tree.
+     * @param NodeContext $context Target position and depth offset of the move.
+     * @param mixed $currentTreeValue Identifier of the tree that contains the subtree.
      */
     private function executeSameTreeMove(NodeContext $context, mixed $currentTreeValue): void
     {
@@ -1367,7 +973,10 @@ class NestedSetsBehavior extends Behavior
         $targetDepthValue = $context->getTargetDepth($this->depthAttribute);
         $depthOffset = $targetDepthValue - $this->getDepthValue() + $context->depthLevelDelta;
 
-        $this->shiftLeftRightAttribute($context->targetPositionValue, $subtreeSize);
+        $this->shiftLeftRightAttribute(
+            $context->targetPositionValue,
+            $subtreeSize,
+        );
 
         $adjustedLeftValue = $this->getLeftValue();
         $adjustedRightValue = $this->getRightValue();
@@ -1415,19 +1024,16 @@ class NestedSetsBehavior extends Behavior
             );
         }
 
-        $this->shiftLeftRightAttribute($adjustedRightValue, -$subtreeSize);
+        $this->shiftLeftRightAttribute(
+            $adjustedRightValue,
+            -$subtreeSize,
+        );
     }
 
     /**
-     * Retrieves and caches the {@see Connection} object associated with the owner model.
+     * Returns the database connection of the owner model, resolving it once.
      *
-     * The connection is resolved on first access and stored for subsequent calls to improve performance and avoid
-     * redundant lookups.
-     *
-     * This method is used internally by operations that require direct database access, such as bulk updates or
-     * structural modifications to the nested set tree.
-     *
-     * @return Connection Database connection instance for the owner model.
+     * @return Connection Connection of the owner model.
      */
     private function getDb(): Connection
     {
@@ -1435,14 +1041,9 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Retrieves and caches the depth value of the current node.
+     * Returns the depth of the owner, caching it until the next refresh.
      *
-     * The value is cached on first access to avoid redundant lookups during nested set operations.
-     *
-     * This method is used internally by movement and update operations to determine the current node depth within the
-     * tree structure, ensuring correct calculation of depth offsets and validation of node positions.
-     *
-     * @return int Depth value of the current node as stored in the owner model.
+     * @return int Depth of the owner.
      */
     private function getDepthValue(): int
     {
@@ -1450,14 +1051,9 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Retrieves and caches the left boundary value of the current node.
+     * Returns the left value of the owner, caching it until the next refresh.
      *
-     * The value is cached on first access to avoid redundant lookups during nested set operations.
-     *
-     * This method is used internally by movement and update operations to determine the current node left boundary
-     * within the tree structure, ensuring correct calculation of node positions and validation of node movements.
-     *
-     * @return int Left boundary value of the current node as stored in the owner model.
+     * @return int Left value of the owner.
      */
     private function getLeftValue(): int
     {
@@ -1465,38 +1061,27 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Retrieves the owner model instance to which this behavior is attached.
+     * Returns the model the behavior is attached to.
      *
-     * Ensures that the behavior has a valid owner before performing any operations that require access to the model
-     * instance.
+     * @throws LogicException if the behavior is not attached.
      *
-     * This method is used internally by all operations that manipulate the nested set structure, providing type safety
-     * and a clear error if the behavior is not attached.
-     *
-     * @throws LogicException if the behavior is not attached to an owner model.
-     *
-     * @return ActiveRecord Owner model instance to which this behavior is attached.
-     *
-     * @phpstan-return T
+     * @return T Owner model.
      */
     private function getOwner(): ActiveRecord
     {
         if ($this->owner === null) {
-            throw new LogicException('The "owner" property must be set before using the behavior.');
+            throw new LogicException(
+                Message::BEHAVIOR_NOT_ATTACHED->getMessage(),
+            );
         }
 
         return $this->owner;
     }
 
     /**
-     * Retrieves and caches the right boundary value of the current node.
+     * Returns the right value of the owner, caching it until the next refresh.
      *
-     * The value is cached on first access to avoid redundant lookups during nested set operations.
-     *
-     * This method is used internally by movement and update operations to determine the current node right boundary
-     * within the tree structure, ensuring correct calculation of node positions and validation of node movements.
-     *
-     * @return int Right boundary value of the current node as stored in the owner model.
+     * @return int Right value of the owner.
      */
     private function getRightValue(): int
     {
@@ -1504,18 +1089,11 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Retrieves the tree attribute value from the specified {@see ActiveRecord} instance.
+     * Returns the tree identifier of the given record.
      *
-     * Extracts the tree identifier value from the given model instance when multi-tree support is enabled, providing
-     * a centralized method for accessing tree attribute values throughout the behavior.
+     * @param ActiveRecord|null $activeRecord Record to read, or `null`.
      *
-     * The method is used internally by movement operations, tree validation, and condition building to ensure proper
-     * tree scoping and maintain data integrity across different tree contexts.
-     *
-     * @param ActiveRecord|null $activeRecord Model instance from which to extract the tree value, or `null` if not
-     * available.
-     *
-     * @return mixed Tree attribute value if multi-tree support is enabled and the record exists, `null` otherwise.
+     * @return mixed Tree identifier, or `null` when {@see $treeAttribute} is `false` or no record is given.
      */
     private function getTreeValue(ActiveRecord|null $activeRecord): mixed
     {
@@ -1525,23 +1103,26 @@ class NestedSetsBehavior extends Behavior
     }
 
     /**
-     * Moves a subtree to a different tree or position within a multi-tree nested set structure.
+     * Returns a scalar optimistic lock version as a `string` so integer and numeric `string` versions compare equal.
      *
-     * Updates the left, right, and depth attributes, as well as the tree attribute, for all nodes in the specified
-     * subtree.
+     * @return mixed Optimistic lock version as a `string` if scalar, otherwise the original value.
+     */
+    private static function lockVersion(mixed $value): mixed
+    {
+        return is_scalar($value) ? (string) $value : $value;
+    }
+
+    /**
+     * Applies depth and position offsets to a subtree and assigns it the target tree identifier in one statement.
      *
-     * This method is used internally when moving a node and its descendants across trees or to a new root, ensuring
-     * that all affected nodes are updated in a single bulk operation.
+     * @param mixed $currentTreeValue Identifier of the tree that currently contains the subtree.
+     * @param mixed $targetTreeValue Identifier of the tree that receives the subtree.
+     * @param int $depth Depth offset to apply to every node of the subtree.
+     * @param int $leftValue Left value of the subtree root.
+     * @param int $positionOffset Offset to add to the left and right values of the subtree.
+     * @param int $rightValue Right value of the subtree root.
      *
-     * This operation is essential for maintaining the integrity of the nested set structure when reorganizing nodes
-     * between trees or promoting a node to root in a multi-tree configuration.
-     *
-     * @param mixed $currentTreeValue Current tree attribute value of the nodes being moved.
-     * @param mixed $targetTreeValue Value to assign to the tree attribute for all nodes in the moved subtree.
-     * @param int $depth Depth offset to apply to all nodes in the subtree.
-     * @param int $leftValue Left boundary value of the subtree to move.
-     * @param int $positionOffset Amount to shift left and right attribute values for the subtree.
-     * @param int $rightValue Right boundary value of the subtree to move.
+     * @throws LogicException if {@see $treeAttribute} is `false`.
      */
     private function moveSubtreeToTargetTree(
         mixed $currentTreeValue,
@@ -1560,6 +1141,12 @@ class NestedSetsBehavior extends Behavior
             ],
         );
 
+        if ($this->treeAttribute === false) {
+            throw new LogicException(
+                Message::TREE_ATTRIBUTE_REQUIRED->getMessage(),
+            );
+        }
+
         $attributes += [$this->treeAttribute => $targetTreeValue];
 
         $this->getOwner()::updateAll(
@@ -1573,5 +1160,159 @@ class NestedSetsBehavior extends Behavior
                 $currentTreeValue,
             ),
         );
+    }
+
+    /**
+     * Reloads managed coordinates without discarding unsaved application attributes.
+     *
+     * @param ActiveRecord $node Node whose coordinates are reloaded from the primary database.
+     * @param bool $checkLock Whether to reject a node whose optimistic lock version has changed.
+     * @param bool $required Whether a missing row is an error rather than a silent no-op.
+     *
+     * @throws StaleObjectException if the node no longer exists and `$required` is `true`, or if `$checkLock` is `true`
+     * and the optimistic lock version has changed.
+     */
+    private function refreshStructure(ActiveRecord $node, bool $checkLock = false, bool $required = true): void
+    {
+        $query = $node::find();
+        $tableName = key($query->getTablesUsedInFrom());
+
+        $condition = [];
+
+        foreach ($node::primaryKey() as $attribute) {
+            $condition["{$tableName}.{$attribute}"] = $node->getOldAttribute($attribute);
+        }
+
+        $record = $node::getDb()->useMaster(
+            static fn(): ActiveRecord|null => TreeLock::one($query->where($condition)),
+        );
+
+        if ($record instanceof ActiveRecord === false) {
+            if ($required === false) {
+                return;
+            }
+
+            throw new StaleObjectException(
+                Message::NODE_NOT_FOUND->getMessage(),
+            );
+        }
+
+        $lock = $node->optimisticLock();
+
+        // Request data assigns versions as numeric strings while database reads return integers.
+        if (
+            $checkLock
+            && $lock !== null
+            && self::lockVersion($record->getAttribute($lock)) !== self::lockVersion($node->getAttribute($lock))
+        ) {
+            throw new StaleObjectException(
+                Message::NODE_MODIFIED->getMessage(),
+            );
+        }
+
+        foreach ($this->structuralAttributes() as $attribute) {
+            $value = $record->getAttribute($attribute);
+            $node->setAttribute($attribute, $value);
+            $node->setOldAttribute($attribute, $value);
+        }
+
+        foreach ($node->getBehaviors() as $behavior) {
+            if ($behavior instanceof self) {
+                $behavior->afterRefresh();
+            }
+        }
+    }
+
+    /**
+     * Verifies that a target belongs to the same nested set storage before reading its coordinates.
+     *
+     * @throws Exception if the target uses another database connection or table.
+     * @throws StaleObjectException if the target no longer exists.
+     */
+    private function refreshTarget(ActiveRecord $node): void
+    {
+        if ($node::getDb() !== $this->getDb() || $node::tableName() !== $this->getOwner()::tableName()) {
+            throw new Exception(
+                Message::TARGET_STORAGE_MISMATCH->getMessage(),
+            );
+        }
+
+        $this->refreshStructure($node);
+    }
+
+    /**
+     * Rolls back failed operations and restores the owner so it can be retried.
+     *
+     * Runs the callback in its own transaction after acquiring the table writer lock. A `false` result rolls back the
+     * transaction, an exception is rethrown after the rollback, and the cached state is cleared in every case.
+     *
+     * @template TResult of bool|int
+     *
+     * @param callable(): TResult $callback Structural operation to run under the writer lock.
+     *
+     * @throws Throwable if acquiring the lock, the callback, or the rollback fails.
+     *
+     * @return TResult Result of the callback.
+     */
+    private function runOperation(callable $callback): bool|int
+    {
+        $owner = $this->getOwner();
+        $oldAttributes = $owner->getIsNewRecord() ? null : $owner->getOldAttributes();
+        $attributes = $owner->getAttributes();
+
+        if ($oldAttributes === null) {
+            $attributes = array_intersect_key($attributes, $owner->getDirtyAttributes());
+        }
+        $transaction = $this->getDb()->beginTransaction();
+
+        $succeeded = false;
+
+        try {
+            TreeLock::acquire($owner, $this->lockTimeout);
+
+            $result = $callback();
+
+            if ($result === false) {
+                $transaction->rollBack();
+            } else {
+                $transaction->commit();
+                $succeeded = true;
+            }
+
+            return $result;
+        } catch (Throwable $exception) {
+            TreeLock::rollBack($this->getDb(), $transaction, $exception);
+
+            throw $exception;
+        } finally {
+            if ($succeeded === false) {
+                foreach ($owner->getAttributes() as $attribute => $_value) {
+                    if (array_key_exists($attribute, $attributes) === false) {
+                        $owner->__unset($attribute);
+                    }
+                }
+
+                $owner->setAttributes($attributes, false);
+                $owner->setOldAttributes($oldAttributes);
+            }
+
+            $this->invalidateCache();
+        }
+    }
+
+    /**
+     * Returns the names of the attributes managed by the behavior.
+     *
+     * @return list<string> Attributes managed by this behavior.
+     */
+    private function structuralAttributes(): array
+    {
+        $attributes = [$this->leftAttribute, $this->rightAttribute, $this->depthAttribute];
+
+        if ($this->treeAttribute !== false) {
+            $attributes[] = $this->treeAttribute;
+        }
+
+        return $attributes;
     }
 }

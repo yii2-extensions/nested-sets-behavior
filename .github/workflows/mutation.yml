@@ -1,79 +1,66 @@
+---
 on:
-  pull_request:
+  pull_request: &ignore-paths
     paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.gitattributes'
+      - ".gitattributes"
+      - ".gitignore"
+      - "CHANGELOG.md"
+      - "docs/**"
+      - "README.md"
+      - "UPGRADE.md"
 
-  push:
-    paths-ignore:
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.gitignore'
-      - '.gitattributes'
+  push: *ignore-paths
 
 name: mutation test
 
+permissions:
+  contents: read
+
 jobs:
   mutation:
-    uses: php-forge/actions/.github/workflows/infection.yml@v2
+    uses: yii2-framework/actions/.github/workflows/infection.yml@f0e06ea5cc965cff4431177d448add7b7c98668b # v2.0.1
     with:
       before-hook: |
-        # Config MySQL with Docker
         docker run -d \
           --name mysql-test \
           -e MYSQL_ROOT_PASSWORD=root \
           -e MYSQL_DATABASE=yiitest \
-          -e MYSQL_USER=test \
-          -e MYSQL_PASSWORD=test \
           -p 3306:3306 \
           --health-cmd="mysqladmin ping -h localhost" \
           --health-interval=10s \
           --health-timeout=5s \
           --health-retries=5 \
-          mysql:8.0
+          mysql:8.4
 
-        # Config PostgreSQL with Docker
         docker run -d \
           --name postgres-test \
           -e POSTGRES_DB=yiitest \
           -e POSTGRES_USER=root \
           -e POSTGRES_PASSWORD=root \
           -p 5432:5432 \
-          --health-cmd="pg_isready -U postgres" \
+          --health-cmd="pg_isready -U root" \
           --health-interval=10s \
           --health-timeout=5s \
           --health-retries=3 \
-          postgres:16
+          postgres:17
 
-        # Wait for MySQL to be ready
         echo "Waiting for MySQL to be ready..."
         timeout 120s bash -c 'until docker exec mysql-test mysqladmin ping -h localhost --silent; do sleep 3; done'
 
-        # Wait for PostgreSQL to be ready
         echo "Waiting for PostgreSQL to be ready..."
-        timeout 60s bash -c 'until docker exec postgres-test pg_isready -U postgres; do sleep 2; done'
+        timeout 60s bash -c 'until docker exec postgres-test pg_isready -U root; do sleep 2; done'
 
-        # Check if MySQL is running
-        echo "Testing MySQL connection..."
-        docker exec mysql-test mysql -u root -proot -e "SELECT VERSION();"
+        # Each Infection worker uses its own disposable database; see docs/testing.md.
+        for token in initial 1 2 3 4; do
+          docker exec mysql-test mysql -u root -proot -e "CREATE DATABASE yiitest_${token};"
+          docker exec postgres-test createdb -U root "yiitest_${token}"
+        done
 
-        # Check if PostgreSQL is running
-        echo "Testing PostgreSQL connection..."
-        docker exec postgres-test psql -U root -d yiitest -c "SELECT version();"
-
-        # Set environment variables for MySQL and PostgreSQL
-        echo "MYSQL_DSN=mysql:host=localhost;port=3306;dbname=yiitest" >> $GITHUB_ENV
-        echo "MYSQL_USERNAME=root" >> $GITHUB_ENV
-        echo "MYSQL_PASSWORD=root" >> $GITHUB_ENV
-        echo "PGSQL_DSN=pgsql:host=localhost;port=5432;dbname=yiitest" >> $GITHUB_ENV
-        echo "PGSQL_USERNAME=root" >> $GITHUB_ENV
-        echo "PGSQL_PASSWORD=root" >> $GITHUB_ENV
+        echo 'NESTED_SETS_TEST_MYSQL_DSN=mysql:host=127.0.0.1;port=3306;dbname=yiitest_{token};charset=utf8mb4' >> "$GITHUB_ENV"
+        echo 'NESTED_SETS_TEST_PGSQL_DSN=pgsql:host=127.0.0.1;port=5432;dbname=yiitest_{token}' >> "$GITHUB_ENV"
+      command-options: --threads=4
       extensions: pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
-      framework-options: --test-framework-options="--group=sqlite,mutation"
+      php-ini-values: date.timezone='UTC', memory_limit=-1
       phpstan: true
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}

@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD041 -->
+
 <p align="center">
     <a href="https://github.com/yii2-extensions/nested-sets-behavior" target="_blank">
         <img src="https://www.yiiframework.com/image/yii_logo_light.svg" alt="Yii Framework">
@@ -7,23 +9,14 @@
 </p>
 
 <p align="center">
-    <a href="https://www.php.net/releases/8.1/en.php" target="_blank">
-        <img src="https://img.shields.io/badge/%3E%3D8.1-777BB4.svg?style=for-the-badge&logo=php&logoColor=white" alt="PHP version">
-    </a>
-    <a href="https://github.com/yiisoft/yii2/tree/2.0.53" target="_blank">
-        <img src="https://img.shields.io/badge/2.0.x-0073AA.svg?style=for-the-badge&logo=yii&logoColor=white" alt="Yii 2.0.x">
-    </a>
-    <a href="https://github.com/yiisoft/yii2/tree/22.0" target="_blank">
-        <img src="https://img.shields.io/badge/22.0.x-0073AA.svg?style=for-the-badge&logo=yii&logoColor=white" alt="Yii 22.0.x">
-    </a>
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml" target="_blank">
-        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/build.yml?style=for-the-badge&label=PHPUnit" alt="PHPUnit">
+        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/build.yml?style=for-the-badge&label=PHPUnit&logo=github" alt="PHPUnit">
     </a>
     <a href="https://dashboard.stryker-mutator.io/reports/github.com/yii2-extensions/nested-sets-behavior/main" target="_blank">
         <img src="https://img.shields.io/endpoint?style=for-the-badge&url=https%3A%2F%2Fbadge-api.stryker-mutator.io%2Fgithub.com%2Fyii2-extensions%2Fnested-sets-behavior%2Fmain" alt="Mutation Testing">
-    </a>     
+    </a>
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml" target="_blank">
-        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/static.yml?style=for-the-badge&label=PHPStan" alt="PHPStan">
+        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/static.yml?style=for-the-badge&label=PHPStan&logo=github" alt="PHPStan">
     </a>
 </p>
 
@@ -37,8 +30,9 @@ with high-performance database operations.
 - ✅ **Efficient Tree Operations** - Insert, move, delete nodes with automatic boundary management.
 - ✅ **Flexible Queries** - Find ancestors, descendants, siblings, leaves, and roots.
 - ✅ **Multiple Trees Support** - Manage multiple independent trees in the same table.
-- ✅ **Query Optimization** - Single-query operations for maximum performance.
-- ✅ **Transaction Safety** - All operations are wrapped in database transactions.
+- ✅ **Bulk Updates** - Shift node and subtree boundaries without recursive writes.
+- ✅ **Transaction Safety** - Transactional methods roll back failures; cooperating writers serialize through a registry
+  row.
 - ✅ **Validation & Error Handling** - Comprehensive validation with clear error messages.
 
 ## Database support
@@ -81,8 +75,10 @@ Numbers represent: (left, right, depth)
 ### Installation
 
 ```bash
-composer require yii2-extensions/nested-sets-behavior
+composer require 'yii2-extensions/nested-sets-behavior:^0.2@dev'
 ```
+
+See the [installation guide](docs/installation.md) for Composer setup and the Yii version constraints.
 
 ### Database setup
 
@@ -90,7 +86,8 @@ The package includes ready-to-use migrations for creating the necessary database
 
 #### Quick setup (Recommended)
 
-1. **Configure console application**:
+**1. Configure console application:**
+
 ```php
 <?php
 
@@ -112,33 +109,31 @@ return [
 ];
 ```
 
-2. **Run migrations**:
-```bash
-# For single tree structure
-./yii migrate/up m250707_103609_tree
-
-# For multiple trees structure  
-./yii migrate/up m250707_104009_multiple_tree
-```
-
-#### Alternative: Direct migration execution
+**2. Run migrations:**
 
 ```bash
-# Run without configuration changes
 ./yii migrate/up --migrationPath=@vendor/yii2-extensions/nested-sets-behavior/migrations
 ```
 
+This creates the example `tree` and `multiple_tree` tables and the required `nested_sets_lock` registry. For an existing
+application or a different model table, copy only `m261016_000001_nested_sets_lock.php` and any desired example
+migration into your application's migration directory, adjust the example table name, and run `./yii migrate/up`. Create
+one unprefixed lock registry in each database schema containing a nested set table. See
+[writer locking](docs/configuration.md#concurrent-writers) and the [upgrade guide](UPGRADE.md) before deployment.
+
 #### Table structures created
+
+The SQL below summarizes columns and indexes; the migrations generate driver-specific primary keys and table options.
 
 **Single tree** (`m250707_103609_tree.php`). Creates a `tree` table for single hierarchical structure.
 
 ```sql
 CREATE TABLE tree (
-  id INTEGER NOT NULL PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  lft INTEGER NOT NULL,
-  rgt INTEGER NOT NULL,
-  depth INTEGER NOT NULL
+    id INTEGER NOT NULL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    lft INTEGER NOT NULL,
+    rgt INTEGER NOT NULL,
+    depth INTEGER NOT NULL
 );
 
 CREATE INDEX idx_tree_lft ON tree (lft);
@@ -151,12 +146,12 @@ CREATE INDEX idx_tree_lft_rgt ON tree (lft, rgt);
 
 ```sql
 CREATE TABLE multiple_tree (
-  id INTEGER NOT NULL PRIMARY KEY,
-  tree INTEGER DEFAULT NULL,
-  name VARCHAR(255) NOT NULL,
-  lft INTEGER NOT NULL,
-  rgt INTEGER NOT NULL,
-  depth INTEGER NOT NULL
+    id INTEGER NOT NULL PRIMARY KEY,
+    tree INTEGER DEFAULT NULL,
+    name VARCHAR(255) NOT NULL,
+    lft INTEGER NOT NULL,
+    rgt INTEGER NOT NULL,
+    depth INTEGER NOT NULL
 );
 
 CREATE INDEX idx_multiple_tree_tree ON multiple_tree (tree);
@@ -168,7 +163,7 @@ CREATE INDEX idx_multiple_tree_tree_lft_rgt ON multiple_tree (tree, lft, rgt);
 
 ### Quick start
 
-Add the behavior to your ActiveRecord model.
+Add the behavior to your ActiveRecord model. This example maps to the `tree` migration above.
 
 ```php
 <?php
@@ -179,16 +174,16 @@ use yii\db\ActiveRecord;
 use yii2\extensions\nestedsets\NestedSetsBehavior;
 
 /**
- * @phpstan-property int $depth
- * @phpstan-property int $id
- * @phpstan-property int $lft
- * @phpstan-property int $rgt
+ * @property int $depth
+ * @property int $id
+ * @property int $lft
+ * @property int $rgt
  */
 class Category extends ActiveRecord
 {
     public static function tableName(): string
     {
-        return '{{%category}}';
+        return '{{%tree}}';
     }
 
     public function behaviors(): array
@@ -273,7 +268,7 @@ declare(strict_types=1);
 // Move as last child
 $smartphone->appendTo($computers);
 
-// Move as first child  
+// Move as first child
 $smartphone->prependTo($phones);
 
 // Move as next sibling
@@ -282,8 +277,8 @@ $smartphone->insertAfter($laptop);
 // Move as previous sibling
 $smartphone->insertBefore($laptop);
 
-// Make node a new root (multiple trees only)
-$smartphone->makeRoot();
+// For a model configured with treeAttribute, a node can become a separate root:
+// $smartphone->makeRoot();
 ```
 
 #### Deleting nodes
@@ -297,7 +292,7 @@ declare(strict_types=1);
 $phones->delete();
 
 // Delete node with all descendants
-$phones->deleteWithChildren();
+$computers->deleteWithChildren();
 ```
 
 #### Query builder integration
@@ -327,9 +322,13 @@ class CategoryQuery extends ActiveQuery
     }
 }
 
-// In your Category model
+```
+
+In your `Category` model:
+
+```php
 /**
- * @phpstan-return CategoryQuery<static>
+ * @return CategoryQuery<static>
  */
 public static function find(): CategoryQuery
 {
@@ -347,38 +346,64 @@ declare(strict_types=1);
 // Find all root nodes
 $roots = Category::find()->roots()->all();
 
-// Find all leaf nodes  
+// Find all leaf nodes
 $leaves = Category::find()->leaves()->all();
 ```
 
 ## Documentation
 
-For detailed configuration options and advanced usage.
+Practical guides and complete examples for safe tree operations.
 
-- 📚 [Installation Guide](docs/installation.md)
-- ⚙️ [Configuration Reference](docs/configuration.md) 
-- 💡 [Usage Examples](docs/examples.md)
-- 🧪 [Testing Guide](docs/testing.md)
+- 📚 [Installation Guide](docs/installation.md): Composer setup for either Yii branch.
+- ⚙️ [Configuration Guide](docs/configuration.md): attributes, transactions, and writer locking.
+- 💡 [Usage Examples](docs/examples.md): creation, traversal, movement, and deletion.
+- 🔄 [Upgrade Guide](UPGRADE.md): required migrations and compatibility actions.
+- 🧪 [Testing Guide](docs/testing.md): checks, isolated fixtures, and concurrency tests.
+
+The guides are available in [`docs/`](docs/), and the API is documented by the PHPDoc in `src/`. Publication on the
+[documentation site](https://yii2-framework.github.io/docs/) is pending.
+
+## AI assistance
+
+AI agents: read the [documentation index](https://yii2-framework.github.io/docs/llms.txt) and fetch the Markdown version
+of a page by appending `index.md` to its URL. The
+[AI agents guide](https://yii2-framework.github.io/docs/project/ai-agents/) covers skill installation, client setup and
+verification.
+
+- 🤖 [`yii2-nested-sets` skill](docs/agents.md): Nested set trees.
+- 🧭 [`yii2-framework` skill](https://yii2-framework.github.io/docs/guide/skills/yii2-framework/): Yii 22.0 application
+  conventions.
+
+The hosted documentation covers Yii 22.0. If it does not match the installed revision or is unavailable, use the
+[repository guides](#documentation), the [skill source](skills/yii2-nested-sets/SKILL.md), the source PHPDoc and the
+[changelog](CHANGELOG.md).
 
 ## Package information
 
+[![PHP](https://img.shields.io/badge/%3E%3D8.3-777BB4.svg?style=for-the-badge&logo=php&logoColor=white)](https://www.php.net/releases/8.3/en.php)
+[![Yii 2.0.55+](https://img.shields.io/badge/%3E%3D2.0.55-0073AA.svg?style=for-the-badge&logo=yii&logoColor=white)](https://github.com/yiisoft/yii2/releases/tag/2.0.55)
+[![Yii 22.0.x](https://img.shields.io/badge/22.0.x-0073AA.svg?style=for-the-badge&logo=yii&logoColor=white)](https://github.com/yiisoft/yii2/tree/22.0)
 [![Latest Stable Version](https://img.shields.io/packagist/v/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=packagist&logoColor=white&label=Stable)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
-[![Total Downloads](https://img.shields.io/packagist/dt/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=packagist&logoColor=white&label=Downloads)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
+[![Total Downloads](https://img.shields.io/packagist/dt/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=composer&logoColor=white&label=Downloads)](https://packagist.org/packages/yii2-extensions/nested-sets-behavior)
 
-## Quality code
+## Project status
 
-[![codecov](https://img.shields.io/codecov/c/github/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=codecov&logoColor=white&label=Coverage)](https://codecov.io/gh/yii2-extensions/nested-sets-behavior)
-[![phpstan-level](https://img.shields.io/badge/PHPStan%20level-max-blue?style=for-the-badge)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
-[![style-ci](https://img.shields.io/badge/StyleCI-Passed-44CC11.svg?style=for-the-badge&logo=styleci&logoColor=white)](https://github.styleci.io/repos/717718161?branch=main)
+[![Codecov](https://img.shields.io/codecov/c/github/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=codecov&logoColor=white&label=Coverage)](https://codecov.io/github/yii2-extensions/nested-sets-behavior)
+[![PHPStan Level Max](https://img.shields.io/badge/PHPStan-Level%20Max-4F5D95.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
+[![StyleCI](https://img.shields.io/badge/StyleCI-Passed-44CC11.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.styleci.io/repos/717718161?branch=main)
 
 ## Our social networks
 
 [![Follow on X](https://img.shields.io/badge/-Follow%20on%20X-1DA1F2.svg?style=for-the-badge&logo=x&logoColor=white&labelColor=000000)](https://x.com/Terabytesoftw)
+[![Follow on Facebook](https://img.shields.io/badge/-Follow%20on%20Facebook-1877F2.svg?style=for-the-badge&logo=facebook&logoColor=white&labelColor=000000)](https://www.facebook.com/wilmer.arambula.9)
+[![Join our Subreddit](https://img.shields.io/badge/-Join%20our%20Subreddit-FF4500.svg?style=for-the-badge&logo=reddit&logoColor=white&labelColor=000000)](https://www.reddit.com/r/Yii2/)
+[![Join on Telegram](https://img.shields.io/badge/-Join%20on%20Telegram-26A5E4.svg?style=for-the-badge&logo=telegram&logoColor=white&labelColor=000000)](https://t.me/yii_framework_in_english)
 
 ## License
 
-[![License](https://img.shields.io/github/license/yii2-extensions/nested-sets-behavior?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=333333)](LICENSE.md)
+[![License](https://img.shields.io/badge/License-BSD--3--Clause-brightgreen.svg?style=for-the-badge&logo=opensourceinitiative&logoColor=white&labelColor=555555)](LICENSE)
 
-## Fork 
+## Fork
 
-This package is a fork of [https://github.com/creocoder/yii2-nested-sets](https://github.com/creocoder/yii2-nested-sets) with some corrections.
+This package is a fork of [https://github.com/creocoder/yii2-nested-sets](https://github.com/creocoder/yii2-nested-sets)
+with some corrections.

@@ -7,33 +7,15 @@ namespace yii2\extensions\nestedsets\tests\base;
 use PHPUnit\Framework\MockObject\Exception;
 use Throwable;
 use yii\db\{ActiveRecord, StaleObjectException};
+use yii2\extensions\nestedsets\NestedSetsBehavior;
 use yii2\extensions\nestedsets\tests\support\model\{MultipleTree, Tree};
 use yii2\extensions\nestedsets\tests\TestCase;
 
 /**
- * Base class for node deletion tests in nested sets tree behaviors.
- *
- * Provides a comprehensive suite of unit tests for node deletion operations in nested sets tree structures, ensuring
- * correct state transitions, affected row counts, and data integrity after node and subtree deletions.
- *
- * This class validates the behavior of the nested sets implementation by simulating node deletions, subtree removals,
- * and update operations, covering both single and multiple tree models.
- *
- * The tests also cover abort scenarios for deletions, transactional behavior, and update operations on node attributes.
- *
- * Key features.
- * - Covers update operations and affected row count for node attribute changes.
- * - Ensures correct affected row counts for node and subtree deletions in both {@see Tree} and {@see MultipleTree}
- *   models.
- * - Tests aborting deletions via `beforeDelete()` and transactional behavior.
- * - Validates XML dataset consistency after deletions.
- * - Verifies node state transitions after `deleteWithChildren()` (new record status, old attributes).
+ * Unit tests for the {@see NestedSetsBehavior} node and subtree deletion operations.
  *
  * @see MultipleTree for multi-tree model.
  * @see Tree for single-tree model.
- *
- * @copyright Copyright (C) 2023 Terabytesoftw.
- * @license https://opensource.org/license/bsd-3-clause BSD 3-Clause License.
  */
 abstract class AbstractNodeDelete extends TestCase
 {
@@ -113,8 +95,10 @@ abstract class AbstractNodeDelete extends TestCase
             Tree::class,
             [
                 'beforeDelete',
+                'isTransactional',
             ],
         );
+        $node->method('isTransactional')->willReturn(false);
         $node->setAttributes(
             [
                 'id' => 1,
@@ -125,7 +109,10 @@ abstract class AbstractNodeDelete extends TestCase
             ],
         );
         $node->setIsNewRecord(false);
-        $node->expects(self::once())->method('beforeDelete')->willReturn(false);
+        $node
+            ->expects(self::once())
+            ->method('beforeDelete')
+            ->willReturn(false);
 
         self::assertFalse(
             $node->isTransactional(ActiveRecord::OP_DELETE),
@@ -185,10 +172,17 @@ abstract class AbstractNodeDelete extends TestCase
 
         $node = Tree::findOne(9);
 
-        self::assertNotNull($node, "Node with ID '9' should exist before attempting update.");
+        self::assertNotNull(
+            $node,
+            "Node with ID '9' should exist before attempting update.",
+        );
 
         $node->name = 'Updated node';
 
-        self::assertEquals(1, $node->update(), 'Updating the node name should affect exactly one row.');
+        self::assertEquals(
+            1,
+            $node->update(),
+            'Updating the node name should affect exactly one row.',
+        );
     }
 }
