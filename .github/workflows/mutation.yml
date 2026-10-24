@@ -61,6 +61,7 @@ jobs:
       command-options: --threads=4
       extensions: pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
       php-ini-values: date.timezone='UTC', memory_limit=-1
+      php-version: '["8.3"]'
       phpstan: true
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
