@@ -30,13 +30,10 @@ with high-performance database operations.
 
 ## Features
 
-- ✅ **Efficient Tree Operations** - Insert, move, delete nodes with automatic boundary management.
-- ✅ **Flexible Queries** - Find ancestors, descendants, siblings, leaves, and roots.
-- ✅ **Multiple Trees Support** - Manage multiple independent trees in the same table.
-- ✅ **Bulk Updates** - Shift node and subtree boundaries without recursive writes.
-- ✅ **Transaction Safety** - Transactional methods roll back failures; cooperating writers serialize through a registry
-  row.
-- ✅ **Validation & Error Handling** - Comprehensive validation with clear error messages.
+<picture>
+    <source media="(min-width: 768px)" srcset="./docs/svgs/features.svg">
+    <img src="./docs/svgs/features-mobile.svg" alt="Feature Overview" style="width: 100%;">
+</picture>
 
 ## Database support
 

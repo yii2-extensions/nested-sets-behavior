@@ -1,0 +1,57 @@
+<!-- Mobile version - Single column -->
+<svg viewBox="0 0 620 620" width="100%" height="580" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .box-bg { fill: #e6f4ea; stroke: #a7cdb3; stroke-width: 1; }
+        .title { font-weight: 700; font-size: 14px; fill: #1a202c; }
+        .content { font-size: 11px; fill: #4a5568; }
+    </style>
+
+    <g>
+        <rect class="box-bg" x="16" y="16" width="588" height="84" rx="6"/>
+        <rect x="16" y="16" width="4" height="84" fill="#1f883d"/>
+        <text class="title" x="32" y="42">Efficient Tree Operations</text>
+        <text class="content" x="32" y="66">Insert &#8226; Move &#8226; Delete nodes and whole subtrees</text>
+        <text class="content" x="32" y="84">Automatic left and right boundary management</text>
+    </g>
+
+    <g>
+        <rect class="box-bg" x="16" y="116" width="588" height="84" rx="6"/>
+        <rect x="16" y="116" width="4" height="84" fill="#1f883d"/>
+        <text class="title" x="32" y="142">Flexible Queries</text>
+        <text class="content" x="32" y="166">Ancestors &#8226; Descendants &#8226; Siblings &#8226; Leaves &#8226; Roots</text>
+        <text class="content" x="32" y="184">Ordered results with optional depth limits</text>
+    </g>
+
+    <g>
+        <rect class="box-bg" x="16" y="216" width="588" height="84" rx="6"/>
+        <rect x="16" y="216" width="4" height="84" fill="#1f883d"/>
+        <text class="title" x="32" y="242">Multiple Trees Support</text>
+        <text class="content" x="32" y="266">Independent trees in one table through a tree attribute</text>
+        <text class="content" x="32" y="284">Single-tree mode when the attribute is disabled</text>
+    </g>
+
+    <g>
+        <rect class="box-bg" x="16" y="316" width="588" height="84" rx="6"/>
+        <rect x="16" y="316" width="4" height="84" fill="#1f883d"/>
+        <text class="title" x="32" y="342">Bulk Updates</text>
+        <text class="content" x="32" y="366">Node and subtree boundary shifts in set-based updates</text>
+        <text class="content" x="32" y="384">No recursive writes per node</text>
+    </g>
+
+    <g>
+        <rect class="box-bg" x="16" y="416" width="588" height="84" rx="6"/>
+        <rect x="16" y="416" width="4" height="84" fill="#1f883d"/>
+        <text class="title" x="32" y="442">Transaction Safety</text>
+        <text class="content" x="32" y="466">Transactional methods &#8226; Rollback on failure &#8226; Savepoints</text>
+        <text class="content" x="32" y="484">Cooperating writers serialize through the nested_sets_lock registry</text>
+    </g>
+
+    <g>
+        <rect class="box-bg" x="16" y="516" width="588" height="84" rx="6"/>
+        <rect x="16" y="516" width="4" height="84" fill="#1f883d"/>
+        <text class="title" x="32" y="542">Validation &amp; Error Handling</text>
+        <text class="content" x="32" y="566">Structure validation &#8226; Stale record detection &#8226; Clear messages</text>
+        <text class="content" x="32" y="584">Yii exceptions with a documented message catalog</text>
+    </g>
+</svg>
