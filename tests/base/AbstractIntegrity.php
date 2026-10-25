@@ -24,13 +24,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
  */
 abstract class AbstractIntegrity extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
     public function testAfterInsertListenerCanSaveTheRoot(): void
     {
         $root = new Tree(['name' => 'root']);
@@ -1391,6 +1384,13 @@ abstract class AbstractIntegrity extends TestCase
         );
 
         $this->assertIntegrity(Tree::class);
+    }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->createDatabase();
     }
 
     /**

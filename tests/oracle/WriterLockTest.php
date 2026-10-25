@@ -17,15 +17,6 @@ use yii2\extensions\nestedsets\TreeLock;
 #[Group('oci')]
 final class WriterLockTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::ORACLE->connection();
-
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
     public function testAcquireTreeLockResolvesOwnerFromSessionWhenTableSchemaHasNoSchemaName(): void
     {
         $db = $this->getDb();
@@ -59,5 +50,14 @@ final class WriterLockTest extends TestCase
 
             $outer->rollBack();
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::ORACLE->connection();
+
+        parent::setUp();
+
+        $this->createDatabase();
     }
 }

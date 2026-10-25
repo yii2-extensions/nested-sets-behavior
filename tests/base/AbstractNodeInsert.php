@@ -53,8 +53,8 @@ abstract class AbstractNodeInsert extends TestCase
 
         self::assertTrue(
             $result2,
-            "'insertAfter()' should return 'true' when 'runValidation=false', even with invalid data that would " .
-            'fail validation.',
+            "'insertAfter()' should return 'true' when 'runValidation=false', even with invalid data that would "
+            . 'fail validation.',
         );
         self::assertFalse(
             $hasError2,
@@ -106,8 +106,8 @@ abstract class AbstractNodeInsert extends TestCase
 
         self::assertTrue(
             $result2,
-            "'insertBefore()' should return 'true' when 'runValidation=false', even with invalid data that would " .
-            'fail validation.',
+            "'insertBefore()' should return 'true' when 'runValidation=false', even with invalid data that would "
+            . 'fail validation.',
         );
         self::assertFalse(
             $hasError2,

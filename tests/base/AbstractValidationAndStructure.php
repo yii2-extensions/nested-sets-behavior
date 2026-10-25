@@ -41,8 +41,8 @@ abstract class AbstractValidationAndStructure extends TestCase
 
         self::assertTrue(
             $result2,
-            "'makeRoot()' should return 'true' when 'runValidation=false', even with invalid data that would fail " .
-            'validation.',
+            "'makeRoot()' should return 'true' when 'runValidation=false', even with invalid data that would fail "
+            . 'validation.',
         );
         self::assertFalse(
             $hasError2,
@@ -126,7 +126,9 @@ abstract class AbstractValidationAndStructure extends TestCase
     {
         $this->createDatabase();
 
-        $behavior = new /** @extends NestedSetsBehavior<Tree> */ class extends NestedSetsBehavior {
+        $behavior = new /**
+         * @extends NestedSetsBehavior<Tree>
+         */ class extends NestedSetsBehavior {
             public function callBeforeInsertNode(int $value, int $depth): void
             {
                 $this->beforeInsertNode($value, $depth);

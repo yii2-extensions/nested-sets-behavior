@@ -27,16 +27,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
 #[Group('sqlite')]
 final class WriterLockTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::SQLITE->connection();
-        $this->connection['class'] = RewritingConnection::class;
-
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
     #[TestWith([false])]
     #[TestWith([true])]
     public function testBusyTimeoutIsAppliedInMillisecondsAndRestoredAfterSuccessAndFailure(bool $stringify): void
@@ -1085,6 +1075,16 @@ final class WriterLockTest extends TestCase
         );
 
         $outer->rollBack();
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::SQLITE->connection();
+        $this->connection['class'] = RewritingConnection::class;
+
+        parent::setUp();
+
+        $this->createDatabase();
     }
 
     private function assertCatalogRowIsRejected(string $catalogRow, Message $expected): void

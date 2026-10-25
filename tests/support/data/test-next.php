@@ -3,8 +3,7 @@
 declare(strict_types=1);
 
 return [
-    0 =>
-    [
+    0 => [
         'id' => 16,
         'lft' => 30,
         'rgt' => 43,

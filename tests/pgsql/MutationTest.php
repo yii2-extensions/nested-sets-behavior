@@ -15,13 +15,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
 #[Group('mutation')]
 final class MutationTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::PGSQL->connection();
-
-        parent::setUp();
-    }
-
     public function testChildrenMethodRequiresOrderByForCorrectTreeTraversal(): void
     {
         $expectedOrder = ['Child A', 'Child B', 'Child C'];
@@ -41,5 +34,12 @@ final class MutationTest extends TestCase
         $nodeList = $tree->children()->all();
 
         $this->assertNodesInCorrectOrder($nodeList, $expectedOrder, 'Child');
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::PGSQL->connection();
+
+        parent::setUp();
     }
 }

@@ -22,16 +22,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
 #[Group('mutation')]
 final class WriterLockTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::MYSQL->connection();
-        $this->connection['class'] = ReportedCaseModeConnection::class;
-
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
     #[TestWith([0, false])]
     #[TestWith([0, true])]
     #[TestWith([1, false])]
@@ -461,6 +451,16 @@ final class WriterLockTest extends TestCase
                 ->createCommand('DROP VIEW tree_view')
                 ->execute();
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::MYSQL->connection();
+        $this->connection['class'] = ReportedCaseModeConnection::class;
+
+        parent::setUp();
+
+        $this->createDatabase();
     }
 
     /**

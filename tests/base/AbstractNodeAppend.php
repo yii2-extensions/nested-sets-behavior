@@ -102,8 +102,8 @@ abstract class AbstractNodeAppend extends TestCase
 
         self::assertTrue(
             $result2,
-            "'appendTo()' should return 'true' when 'runValidation=false', even with invalid data that would " .
-            'fail validation.',
+            "'appendTo()' should return 'true' when 'runValidation=false', even with invalid data that would "
+            . 'fail validation.',
         );
         self::assertFalse(
             $hasError2,

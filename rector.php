@@ -2,27 +2,17 @@
 
 declare(strict_types=1);
 
-return static function (Rector\Config\RectorConfig $rectorConfig): void {
-    $rectorConfig->parallel();
+use Rector\Config\RectorConfig;
 
-    $rectorConfig->importNames();
+return static function (RectorConfig $rectorConfig): void {
+    $rectorConfig->import(__DIR__ . '/vendor/php-forge/coding-standard/src/rector-83.php');
+
+    $rectorConfig->importNames(true, false);
 
     $rectorConfig->paths(
         [
             __DIR__ . '/src',
             __DIR__ . '/tests',
         ],
-    );
-
-    $rectorConfig->sets(
-        [
-            Rector\Set\ValueObject\SetList::PHP_82,
-            Rector\Set\ValueObject\LevelSetList::UP_TO_PHP_82,
-            Rector\Set\ValueObject\SetList::TYPE_DECLARATION,
-        ],
-    );
-
-    $rectorConfig->rule(
-        Rector\CodeQuality\Rector\BooleanAnd\SimplifyEmptyArrayCheckRector::class
     );
 };

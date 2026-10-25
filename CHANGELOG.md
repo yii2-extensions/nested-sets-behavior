@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bug #89: Update `php-forge/support` version `0.2` in `composer.json` and refactor assertions in test cases (@terabytesoftw)
 - Bug #90: Update badge styles and links in `README.md`, reorganize sections for clarity (@terabytesoftw)
 - feat!: add transactional tree locking and safe writes; improve integrity, compatibility, tooling, tests, CI, packaging, and documentation.
+- fix: add the `Security` and `Quality` workflow badges to `README.md` to match the organization standard.
 
 ## 0.1.0 July 8, 2025
 

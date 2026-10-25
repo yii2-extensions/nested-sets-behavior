@@ -17,13 +17,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
 #[Group('mutation')]
 final class MutationTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::MYSQL->connection();
-
-        parent::setUp();
-    }
-
     /**
      * @throws Exception if an unexpected error occurs during execution.
      */
@@ -99,5 +92,12 @@ final class MutationTest extends TestCase
                 );
             }
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::MYSQL->connection();
+
+        parent::setUp();
     }
 }

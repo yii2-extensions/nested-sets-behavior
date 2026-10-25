@@ -14,16 +14,16 @@ use yii2\extensions\nestedsets\tests\support\DatabaseConnection;
 #[Group('mysql')]
 final class ConcurrencyTest extends AbstractConcurrency
 {
+    #[Group('mutation')]
+    public function testOlderOuterSnapshotCannotCommitASecondRoot(): void
+    {
+        parent::testOlderOuterSnapshotCannotCommitASecondRoot();
+    }
+
     protected function setUp(): void
     {
         $this->connection = DatabaseConnection::MYSQL->connection();
 
         parent::setUp();
-    }
-
-    #[Group('mutation')]
-    public function testOlderOuterSnapshotCannotCommitASecondRoot(): void
-    {
-        parent::testOlderOuterSnapshotCannotCommitASecondRoot();
     }
 }
