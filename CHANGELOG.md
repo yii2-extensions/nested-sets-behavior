@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.2.0 Under development
+## 0.2.0 October 24, 2026
 
 - Bug #85: Update license badge URL in `README.md` and add license header in `LICENSE.md` and kill infection mutant (@terabytesoftw)
 - Bug #87: Update `.gitattributes` to exclude additional files from the package, update `LICENSE.md` and add stable version workflows actions (@terabytesoftw)

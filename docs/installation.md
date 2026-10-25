@@ -12,7 +12,7 @@
 Select the `0.2` API described by these guides:
 
 ```bash
-composer require 'yii2-extensions/nested-sets-behavior:^0.2@dev'
+composer require yii2-extensions/nested-sets-behavior:^0.2
 ```
 
 ### Yii 2.0
@@ -22,7 +22,7 @@ before installing:
 
 ```bash
 composer config repositories.asset-packagist composer https://asset-packagist.org
-composer require 'yii2-extensions/nested-sets-behavior:^0.2@dev' 'yiisoft/yii2:~2.0.55'
+composer require yii2-extensions/nested-sets-behavior:^0.2 'yiisoft/yii2:~2.0.55'
 ```
 
 ### Yii 22
@@ -30,7 +30,7 @@ composer require 'yii2-extensions/nested-sets-behavior:^0.2@dev' 'yiisoft/yii2:~
 Use the declared Yii 22 constraint:
 
 ```bash
-composer require 'yii2-extensions/nested-sets-behavior:^0.2@dev' 'yiisoft/yii2:^22.0@dev'
+composer require yii2-extensions/nested-sets-behavior:^0.2 'yiisoft/yii2:^22.0@dev'
 ```
 
 After resolving dependencies, verify the runtime with `composer check-platform-reqs`. Before writing trees, apply the

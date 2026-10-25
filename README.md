@@ -75,7 +75,7 @@ Numbers represent: (left, right, depth)
 ### Installation
 
 ```bash
-composer require 'yii2-extensions/nested-sets-behavior:^0.2@dev'
+composer require yii2-extensions/nested-sets-behavior:^0.2
 ```
 
 See the [installation guide](docs/installation.md) for Composer setup and the Yii version constraints.
