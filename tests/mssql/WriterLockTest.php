@@ -22,16 +22,6 @@ use yii2\extensions\nestedsets\TreeLock;
 #[Group('mssql')]
 final class WriterLockTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::MSSQL->connection();
-        $this->connection['class'] = RewritingConnection::class;
-
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
     public function testAcquireTreeLockResolvesCatalogFromServerWhenTableSchemaHasNoCatalog(): void
     {
         $db = $this->getDb();
@@ -214,6 +204,16 @@ final class WriterLockTest extends TestCase
 
             $outer->rollBack();
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::MSSQL->connection();
+        $this->connection['class'] = RewritingConnection::class;
+
+        parent::setUp();
+
+        $this->createDatabase();
     }
 
     /**

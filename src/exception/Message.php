@@ -112,7 +112,7 @@ enum Message: string
      * Error when the writer lock bootstrap row is missing.
      */
     case LOCK_BOOTSTRAP_ROW_MISSING = "Missing nested set bootstrap row. Apply 'm261016_000001_nested_sets_lock' in the "
-    . 'model table schema.';
+        . 'model table schema.';
 
     /**
      * Error when writer locking is not implemented for the database driver.
@@ -123,19 +123,19 @@ enum Message: string
      * Error when a MySQL nested set or registry table does not use InnoDB.
      */
     case LOCK_REQUIRES_INNODB = 'Nested set and nested_sets_lock tables must use InnoDB; apply the lock migration '
-    . 'first.';
+        . 'first.';
 
     /**
      * Error when the nested set table is not a physical base table visible in the catalog.
      */
     case LOCK_REQUIRES_PHYSICAL_TABLE = 'Nested set locking requires a physical base table visible in the database '
-    . 'catalog.';
+        . 'catalog.';
 
     /**
      * Error when savepoints are disabled on the connection.
      */
     case LOCK_REQUIRES_SAVEPOINTS = 'Nested set writer locking requires savepoint support; enable '
-    . '\'Connection::$enableSavepoint\'.';
+        . '\'Connection::$enableSavepoint\'.';
 
     /**
      * Error when a SQLite table is outside the `main` database.
@@ -186,7 +186,7 @@ enum Message: string
      * Error when a write runs without an active Yii database transaction.
      */
     case TRANSACTION_REQUIRED = "Nested set writes require a Yii database transaction. Configure 'transactions()' or "
-    . 'begin an outer transaction.';
+        . 'begin an outer transaction.';
 
     /**
      * Error when a subtree is moved between trees while `treeAttribute` is `false`.

@@ -19,15 +19,6 @@ use yii2\extensions\nestedsets\tests\TestCase;
 #[Group('mutation')]
 final class WriterLockTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::PGSQL->connection();
-
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
     public function testGuardTimeoutUsesSecondsAndRestoresThePriorSetting(): void
     {
         $db = $this->getDb();
@@ -138,5 +129,14 @@ final class WriterLockTest extends TestCase
                 ->createCommand('DROP VIEW tree_view')
                 ->execute();
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::PGSQL->connection();
+
+        parent::setUp();
+
+        $this->createDatabase();
     }
 }

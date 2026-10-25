@@ -3,8 +3,7 @@
 declare(strict_types=1);
 
 return [
-    0 =>
-    [
+    0 => [
         'id' => 32,
         'tree' => 23,
         'lft' => 17,
@@ -12,8 +11,7 @@ return [
         'depth' => 2,
         'name' => 'Node 2.1',
     ],
-    1 =>
-    [
+    1 => [
         'id' => 33,
         'tree' => 23,
         'lft' => 18,
@@ -21,8 +19,7 @@ return [
         'depth' => 3,
         'name' => 'Node 2.1.1',
     ],
-    2 =>
-    [
+    2 => [
         'id' => 34,
         'tree' => 23,
         'lft' => 20,
@@ -30,8 +27,7 @@ return [
         'depth' => 3,
         'name' => 'Node 2.1.2',
     ],
-    3 =>
-    [
+    3 => [
         'id' => 35,
         'tree' => 23,
         'lft' => 23,
@@ -39,8 +35,7 @@ return [
         'depth' => 2,
         'name' => 'Node 2.2',
     ],
-    4 =>
-    [
+    4 => [
         'id' => 36,
         'tree' => 23,
         'lft' => 24,
@@ -48,8 +43,7 @@ return [
         'depth' => 3,
         'name' => 'Node 2.2.1',
     ],
-    5 =>
-    [
+    5 => [
         'id' => 37,
         'tree' => 23,
         'lft' => 26,

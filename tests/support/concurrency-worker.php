@@ -6,6 +6,7 @@ namespace yii2\extensions\nestedsets\tests\support;
 
 use RuntimeException;
 use Throwable;
+use Yii;
 use yii\console\Application;
 use yii\db\{ActiveRecord, Connection, Transaction};
 use yii2\extensions\nestedsets\NestedSetsBehavior;
@@ -86,7 +87,7 @@ try {
         ],
     );
 
-    $db = \Yii::$app->getDb();
+    $db = Yii::$app->getDb();
 
     $db->tablePrefix = stringOption($data, 'prefix');
 

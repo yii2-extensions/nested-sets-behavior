@@ -18,6 +18,9 @@
     <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml" target="_blank">
         <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/static.yml?style=for-the-badge&label=PHPStan&logo=github" alt="PHPStan">
     </a>
+    <a href="https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/security.yml" target="_blank">
+        <img src="https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/security.yml?style=for-the-badge&label=Security&logo=github" alt="Security">
+    </a>
 </p>
 
 A powerful behavior for managing hierarchical data structures using the nested sets pattern in Yii ActiveRecord models.
@@ -390,6 +393,7 @@ The hosted documentation covers Yii 22.0. If it does not match the installed rev
 
 [![Codecov](https://img.shields.io/codecov/c/github/yii2-extensions/nested-sets-behavior.svg?style=for-the-badge&logo=codecov&logoColor=white&label=Coverage)](https://codecov.io/github/yii2-extensions/nested-sets-behavior)
 [![PHPStan Level Max](https://img.shields.io/badge/PHPStan-Level%20Max-4F5D95.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/static.yml)
+[![Quality](https://img.shields.io/github/actions/workflow/status/yii2-extensions/nested-sets-behavior/quality.yml?style=for-the-badge&label=Quality&logo=github)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/quality.yml)
 [![StyleCI](https://img.shields.io/badge/StyleCI-Passed-44CC11.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.styleci.io/repos/717718161?branch=main)
 
 ## Our social networks

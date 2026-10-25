@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use yii\console\Application;
 use yii\db\{ActiveQuery, ActiveRecord};
 use yii2\extensions\nestedsets\{NestedSetsBehavior, NestedSetsQueryBehavior};
 use yii2\extensions\nestedsets\tests\support\model\{
@@ -19,7 +20,7 @@ use yii2\extensions\nestedsets\tests\support\model\{
 };
 
 return [
-    'phpstan' => ['application_type' => yii\console\Application::class],
+    'phpstan' => ['application_type' => Application::class],
     'behaviors' => [
         ActiveRecord::class => [
             NestedSetsBehavior::class,

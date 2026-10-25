@@ -67,16 +67,6 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     protected string $fixtureDirectory = __DIR__ . '/support/data/';
 
     /**
-     * @throws InvalidConfigException if the configuration is invalid or incomplete.
-     */
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->mockConsoleApplication();
-    }
-
-    /**
      * Asserts that a list of tree nodes matches the expected order.
      *
      * @param array<ActiveRecord> $nodesList List of tree nodes to validate.
@@ -256,9 +246,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 
             $root->makeRoot();
 
-            if ($rootNode === null) {
-                $rootNode = $root;
-            }
+            $rootNode ??= $root;
 
             if (isset($rootDefinition['children'])) {
                 /** @phpstan-var NodeChildren $children */
@@ -499,6 +487,16 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         }
 
         return $result;
+    }
+
+    /**
+     * @throws InvalidConfigException if the configuration is invalid or incomplete.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->mockConsoleApplication();
     }
 
     /**

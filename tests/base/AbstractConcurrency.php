@@ -26,40 +26,6 @@ abstract class AbstractConcurrency extends TestCase
      */
     private array $workers = [];
 
-    protected function setUp(): void
-    {
-        $this->directory = sys_get_temp_dir() . '/nestedsets-' . bin2hex(random_bytes(8));
-
-        mkdir($this->directory);
-
-        if (str_starts_with($this->connection['dsn'] ?? '', 'sqlite:')) {
-            $this->connection['dsn'] = "sqlite:{$this->directory}/test.sqlite";
-        }
-
-        parent::setUp();
-
-        $this->createDatabase();
-    }
-
-    protected function tearDown(): void
-    {
-        foreach ($this->workers as $worker) {
-            $worker->close();
-        }
-
-        $this
-            ->getDb()
-            ->close();
-
-        foreach (($files = glob($this->directory . '/*')) === false ? [] : $files as $file) {
-            unlink($file);
-        }
-
-        rmdir($this->directory);
-
-        parent::tearDown();
-    }
-
     public function testConcurrentCrossTreeMoveReloadsSourceAndTarget(): void
     {
         $firstRoot = new MultipleTree(['name' => 'first-root']);
@@ -1128,6 +1094,40 @@ abstract class AbstractConcurrency extends TestCase
             (int) Tree::find()->count(),
             'No root may be written.',
         );
+    }
+
+    protected function setUp(): void
+    {
+        $this->directory = sys_get_temp_dir() . '/nestedsets-' . bin2hex(random_bytes(8));
+
+        mkdir($this->directory);
+
+        if (str_starts_with($this->connection['dsn'] ?? '', 'sqlite:')) {
+            $this->connection['dsn'] = "sqlite:{$this->directory}/test.sqlite";
+        }
+
+        parent::setUp();
+
+        $this->createDatabase();
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->workers as $worker) {
+            $worker->close();
+        }
+
+        $this
+            ->getDb()
+            ->close();
+
+        foreach (($files = glob($this->directory . '/*')) === false ? [] : $files as $file) {
+            unlink($file);
+        }
+
+        rmdir($this->directory);
+
+        parent::tearDown();
     }
 
     /**

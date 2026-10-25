@@ -17,13 +17,6 @@ use yii2\extensions\nestedsets\tests\support\model\Tree;
 #[Group('sqlite')]
 final class IntegrityTest extends AbstractIntegrity
 {
-    protected function setUp(): void
-    {
-        $this->connection = DatabaseConnection::SQLITE->connection();
-
-        parent::setUp();
-    }
-
     public function testThrowStaleObjectExceptionWhenInsertedNodeIsDeletedBeforeReload(): void
     {
         $db = $this->getDb();
@@ -71,5 +64,12 @@ final class IntegrityTest extends AbstractIntegrity
                 ->createCommand('DROP TRIGGER drop_inserted')
                 ->execute();
         }
+    }
+
+    protected function setUp(): void
+    {
+        $this->connection = DatabaseConnection::SQLITE->connection();
+
+        parent::setUp();
     }
 }

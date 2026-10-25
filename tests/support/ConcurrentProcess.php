@@ -16,7 +16,7 @@ final class ConcurrentProcess
 
     private bool $closed = false;
 
-    private string $errors;
+    private readonly string $errors;
 
     /**
      * @var array<string, array<string, mixed>>
@@ -25,12 +25,12 @@ final class ConcurrentProcess
 
     private int $offset = 0;
 
-    private string $output;
+    private readonly string $output;
 
     /**
      * @var resource
      */
-    private mixed $process;
+    private readonly mixed $process;
 
     /**
      * @param array<string, mixed> $payload Worker options encoded as JSON on the worker's standard input.
