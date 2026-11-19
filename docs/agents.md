@@ -62,4 +62,34 @@ require neighboring `docs/` files; it can use matching repository documentation 
 when hosted pages are unavailable. See [AI assistance](../README.md#ai-assistance) for the framework documentation index
 and framework skill. Never substitute current hosted APIs for an older installation without verifying them.
 
+## Example prompts
+
+Start a fresh client session at the application root. The explicit example uses Codex's `$skill-name` notation; use
+`/yii2-nested-sets` in Claude Code or the installed client's native skill mechanism. Do not paste the skill body and
+count that as native activation. These are tasks to execute and verify, not claims that an evaluation has passed.
+
+### Explicit invocation
+
+```text
+$yii2-nested-sets
+Show a transactional tree move using the installed nested-sets behavior. Preserve the writer-lock contract and
+include rollback checks for boundaries, depth and stale loaded models on a disposable database fixture.
+Inspect the installed revision first. Do not install dependencies or change files without authorization.
+```
+
+### Natural selection
+
+```text
+Two processes modify different trees in the same table. What must be verified before claiming independent concurrent
+writes, and how should a failed transaction be retried safely?
+```
+
+### Verify the outcome
+
+Assert tree invariants and rollback state. Concurrency claims require independent connections on the relevant database,
+not a sequential SQLite-only test. Record native loading evidence separately from configuration review, executable
+checks and browser/runtime results. For a negative selection control, ask an unrelated question in a fresh session and
+confirm this package skill is not loaded. Keep evaluation traces private; report unavailable checks rather than treating
+discovery as execution.
+
 [Back to documentation](../README.md#documentation)

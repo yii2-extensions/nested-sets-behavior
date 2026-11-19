@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.2.1 Under development
 
+- docs: align `README.md` with the standard, add Security section and Scorecard, restore skill discovery links, and add skill prompts and contracts.
+
 ## 0.2.0 October 24, 2026
 
 - Bug #85: Update license badge URL in `README.md` and add license header in `LICENSE.md` and kill infection mutant (@terabytesoftw)
@@ -20,4 +22,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 0.1.0 July 8, 2025
 
-- Initial release
+- feat: initial development release.
