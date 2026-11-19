@@ -1,0 +1,4 @@
+interface:
+  display_name: "Yii2 Nested Sets"
+  short_description: "Configure nested set trees, moves and writer locks"
+  default_prompt: "Use $yii2-nested-sets to configure, query or safely modify nested set trees in Yii ActiveRecord models."

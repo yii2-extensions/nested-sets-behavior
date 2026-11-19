@@ -1,6 +1,6 @@
 ---
 name: yii2-nested-sets
-description: Configure, query, migrate, or troubleshoot hierarchical Yii ActiveRecord models using yii2-extensions/nested-sets-behavior, including structural writes and writer locking.
+description: Configure, query, migrate, or troubleshoot hierarchical Yii ActiveRecord models using yii2-extensions/nested-sets-behavior, including structural writes and writer locking. Not for adjacency-list or closure-table hierarchies without this behavior, the original creocoder/yii2-nested-sets package, or ActiveRecord work unrelated to trees.
 license: BSD-3-Clause
 ---
 
@@ -78,6 +78,24 @@ the inspected API instead of substituting newer documentation. This skill works 
   argument limits relative depth, not an absolute level. Tree queries do not by themselves lock application decisions.
   For `children()->exists()`, remove ordering with `orderBy(null)` for SQL Server compatibility. Use
   `orderBy(['depth' => SORT_DESC])` to select the deepest common ancestor, rather than comparing primary keys.
+
+## Intended behavior
+
+These look like bugs and are package contracts; do not "fix" them in package or application code:
+
+- `insert()` or `save()` on a new record throws `NotSupportedException`; nodes are created only by the structural
+  methods. A structural call that returns `false` clears its pending operation, so a later plain `save()` throws too.
+- With `treeAttribute` set to `false`, a second `makeRoot()` and `makeRoot()` on an existing node throw.
+- Ordinary `delete()` does not cascade: the descendants of a deleted node move one level up under its parent. It throws
+  `NotSupportedException` for a root.
+- Ordinary `delete()` and `acquireTreeLock()` throw `InvalidConfigException` without an active Yii transaction, while
+  the structural methods and `deleteWithChildren()` open their own transaction whatever `transactions()` declares.
+- `deleteWithChildren()` runs the owner's delete hooks only; descendants are removed by one bulk delete.
+- Structural writes fail when the `nested_sets_lock` registry is missing; runtime code never creates it.
+
+`NodeContext`, `QueryConditionBuilder`, `TreeLock` and `exception\Message` are public helpers used by the behaviors.
+Call `acquireTreeLock()` rather than `TreeLock::acquire()` so the configured `lockTimeout` applies, and read `Message`
+only when matching an error text.
 
 ## Evidence for the requested change
 
