@@ -85,8 +85,8 @@ These look like bugs and are package contracts; do not "fix" them in package or 
 
 - `insert()` or `save()` on a new record throws `NotSupportedException` once validation passes; a validation failure
   returns `false` first. Nodes are created only by the structural methods. Handle `false` from both, and retry a failed
-  structural call: it clears its pending operation, so a later plain `save()` throws on a new record and, on an
-  existing node, runs as an ordinary update without moving it.
+  structural call: it clears its pending operation, so a later plain `save()` throws on a new record and, on an existing
+  node, runs as an ordinary update without moving it.
 - With `treeAttribute` set to `false`, a second `makeRoot()` and `makeRoot()` on an existing node throw.
 - Ordinary `delete()` does not cascade: the descendants of a deleted node move one level up under its parent. It throws
   `NotSupportedException` for a root.
