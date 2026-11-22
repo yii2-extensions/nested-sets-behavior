@@ -38,7 +38,7 @@ jobs:
       database-versions: '["15", "16", "17"]'
       enable-concurrency: true
       extensions: pdo, pdo_pgsql, sodium
-      os: "[ubuntu-latest]"
+      os: '["ubuntu-latest"]'
       ignore-platform-reqs-php-version: "[8.6]"
       php-version: "[8.3, 8.6]"
       phpunit-group: pgsql

@@ -38,6 +38,6 @@ jobs:
       enable-concurrency: true
       extensions: pdo, pdo_mysql, sodium
       ignore-platform-reqs-php-version: "[8.6]"
-      os: "[ubuntu-latest]"
+      os: '["ubuntu-latest"]'
       php-version: "[8.3, 8.6]"
       phpunit-group: mysql
