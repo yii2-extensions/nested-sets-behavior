@@ -35,7 +35,7 @@ jobs:
       database-image: mcr.microsoft.com/mssql/server
       database-port: 1433
       database-type: mssql
-      database-versions: "[2022-latest]"
+      database-versions: '["2022-latest"]'
       enable-concurrency: true
       extensions: pdo, pdo_sqlsrv, sqlsrv, sodium
       ignore-platform-reqs-php-version: "[8.6]"

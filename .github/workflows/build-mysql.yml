@@ -34,7 +34,7 @@ jobs:
       database-image: mysql
       database-port: 3306
       database-type: mysql
-      database-versions: "[8.0, 8.4, latest]"
+      database-versions: '["8.0", "8.4", "latest"]'
       enable-concurrency: true
       extensions: pdo, pdo_mysql, sodium
       ignore-platform-reqs-php-version: "[8.6]"

@@ -35,7 +35,7 @@ jobs:
       database-image: postgres
       database-port: 5432
       database-type: pgsql
-      database-versions: "[15, 16, 17]"
+      database-versions: '["15", "16", "17"]'
       enable-concurrency: true
       extensions: pdo, pdo_pgsql, sodium
       os: "[ubuntu-latest]"
