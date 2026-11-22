@@ -19,7 +19,7 @@ permissions:
 jobs:
   mysql:
     name: MySQL tests.
-    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@7a2d60325d59c5c9377fd445c912f2f1bfacf9d9 # v2.0.2
+    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@e3e99bd1c54fb350911bf446690e6146acf7660d # v2.0.6
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
@@ -36,7 +36,8 @@ jobs:
       database-type: mysql
       database-versions: '["8.0", "8.4", "latest"]'
       enable-concurrency: true
-      extensions: pdo, pdo_mysql
+      extensions: pdo, pdo_mysql, sodium
+      ignore-platform-reqs-php-version: "[8.6]"
       os: '["ubuntu-latest"]'
-      php-version: '["8.4"]'
+      php-version: "[8.3, 8.6]"
       phpunit-group: mysql

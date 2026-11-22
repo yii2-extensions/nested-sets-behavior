@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   mutation:
-    uses: yii2-framework/actions/.github/workflows/infection.yml@7a2d60325d59c5c9377fd445c912f2f1bfacf9d9 # v2.0.2
+    uses: yii2-framework/actions/.github/workflows/infection.yml@e3e99bd1c54fb350911bf446690e6146acf7660d # v2.0.6
     with:
       before-hook: |
         docker run -d \
@@ -59,9 +59,9 @@ jobs:
         echo 'NESTED_SETS_TEST_MYSQL_DSN=mysql:host=127.0.0.1;port=3306;dbname=yiitest_{token};charset=utf8mb4' >> "$GITHUB_ENV"
         echo 'NESTED_SETS_TEST_PGSQL_DSN=pgsql:host=127.0.0.1;port=5432;dbname=yiitest_{token}' >> "$GITHUB_ENV"
       command-options: --threads=4
-      extensions: pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
+      extensions: pdo, pdo_mysql, pdo_pgsql, pdo_sqlite, sodium
       php-ini-values: date.timezone='UTC', memory_limit=-1
-      php-version: '["8.3"]'
+      php-version: "[8.3]"
       phpstan: true
     secrets:
       STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
