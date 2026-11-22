@@ -19,7 +19,7 @@ permissions:
 jobs:
   pgsql:
     name: PostgreSQL tests.
-    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@7a2d60325d59c5c9377fd445c912f2f1bfacf9d9 # v2.0.2
+    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@e3e99bd1c54fb350911bf446690e6146acf7660d # v2.0.6
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
@@ -35,9 +35,10 @@ jobs:
       database-image: postgres
       database-port: 5432
       database-type: pgsql
-      database-versions: '["15", "16", "17"]'
+      database-versions: "[15, 16, 17]"
       enable-concurrency: true
-      extensions: pdo, pdo_pgsql
-      os: '["ubuntu-latest"]'
-      php-version: '["8.4"]'
+      extensions: pdo, pdo_pgsql, sodium
+      os: "[ubuntu-latest]"
+      ignore-platform-reqs-php-version: "[8.6]"
+      php-version: "[8.3, 8.6]"
       phpunit-group: pgsql

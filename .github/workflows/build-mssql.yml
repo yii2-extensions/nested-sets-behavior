@@ -19,7 +19,7 @@ permissions:
 jobs:
   mssql:
     name: SQL Server tests.
-    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@7a2d60325d59c5c9377fd445c912f2f1bfacf9d9 # v2.0.2
+    uses: yii2-framework/actions/.github/workflows/phpunit-database.yml@e3e99bd1c54fb350911bf446690e6146acf7660d # v2.0.6
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     with:
@@ -35,11 +35,12 @@ jobs:
       database-image: mcr.microsoft.com/mssql/server
       database-port: 1433
       database-type: mssql
-      database-versions: '["2022-latest"]'
+      database-versions: "[2022-latest]"
       enable-concurrency: true
-      extensions: pdo, pdo_sqlsrv, sqlsrv
-      os: '["ubuntu-latest"]'
-      php-version: '["8.4"]'
+      extensions: pdo, pdo_sqlsrv, sqlsrv, sodium
+      ignore-platform-reqs-php-version: "[8.6]"
+      os: "[ubuntu-latest]"
+      php-version: "[8.3, 8.6]"
       phpunit-group: mssql
       setup-commands: |
         # Install Microsoft ODBC Driver for SQL Server

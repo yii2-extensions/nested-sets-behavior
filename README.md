@@ -43,6 +43,10 @@ with high-performance database operations.
 [![PostgreSQL](https://img.shields.io/badge/postgresql-4169e1?style=for-the-badge&logo=postgresql&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build-pgsql.yml)
 [![SQLite](https://img.shields.io/badge/sqlite-003B57.svg?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/yii2-extensions/nested-sets-behavior/actions/workflows/build.yml)
 
+See the
+[database testing guide](https://github.com/yii2-extensions/nested-sets-behavior/blob/main/docs/testing.md#database-testing)
+for tested server versions, fixture setup, and driver-specific skips.
+
 ## How it works
 
 The nested sets model is a technique for storing hierarchical data in a relational database. Unlike adjacency lists
